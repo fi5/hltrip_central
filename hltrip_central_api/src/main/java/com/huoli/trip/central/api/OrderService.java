@@ -1,3 +1,5 @@
+package com.huoli.trip.central.api;
+
 import com.huoli.trip.common.vo.request.OrderStatusRequest;
 
 /**

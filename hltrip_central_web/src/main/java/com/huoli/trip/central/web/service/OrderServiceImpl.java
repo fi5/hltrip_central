@@ -1,16 +1,18 @@
-package service;
+package com.huoli.trip.central.web.service;
 
+import com.alibaba.dubbo.config.annotation.Service;
+import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.common.vo.request.OrderStatusRequest;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
 
 /**
  * 中台订单服务
  */
-@Service
-public class OrderServiceImpl implements OrderService{
+@Service(timeout = 10000,group = "hllx")
+public class OrderServiceImpl implements OrderService {
 
-    private Object getOrderStatus(OrderStatusRequest request){
+    @Override
+     public Object getOrderStatus(OrderStatusRequest request){
         //渠道信息不可为空 返回相关提示
         String channelCode = request.getChannelCode();
         if(StringUtils.isEmpty(channelCode)){
