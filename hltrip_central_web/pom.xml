@@ -11,5 +11,13 @@
     </parent>
     <artifactId>hltrip_central_web</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.huoli.trip</groupId>
+            <artifactId>hltrip_central_api</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
     
 </project>

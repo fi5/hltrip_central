@@ -1,4 +1,4 @@
-package com.huoli.trip.central.service;
+package service;
 
 import com.huoli.trip.common.vo.request.OrderStatusRequest;
 import org.apache.commons.lang3.StringUtils;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
  * 中台订单服务
  */
 @Service
-public class OrderService {
+public class OrderServiceImpl implements OrderService{
 
     private Object getOrderStatus(OrderStatusRequest request){
         //渠道信息不可为空 返回相关提示
