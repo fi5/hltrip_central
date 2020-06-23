@@ -1,15 +1,20 @@
 package com.huoli.trip.central.web.service;
 
+import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.common.vo.request.OrderStatusRequest;
+import com.huoli.trip.supplier.api.YcfOrderStatusService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 中台订单服务
  */
 @Service(timeout = 10000,group = "hllx")
 public class OrderServiceImpl implements OrderService {
+    @Autowired
+    OrderConsumerService orderConsumerService;
 
     @Override
      public Object getOrderStatus(OrderStatusRequest request){
@@ -24,10 +29,10 @@ public class OrderServiceImpl implements OrderService {
         }
         switch (channelCode){
             case "yaochufa":
-                getYaochufaOrderStatus(orderId);
+                orderConsumerService.getYaochufaOrderStatus(orderId);
                 break;
             case "difengyun":
-                getDiFengYunOrderStatus(orderId);
+                orderConsumerService.getDiFengYunOrderStatus(orderId);
                 break;
             default:
                 return "渠道信息不存在,请检查相关配置";
@@ -36,13 +41,6 @@ public class OrderServiceImpl implements OrderService {
         return null;
     }
 
-    private Object getYaochufaOrderStatus(String orderId){
-        return null;
 
-    }
-
-    private void getDiFengYunOrderStatus(String orderId){
-        return;
-    }
 
 }
