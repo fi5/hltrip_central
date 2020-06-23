@@ -12,8 +12,13 @@
     <artifactId>hltrip_central</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>hltrip_central</name>
-    <description>Demo project for Spring Boot</description>
+    <packaging>pom</packaging>
+    <description>供应商中台</description>
 
+    <modules>
+        <module>hltrip_central_api</module>
+        <module>hltrip_central_web</module>
+    </modules>
     <properties>
         <java.version>1.8</java.version>
     </properties>
@@ -52,11 +57,35 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>nexus-releases</id>
+            <name>Nexus Snapshot</name>
+            <url>http://60.205.218.7:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>nexus-releases</id>
+            <name>Nexus Release</name>
+            <url>http://60.205.218.7:8081/repository/maven-releases/</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
             </plugin>
         </plugins>
     </build>
