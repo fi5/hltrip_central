@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 中台订单服务
+ * 提供统一的dubbo服务给客户端服务使用
  */
 @Service(timeout = 10000,group = "hllx")
 public class OrderServiceImpl implements OrderService {
