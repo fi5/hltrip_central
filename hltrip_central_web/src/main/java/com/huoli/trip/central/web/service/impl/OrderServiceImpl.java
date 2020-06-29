@@ -1,10 +1,10 @@
-package com.huoli.trip.central.web.service;
+package com.huoli.trip.central.web.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.huoli.trip.central.api.OrderService;
+import com.huoli.trip.central.web.service.OrderConsumerService;
+import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderStatusRequest;
-import com.huoli.trip.supplier.api.YcfOrderStatusService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,6 +42,10 @@ public class OrderServiceImpl implements OrderService {
         return null;
     }
 
+    @Override
+    public Object getCheckInfos(BookCheckReq req) {
+        return null;
+    }
 
 
 }

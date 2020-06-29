@@ -2,10 +2,12 @@ package com.huoli.trip.central.web.config;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
 import java.io.Serializable;
 
 @Data
+@Configuration
 public class DubboProperties implements Serializable {
     @Value("${dubbo.server.name}")
     private String name;
