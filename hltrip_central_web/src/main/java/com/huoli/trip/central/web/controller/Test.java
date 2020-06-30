@@ -2,8 +2,11 @@ package com.huoli.trip.central.web.controller;
 
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.util.SpringBeanFactoryUtil;
+import com.huoli.trip.central.web.util.ValidateUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 描述: <br> 可预订查询
@@ -14,11 +17,10 @@ import org.springframework.web.bind.annotation.*;
  * 创建日期：2020/6/24<br>
  */
 @RestController
-@RequestMapping("hltrip")
 public class Test {
     @RequestMapping(value = "getCheckInfos",produces={"application/json;charset=UTF-8"})
     public Object getCheckInfos(@RequestBody BookCheckReq request){
-        OrderService orderService = (OrderService) SpringBeanFactoryUtil.getBean(request.getChannelCode() + "OrderServiceImpl");
+        OrderService orderService = (OrderService) SpringBeanFactoryUtil.getBean(ValidateUtils.checkChannalCode(request) + "OrderServiceImpl");
         return orderService.getCheckInfos(request);
     }
 }

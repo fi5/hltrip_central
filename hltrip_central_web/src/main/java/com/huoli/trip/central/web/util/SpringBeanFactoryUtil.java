@@ -31,13 +31,13 @@ public class SpringBeanFactoryUtil implements ApplicationContextAware {
 		return applicationContext;
 	}
 	/**
-	 * 获取对象
+	 * 获取bean对象
 	 *
-	 * @param name
+	 * @param beanName
 	 * @return Object
 	 * @throws BeansException
 	 */
-	public static Object getBean(String name) throws BeansException {
-		return applicationContext.getBean(name);
+	public static Object getBean(String beanName) throws BeansException {
+		return applicationContext.getBean(beanName);
 	}
 }

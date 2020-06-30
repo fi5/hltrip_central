@@ -45,10 +45,10 @@
 		  class="com.baidu.disconf.client.addons.properties.ReloadablePropertiesFactoryBean">
 		<property name="locations">
 			<list>
-<!--				<value>classpath:/redis.properties</value>-->
-<!--				<value>classpath:/dubbo.properties</value>-->
-<!--				<value>classpath:/search-common.properties</value>-->
-<!--                <value>classpath:/train.properties</value>-->
+				<value>classpath:/redis.properties</value>
+				<value>classpath:/dubbo.properties</value>
+				<value>classpath:/search-common.properties</value>
+                <value>classpath:/train.properties</value>
 
 			</list>
 
