@@ -37,6 +37,7 @@ public class Test {
         try {
             checkInfos = orderService.getCheckInfos(request);
         } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return new BaseResponse().withSuccess(checkInfos);
     }
