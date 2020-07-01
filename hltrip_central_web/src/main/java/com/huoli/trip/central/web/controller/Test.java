@@ -1,9 +1,11 @@
 package com.huoli.trip.central.web.controller;
 
 import com.huoli.trip.central.api.OrderService;
+import com.huoli.trip.central.web.service.TestService;
 import com.huoli.trip.central.web.util.SpringBeanFactoryUtil;
 import com.huoli.trip.central.web.util.ValidateUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,9 +20,21 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class Test {
-    @RequestMapping(value = "getCheckInfos",produces={"application/json;charset=UTF-8"})
-    public Object getCheckInfos(@RequestBody BookCheckReq request){
-        OrderService orderService = (OrderService) SpringBeanFactoryUtil.getBean(ValidateUtils.checkChannalCode(request) + "OrderServiceImpl");
+    @Autowired
+    TestService testService;
+
+    @RequestMapping(value = "getCheckInfos", produces = {"application/json;charset=UTF-8"})
+    public Object getCheckInfos(@RequestBody BookCheckReq request) {
+        OrderService orderService =
+                (OrderService) SpringBeanFactoryUtil.getBean(ValidateUtils.checkChannalCode(request) +
+                        "OrderServiceImpl");
         return orderService.getCheckInfos(request);
+    }
+
+
+    @RequestMapping(value = "test")
+    public Object test(String channel) {
+        testService.test(channel);
+        return channel;
     }
 }
