@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.service;
 
 import com.google.common.collect.Maps;
 import com.huoli.trip.central.web.service.impl.OrderManager;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import java.util.Map;
  * 创建日期：2020/7/1<br>
  */
 @Component
-//@Slf4j
+@Slf4j
 public class OrderFactory {
 
     @Autowired
@@ -27,20 +28,28 @@ public class OrderFactory {
     public static Map<String,OrderManager> orderManagerMap = Maps.newHashMap();
     @PostConstruct
     public void init(){
-//        log.info("init order manager.....");
+        log.info("init order manager.....");
         register();
     }
 
+    /**
+     * 注册服务
+     */
     private void register(){
        Map<String, OrderManager> managerMap = applicationContext.getBeansOfType(OrderManager.class);
-
       for (String str:managerMap.keySet()){
           OrderManager orderManager =  managerMap.get(str);
           orderManagerMap.put(orderManager.getChannel(),orderManager);
       }
-      OrderManager orderManager =  orderManagerMap.get("ycf");
-        System.out.println(orderManager.test());
-       System.out.println(111);
+    }
+
+    /**
+     * 根据渠道获取OrderManager
+     * @param channel
+     * @return
+     */
+    public  OrderManager getOrderManager(String channel){
+        return orderManagerMap.get(channel);
     }
 
 }
