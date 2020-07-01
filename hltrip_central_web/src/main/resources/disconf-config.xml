@@ -22,6 +22,7 @@
 		<property name="arguments">
 			<util:properties>
 				<prop key="disconf.conf">
+<!--					/Users/fengzhiqiang/work/航班管家/project_folder/hltrip_central/hltrip_central_web/conf/disconf.properties-->
 					/usr/local/huoli_home/flight_search/disconf.properties
 				</prop>
 			</util:properties>
