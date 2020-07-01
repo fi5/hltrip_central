@@ -1,10 +1,14 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.dubbo.config.annotation.Reference;
+import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
+import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderStatusRequest;
 import com.huoli.trip.common.vo.request.RefundNoticeReq;
+import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,8 +24,13 @@ import org.springframework.util.concurrent.ListenableFuture;
  * 创建日期：2020/6/30<br>
  */
 @Slf4j
+@Service(timeout = 10000,group = "hllx")
 public class OrderServiceImpl implements OrderService {
 
+    @Reference(group = "hllx")
+    private YcfOrderService ycfOrderService;
+    @Autowired
+    private OrderFactory orderFactory;
 
     @Autowired
     KafkaTemplate kafkaTemplate;
@@ -33,8 +42,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Object getCheckInfos(BookCheckReq req) {
-        return null;
+    public Object getCheckInfos(BookCheckReq req) throws Exception {
+        OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
+        checkManger(orderManager);
+        return orderManager.getNBCheckInfos(req);
     }
 
     @Override
@@ -54,5 +65,18 @@ public class OrderServiceImpl implements OrderService {
         	log.info("",e);
         }
 
+    }
+
+    /**
+     * 校验manager
+     * @param manager
+     * @return
+     */
+    public Object checkManger(OrderManager manager){
+        if(manager==null){
+            log.info("供应商OrderManager爆了");
+            return null;
+        }
+        return manager;
     }
 }

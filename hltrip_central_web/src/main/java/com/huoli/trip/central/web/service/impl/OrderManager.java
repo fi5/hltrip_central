@@ -1,5 +1,7 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.huoli.trip.common.vo.request.BookCheckReq;
+
 /**
  * 描述：desc<br>
  * 版权：Copyright (c) 2011-2020<br>
@@ -9,6 +11,7 @@ package com.huoli.trip.central.web.service.impl;
  * 创建日期：2020/7/1<br>
  */
 public abstract class OrderManager {
+
     public final static String CHANNEL="order";
 
     public String getChannel(){
@@ -17,6 +20,10 @@ public abstract class OrderManager {
 
     public  String test(){
         return "cha";
+    }
+
+    public Object getNBCheckInfos(BookCheckReq req) throws Exception {
+        return null;
     }
 
 }
