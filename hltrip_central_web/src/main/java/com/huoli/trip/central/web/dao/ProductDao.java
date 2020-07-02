@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.vo.ProductPageResponse;
 
 import java.util.List;
 
@@ -21,7 +22,24 @@ public interface ProductDao {
      */
     List<ProductPO> getProductListByItemIds(List<String> itemIds);
 
+    /**
+     * 列表页
+     * @param city
+     * @param type
+     * @param page
+     * @param size
+     * @return
+     */
     List<ProductPO> getPageList(String city, Integer type, int page, int size);
+
+    /**
+     * 总数
+     * @param city
+     * @param type
+     * @return
+     */
+    int getListTotal(String city, Integer type);
+
     List<ProductPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size);
 
 }

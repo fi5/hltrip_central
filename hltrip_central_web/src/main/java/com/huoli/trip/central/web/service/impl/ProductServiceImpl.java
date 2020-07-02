@@ -12,6 +12,7 @@ import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
+import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.ListResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,9 +39,6 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductItemDao productItemDao;
-
-    @Autowired
-    private PriceDao priceDao;
 
     public ListResult mainList(String city, Integer type, Integer listSize){
         ListResult listResult = new ListResult();
@@ -103,15 +101,30 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> pageList(String city, Integer type, int pageIndex, int pageSize){
-        List<ProductPO> productPOs = productDao.getPageList(city, type, pageIndex, pageSize);
-            List<Product> products = productPOs.stream().map(po -> {
+    public BaseResponse<List<Product>> pageList(ProductPageRequest request){
+        BaseResponse baseResponse = new BaseResponse();
+        List<Integer> types;
+        // 不限需要查所有类型
+        if(request.getType() == ProductType.UN_LIMIT.getCode()){
+            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
+        } else if (request.getType() == ProductType.SCENIC_TICKET_PLUS.getCode()){  // 门票加需要查门票和门票+
+            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
+        } else {  // 其它类型就按传进来的查
+            types = Lists.newArrayList(request.getType());
+        }
+        List<Product> products = Lists.newArrayList();
+        for (Integer t : types) {
+            int total = productDao.getListTotal(request.getCity(), request.getType());
+            List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getPageIndex(), request.getPageSize());
+             products.addAll(productPOs.stream().map(po -> {
                 Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
                 ProductItemPO productItemPO = productItemDao.selectByCode(product.getCode());
                 ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
                 product.setMainItem(productItem);
+                product.setTotal(total);
                 return product;
-            }).collect(Collectors.toList());
-        return products;
+            }).collect(Collectors.toList()));
+        }
+        return baseResponse.withSuccess(products);
     }
 }
