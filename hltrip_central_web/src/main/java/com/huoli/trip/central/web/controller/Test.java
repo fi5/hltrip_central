@@ -3,14 +3,10 @@ package com.huoli.trip.central.web.controller;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.service.TestService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
-import com.huoli.trip.central.web.util.SpringBeanFactoryUtil;
-import com.huoli.trip.central.web.util.ValidateUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
-import com.huoli.trip.common.vo.request.BookCheckReq;
-import com.huoli.trip.common.vo.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,19 +27,7 @@ public class Test {
     TestService testService;
     @Autowired
     YcfOrderManger ycfOrderManger;
-
-//    @RequestMapping(value = "getCheckInfos", produces = {"application/json;charset=UTF-8"})
-//    public Object getCheckInfos(@RequestBody BookCheckReq request) {
-//        OrderService orderService =
-//                (OrderService) SpringBeanFactoryUtil.getBean(ValidateUtils.checkChannalCode(request) +
-//                        "OrderServiceImpl");
-//        try {
-//            return orderService.getCheckInfos(request);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
+    @Autowired
     private OrderService orderService;
 //    @RequestMapping(value = "getCheckInfos", produces = {"application/json;charset=UTF-8"})
 //    public Object getCheckInfos(@RequestBody BookCheckReq request) {
@@ -52,6 +36,16 @@ public class Test {
 //                        "OrderServiceImpl");
 //        return orderService.getCheckInfos(request);
 //    }
+    @RequestMapping(value = "getCheckInfos",method = {RequestMethod.POST, RequestMethod.GET})
+    public BaseResponse getCheckInfos(@RequestBody BookCheckReq request) {
+        Object checkInfos = null;
+        try {
+            checkInfos = orderService.getCheckInfos(request);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return new BaseResponse().withSuccess(checkInfos);
+    }
 
     @RequestMapping(value = "test")
     public Object test(String channel) {

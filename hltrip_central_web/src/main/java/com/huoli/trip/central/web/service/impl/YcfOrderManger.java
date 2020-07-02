@@ -2,14 +2,18 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.fastjson.JSONObject;
+import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import com.huoli.trip.supplier.api.YcfOrderService;
+import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookCheckReq;
+import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookCheckRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfOrderStatusResult;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
 import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,17 +28,26 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class YcfOrderManger extends OrderManager {
-
-    @Reference
-    YcfOrderService ycfOrderService;
-
+    @Reference(group = "hllx")
+    private YcfOrderService ycfOrderService;
     public final static String CHANNEL="ycf";
     public String getChannel(){
         return CHANNEL;
     }
     public String test() {
-            System.out.println("ycf");
-            return "ycf";
+        System.out.println("ycf");
+        return "ycf";
+    }
+    public Object getNBCheckInfos(BookCheckReq req) throws Exception {
+        YcfBaseResult<YcfBookCheckRes> checkInfos = new YcfBaseResult<>();
+        YcfBookCheckReq reqest = new YcfBookCheckReq();
+        BeanUtils.copyProperties(req,reqest);
+        try {
+            checkInfos = ycfOrderService.getCheckInfos(reqest);
+        }catch (Exception e){
+            throw new RuntimeException("ycfOrderService --> rpc服务异常。。",e);
+        }
+        return checkInfos.getData();
     }
 
    public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){
