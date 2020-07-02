@@ -55,6 +55,9 @@ public class YcfOrderManger extends OrderManager {
         final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
         try {
             final YcfOrderStatusResult data = order.getData();
+            //如果数据为空,直接返回错
+            if(data==null || !order.getSuccess())
+                return BaseResponse.fail(-100,order.getMessage(),null);
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(data.getOrderId());
             rep.setOrderStatus(data.getOrderStatus());
