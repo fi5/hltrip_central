@@ -1,14 +1,11 @@
 package com.huoli.trip.central.web.dao.impl;
 
 import com.huoli.trip.central.web.dao.ProductItemDao;
-import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.ProductItemPO;
-import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,16 +23,6 @@ public class ProductItemDaoImpl implements ProductItemDao {
 
     @Autowired
     private MongoTemplate mongoTemplate;
-
-    @Override
-    public void updateBySupplierItemId(ProductItemPO productItemPO){
-        Query query = new Query();
-        query.addCriteria(Criteria.where("code").is(productItemPO.getCode()));
-        Document document = new Document();
-        mongoTemplate.getConverter().write(productItemPO, document);
-        Update update = Update.fromDocument(document);
-        mongoTemplate.upsert(query, update, Constants.COLLECTION_NAME_TRIP_PRODUCT_ITEM);
-    }
 
     @Override
     public List<ProductItemPO> selectByCityAndType(String city, Integer type, int pageSize){

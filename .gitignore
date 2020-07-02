@@ -30,3 +30,4 @@ build/
 ### VS Code ###
 .vscode/
 /logs/
+/hltrip_central_web/logs/

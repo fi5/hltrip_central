@@ -5,10 +5,15 @@ import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.ProductPO;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -28,18 +33,39 @@ public class ProductDaoImpl implements ProductDao {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public void updateBySupplierProductId(ProductPO productPO){
-        Query query = new Query();
-        query.addCriteria(Criteria.where("code").is(productPO.getCode()));
-        Document document = new Document();
-        mongoTemplate.getConverter().write(productPO, document);
-        Update update = Update.fromDocument(document);
-        mongoTemplate.upsert(query, update, Constants.COLLECTION_NAME_TRIP_PRODUCT);
-    }
-
-    @Override
     public List<ProductPO> getProductListByItemIds(List<String> itemIds){
         Query query = new Query(Criteria.where("mainItemId").in(itemIds));
         return mongoTemplate.find(query, ProductPO.class);
+    }
+
+    @Override
+    public List<ProductPO> getPageList(String city, Integer type, int page, int size){
+        Criteria criteria = Criteria.where("productType").is(type).and("city").is(city);
+//        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
+        long rows = (page - 1) * size;
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(criteria),
+                Aggregation.group("mainItemId").first("mainItemId").as("mainItemId").min("salePrice").as("salePrice"),
+                Aggregation.count().as("count"),
+                Aggregation.project(ProductPO.class).andExclude("_id"),
+                Aggregation.skip(rows),
+                Aggregation.limit(size));
+        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return outputType.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size){
+        Criteria criteria = Criteria.where("itype").in(itemIds);
+//        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
+        long rows = (page - 1) * size;
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(criteria),
+                Aggregation.group("mainItemId").first("mainItemId").as("mainItemId").min("salePrice").as("salePrice"),
+                Aggregation.project(ProductPO.class).andExclude("_id"),
+                Aggregation.skip(rows),
+                Aggregation.limit(size));
+        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return outputType.getMappedResults();
     }
 }
