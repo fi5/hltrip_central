@@ -3,19 +3,19 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
+import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.order.CenterBookCheckRes;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookCheckReq;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookCheckRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfOrderStatusResult;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
 import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class YcfOrderManger extends OrderManager {
     @Reference(group = "hllx")
     private YcfOrderService ycfOrderService;
-    public final static String CHANNEL="ycf";
+    public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_YCF;
     public String getChannel(){
         return CHANNEL;
     }
@@ -39,16 +39,31 @@ public class YcfOrderManger extends OrderManager {
         System.out.println("ycf");
         return "ycf";
     }
-    public Object getNBCheckInfos(BookCheckReq req) throws Exception {
-        YcfBaseResult<YcfBookCheckRes> checkInfos = new YcfBaseResult<>();
+    public Object getNBCheckInfos(BookCheckReq req){
         YcfBookCheckReq reqest = new YcfBookCheckReq();
         BeanUtils.copyProperties(req,reqest);
+        CenterBookCheckRes.CenterBookCheck centerBookCheck = null;
         try {
-            checkInfos = ycfOrderService.getCheckInfos(reqest);
+            //**********************************要出发供应商************************************
+//            CenterBookCheckRes.CenterBookCheck centerBookCheck = new CenterBookCheckRes.CenterBookCheck();
+//            YcfBaseResult<YcfBookCheckRes> checkInfos = ycfOrderService.getCheckInfos(reqest);
+//            YcfBookCheckRes data = checkInfos.getData();
+//            centerBookCheck.setProductId(data.getProductId());
+            //测试数据 start
+            String jsonString = "{\"data\":{\"productId\":\"16\",\"saleInfos\":[{\"date\":\"2016-06-14\",\"price\":99,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-15\",\"price\":98,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-16\",\"price\":97,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":10},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-17\",\"price\":96,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":0},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-18\",\"price\":95,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]}]},\"partnerId\":\"zx1000020160229\",\"success\":true,\"message\":null,\"statusCode\":200}";
+            YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
+            centerBookCheck = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), CenterBookCheckRes.CenterBookCheck.class);
+            System.out.println(centerBookCheck);
+            //测试数据  end
+            //todo 封装供应商返回
+
+
+
         }catch (Exception e){
-            throw new RuntimeException("ycfOrderService --> rpc服务异常。。",e);
+            log.error("ycfOrderService --> rpc服务异常。。",e);
+            throw new RuntimeException("ycfOrderService --> rpc服务异常");
         }
-        return checkInfos.getData();
+        return centerBookCheck;
     }
 
    public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){

@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.huoli.trip.common.constant.ChannelConstant;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class DfyOrderManager extends OrderManager {
 
-    public final static String CHANNEL="dfy";
+    public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_DFY;
     public String getChannel(){
         return CHANNEL;
     }
