@@ -1,17 +1,20 @@
 package com.huoli.trip.central.web.dao.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
+import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.vo.PageList;
+import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.vo.ProductPageResponse;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -40,13 +43,13 @@ public class ProductDaoImpl implements ProductDao {
 
     @Override
     public List<ProductPO> getPageList(String city, Integer type, int page, int size){
-        Criteria criteria = Criteria.where("productType").is(type).and("city").is(city);
+        MatchOperation matchOperation = Aggregation.match(Criteria.where("productType").is(type).and("city").is(city));
+        GroupOperation groupOperation = Aggregation.group("mainItemId").first("mainItemId").as("mainItemId");
 //        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
         long rows = (page - 1) * size;
         Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.match(criteria),
-                Aggregation.group("mainItemId").first("mainItemId").as("mainItemId").min("salePrice").as("salePrice"),
-                Aggregation.count().as("count"),
+                matchOperation,
+                groupOperation.min("salePrice").as("salePrice"),
                 Aggregation.project(ProductPO.class).andExclude("_id"),
                 Aggregation.skip(rows),
                 Aggregation.limit(size));
@@ -55,13 +58,31 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
+    public int getListTotal(String city, Integer type){
+        MatchOperation matchOperation = Aggregation.match(Criteria.where("productType").is(type).and("city").is(city));
+        GroupOperation groupOperation = Aggregation.group("mainItemId").first("mainItemId").as("mainItemId");
+        Aggregation aggregationCount = Aggregation.newAggregation(matchOperation,
+                groupOperation.count().as("count"),
+                Aggregation.project(ProductPO.class).andExclude("_id"));
+        AggregationResults<ProductPO> resultsCount = mongoTemplate.aggregate(aggregationCount, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return resultsCount.getMappedResults().size();
+    }
+
+    @Override
     public List<ProductPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size){
         Criteria criteria = Criteria.where("itype").in(itemIds);
 //        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
+        GroupOperation groupOperation = Aggregation.group("mainItemId").first("mainItemId").as("mainItemId");
         long rows = (page - 1) * size;
+        Aggregation aggregation1 = Aggregation.newAggregation(Aggregation.match(criteria),
+                groupOperation.count().as("total"),
+                Aggregation.project(ProductPO.class).andExclude("_id"));
+        AggregationResults<ProductPO> outputType1 = mongoTemplate.aggregate(aggregation1, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        System.out.println("total============ " + outputType1.getMappedResults().size());
+        System.out.println(JSON.toJSONString(outputType1.getMappedResults()));
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(criteria),
-                Aggregation.group("mainItemId").first("mainItemId").as("mainItemId").min("salePrice").as("salePrice"),
+                groupOperation.min("salePrice").as("salePrice"),
                 Aggregation.project(ProductPO.class).andExclude("_id"),
                 Aggregation.skip(rows),
                 Aggregation.limit(size));

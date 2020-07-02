@@ -1,6 +1,9 @@
 package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.vo.ProductPageRequest;
+import com.huoli.trip.common.vo.ProductPageResult;
+import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.ListResult;
 
 import java.util.List;
@@ -12,6 +15,6 @@ public interface ProductService {
 
     ListResult mainList(String city, Integer type, Integer mainPageSize);
 
-    List<Product> pageList(String city, Integer type, int pageIndex, int pageSize);
+    BaseResponse<List<Product>> pageList(ProductPageRequest request);
 
 }
