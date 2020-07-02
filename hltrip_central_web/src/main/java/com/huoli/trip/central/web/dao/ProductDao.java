@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.dao;
 
-import com.huoli.trip.central.web.dao.impl.TestPO;
 import com.huoli.trip.common.entity.ProductPO;
 
 import java.util.List;

@@ -3,7 +3,6 @@ package com.huoli.trip.central.web;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.dao.ProductDao;
-import com.huoli.trip.central.web.dao.impl.TestPO;
 import com.huoli.trip.common.entity.ProductPO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
