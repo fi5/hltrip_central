@@ -64,10 +64,7 @@ public class OrderServiceImpl implements OrderService {
             case ChannelConstant.SUPPLIER_TYPE_DFY:supplier.setType(2);break;
         }
         try {
-            //**********************************要出发供应商************************************
             supplier.setCenterBookCheckObj(orderManager.getNBCheckInfos(req));
-            //**********************************笛风云供应商**************************************
-
             checkRes.setSupplier(supplier);
         }catch (Exception e){
             log.error("orderManager --> rpc服务异常",e);
