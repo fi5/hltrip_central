@@ -1,15 +1,25 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
+import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.vo.BaseListProduct;
+import com.huoli.trip.common.vo.BaseProduct;
 import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.vo.Tag;
+import com.huoli.trip.common.vo.response.ListResult;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,7 +32,8 @@ import java.util.stream.Collectors;
  * 版本：1.0<br>
  * 创建日期：2020/7/1<br>
  */
-public class ProductServiceImpl {
+@Service
+public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductDao productDao;
@@ -33,19 +44,63 @@ public class ProductServiceImpl {
     @Autowired
     private PriceDao priceDao;
 
-    public static final ImmutableList<Integer> types = ImmutableList.of(0, 1, 2, 3, 4);
-
-    public List<Product> productList(String city, Integer type, Integer mainPageSize){
-        List<ProductItemPO> productItems = productItemDao.selectByCityAndType(city, type, mainPageSize);
-        if(ListUtils.isNotEmpty(productItems)){
+    public ListResult productList(String city, Integer type, Integer mainPageSize){
+        ListResult listResult = new ListResult();
+        List<Integer> types;
+        // 不限需要查所有类型
+        if(type == ProductType.UN_LIMIT.getCode()){
+            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
+        } else if (type == ProductType.SCENIC_TICKET_PLUS.getCode()){  // 门票加需要查门票和门票+
+            types = Lists.newArrayList( ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
+        } else {  // 其它类型就按传进来的查
+            types = Lists.newArrayList(type);
+        }
+        for (Integer t : types) {
+            List<ProductItemPO> productItems = productItemDao.selectByCityAndType(city, t, mainPageSize);
+            if(ListUtils.isEmpty(productItems)){
+                continue;
+            }
             List<ProductPO> products = productDao.getProductListByItemIds(productItems.stream().map(item -> item.getCode()).collect(Collectors.toList()));
             if(ListUtils.isNotEmpty(products)){
                 Map<String, List<ProductPO>> map = products.stream().collect(Collectors.groupingBy(productPO -> productPO.getMainItemId()));
-
+                BaseListProduct product = new BaseListProduct();
+                List<BaseProduct> baseProducts = Lists.newArrayList();
+                product.setPros(baseProducts);
+                List<ProductItemPO> mores = productItemDao.selectByCityAndType(city, t, ++mainPageSize);
+                product.setMore(0);
+                if(mores.size() > productItems.size()){
+                    product.setMore(1);
+                }
+                if(t == ProductType.FREE_TRIP.getCode()){
+                    listResult.setHotels(product);
+                } else if(t == ProductType.SCENIC_TICKET.getCode() || t == ProductType.SCENIC_TICKET_PLUS.getCode()){
+                    listResult.setTickets(product);
+                } else {
+                    listResult.setCates(product);
+                }
+                map.forEach((k, v) -> {
+                    ProductItemPO item = productItems.stream().filter(i -> StringUtils.equals(i.getCode(), k)).findFirst().orElse(new ProductItemPO());
+                    v.stream().min(Comparator.comparing(p -> p.getSalePrice())).ifPresent(p -> {
+                        BaseProduct baseProduct = new BaseProduct();
+                        baseProduct.setPrice(p.getSalePrice().doubleValue());
+                        baseProduct.setProductItemId(item.getCode());
+                        baseProduct.setProductName(p.getName());
+                        baseProduct.setDesc(item.getDescription());
+                        if(ListUtils.isNotEmpty(p.getImages())){
+                            baseProduct.setImg(p.getImages().get(0).getUrl());
+                        }
+                        if(ListUtils.isNotEmpty(item.getTags())){
+                            baseProduct.setTags(item.getTags().stream().map(tag -> {
+                                Tag newTag = new Tag();
+                                newTag.setName(tag);
+                                return newTag;
+                            }).collect(Collectors.toList()));
+                        }
+                        baseProducts.add(baseProduct);
+                    });
+                });
             }
         }
-
-
-        return null;
+        return listResult;
     }
 }

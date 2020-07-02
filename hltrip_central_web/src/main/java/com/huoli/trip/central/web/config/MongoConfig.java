@@ -1,8 +1,7 @@
 //package com.huoli.trip.central.web.config;
 //
 //
-//import com.huoli.trip.central.web.util.ConfigGetter;
-//import com.mongodb.MongoClient;
+//import com.huoli.trip.common.util.ConfigGetter;
 //import com.mongodb.MongoClientOptions;
 //import com.mongodb.WriteConcern;
 //import com.mongodb.client.MongoClients;
@@ -12,7 +11,6 @@
 //import org.springframework.data.mongodb.MongoDbFactory;
 //import org.springframework.data.mongodb.core.MongoTemplate;
 //import org.springframework.data.mongodb.core.SimpleMongoClientDbFactory;
-//
 //
 //import java.net.URLEncoder;
 //import java.net.UnknownHostException;

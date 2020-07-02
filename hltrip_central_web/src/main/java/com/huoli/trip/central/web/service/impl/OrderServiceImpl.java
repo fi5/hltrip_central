@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
@@ -10,6 +11,7 @@ import com.huoli.trip.common.vo.request.OrderStatusRequest;
 import com.huoli.trip.common.vo.request.RefundNoticeReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -28,6 +30,8 @@ import org.springframework.util.concurrent.ListenableFuture;
 @Service(timeout = 10000,group = "hllx")
 public class OrderServiceImpl implements OrderService {
 
+    @Reference(group = "hllx")
+    private YcfOrderService ycfOrderService;
 
     @Autowired
     KafkaTemplate kafkaTemplate;
@@ -42,8 +46,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Object getCheckInfos(BookCheckReq req) {
-        return null;
+    public Object getCheckInfos(BookCheckReq req) throws Exception {
+        OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
+        checkManger(orderManager);
+        return orderManager.getNBCheckInfos(req);
     }
 
     @Override
@@ -83,11 +89,23 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
-        OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
-        if(orderManager==null){
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        if (orderManager == null) {
             return null;
         }
         BaseResponse<OrderDetailRep> orderDetail = orderManager.getVochers(req);
         return orderDetail;
+    }
+    /**
+     * 校验manager
+     * @param manager
+     * @return
+     */
+    public Object checkManger(OrderManager manager){
+        if(manager==null){
+            log.info("供应商OrderManager爆了");
+            return null;
+        }
+        return manager;
     }
 }
