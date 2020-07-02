@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.fastjson.JSONObject;
+import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
@@ -60,7 +61,7 @@ public class YcfOrderManger extends OrderManager {
                 return BaseResponse.fail(-100,order.getMessage(),null);
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(data.getOrderId());
-            rep.setOrderStatus(data.getOrderStatus());
+            rep.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(data.getOrderStatus(),1));
             rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
             return BaseResponse.success(rep);
         } catch (Exception e) {
