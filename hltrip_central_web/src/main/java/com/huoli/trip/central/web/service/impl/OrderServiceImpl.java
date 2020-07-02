@@ -5,11 +5,13 @@ import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.service.OrderFactory;
+import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.request.OrderStatusRequest;
 import com.huoli.trip.common.vo.request.RefundNoticeReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.order.CenterBookCheckRes;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
@@ -46,10 +48,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Object getCheckInfos(BookCheckReq req) throws Exception {
+    public BaseResponse<CenterBookCheckRes> getCheckInfos(BookCheckReq req) throws Exception {
         OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
+        //校验manager处理
         checkManger(orderManager);
-        return orderManager.getNBCheckInfos(req);
+        //封装中台返回
+        BaseResponse<CenterBookCheckRes> result = new BaseResponse<>();
+        //封装中台返回
+        CenterBookCheckRes checkRes = new CenterBookCheckRes();
+        //供应商对象包装业务实体类
+        CenterBookCheckRes.Supplier supplier = new CenterBookCheckRes.Supplier();
+        //定位产品所属供应商类别
+        switch (req.getChannelCode()){
+            case ChannelConstant.SUPPLIER_TYPE_YCF:supplier.setType(1);break;
+            case ChannelConstant.SUPPLIER_TYPE_DFY:supplier.setType(2);break;
+        }
+        try {
+            //**********************************要出发供应商************************************
+            supplier.setCenterBookCheckObj(orderManager.getNBCheckInfos(req));
+            //**********************************笛风云供应商**************************************
+
+            checkRes.setSupplier(supplier);
+        }catch (Exception e){
+            log.error("orderManager --> rpc服务异常",e);
+            result.withFail(-100,result.getMessage(),false);
+            throw new RuntimeException("orderManager --> rpc服务异常");
+        }
+        return result.withSuccess(checkRes);
     }
 
     @Override

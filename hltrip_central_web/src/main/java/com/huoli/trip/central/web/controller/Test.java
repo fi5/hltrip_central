@@ -37,14 +37,14 @@ public class Test {
 //        return orderService.getCheckInfos(request);
 //    }
     @RequestMapping(value = "getCheckInfos",method = {RequestMethod.POST, RequestMethod.GET})
-    public BaseResponse getCheckInfos(@RequestBody BookCheckReq request) {
+    public Object getCheckInfos(@RequestBody BookCheckReq request) {
         Object checkInfos = null;
         try {
             checkInfos = orderService.getCheckInfos(request);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return new BaseResponse().withSuccess(checkInfos);
+        return checkInfos;
     }
 
     @RequestMapping(value = "test")
