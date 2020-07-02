@@ -1,9 +1,13 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.huoli.trip.central.web.dao.CityDao;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.service.TestService;
+import com.huoli.trip.common.entity.CityPO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 描述：desc<br>
@@ -20,6 +24,8 @@ public class TestServiceImpl implements TestService {
 
     @Autowired
     OrderFactory orderFactory;
+    @Autowired
+    CityDao  cityDao;
 
     @Override
     public void test(String channel) {
@@ -27,6 +33,8 @@ public class TestServiceImpl implements TestService {
         if(orderManager==null){
             return;
         }
+        final List<CityPO> cityPOs = cityDao.queryCitys();
+
         orderManager.test();
     }
 }
