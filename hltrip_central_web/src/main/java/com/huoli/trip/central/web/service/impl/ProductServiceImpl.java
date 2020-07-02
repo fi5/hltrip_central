@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
@@ -10,10 +11,7 @@ import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.ListUtils;
-import com.huoli.trip.common.vo.BaseListProduct;
-import com.huoli.trip.common.vo.BaseProduct;
-import com.huoli.trip.common.vo.Product;
-import com.huoli.trip.common.vo.Tag;
+import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.response.ListResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +42,7 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private PriceDao priceDao;
 
-    public ListResult productList(String city, Integer type, Integer mainPageSize){
+    public ListResult mainList(String city, Integer type, Integer listSize){
         ListResult listResult = new ListResult();
         List<Integer> types;
         // 不限需要查所有类型
@@ -56,7 +54,7 @@ public class ProductServiceImpl implements ProductService {
             types = Lists.newArrayList(type);
         }
         for (Integer t : types) {
-            List<ProductItemPO> productItems = productItemDao.selectByCityAndType(city, t, mainPageSize);
+            List<ProductItemPO> productItems = productItemDao.selectByCityAndType(city, t, listSize);
             if(ListUtils.isEmpty(productItems)){
                 continue;
             }
@@ -66,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
                 BaseListProduct product = new BaseListProduct();
                 List<BaseProduct> baseProducts = Lists.newArrayList();
                 product.setPros(baseProducts);
-                List<ProductItemPO> mores = productItemDao.selectByCityAndType(city, t, ++mainPageSize);
+                List<ProductItemPO> mores = productItemDao.selectByCityAndType(city, t, ++listSize);
                 product.setMore(0);
                 if(mores.size() > productItems.size()){
                     product.setMore(1);
@@ -102,5 +100,18 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return listResult;
+    }
+
+    @Override
+    public List<Product> pageList(String city, Integer type, int pageIndex, int pageSize){
+        List<ProductPO> productPOs = productDao.getPageList(city, type, pageIndex, pageSize);
+            List<Product> products = productPOs.stream().map(po -> {
+                Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
+                ProductItemPO productItemPO = productItemDao.selectByCode(product.getCode());
+                ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
+                product.setMainItem(productItem);
+                return product;
+            }).collect(Collectors.toList());
+        return products;
     }
 }

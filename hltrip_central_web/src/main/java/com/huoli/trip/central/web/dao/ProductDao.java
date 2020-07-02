@@ -15,15 +15,13 @@ import java.util.List;
 public interface ProductDao {
 
     /**
-     * 同步产品
-     * @param productPO
-     */
-    void updateBySupplierProductId(ProductPO productPO);
-
-    /**
      * 根据item查产品
      * @param itemIds
      * @return
      */
     List<ProductPO> getProductListByItemIds(List<String> itemIds);
+
+    List<ProductPO> getPageList(String city, Integer type, int page, int size);
+    List<ProductPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size);
+
 }
