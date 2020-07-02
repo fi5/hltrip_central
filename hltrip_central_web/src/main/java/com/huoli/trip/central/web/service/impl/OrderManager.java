@@ -1,5 +1,9 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.huoli.trip.common.vo.request.OrderOperReq;
+import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+
 /**
  * 描述：desc<br>
  * 版权：Copyright (c) 2011-2020<br>
@@ -17,6 +21,14 @@ public abstract class OrderManager {
 
     public  String test(){
         return "cha";
+    }
+
+    public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){
+
+        return null;
+    }
+    public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
+        return null;
     }
 
 }
