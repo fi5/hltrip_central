@@ -1,7 +1,6 @@
 package com.huoli.trip.central.web.controller;
 
 import com.huoli.trip.central.api.OrderService;
-import com.huoli.trip.central.web.service.TestService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
@@ -23,8 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class Test {
-    @Autowired
-    TestService testService;
+
     @Autowired
     YcfOrderManger ycfOrderManger;
     @Autowired
@@ -47,11 +45,7 @@ public class Test {
         return checkInfos;
     }
 
-    @RequestMapping(value = "test")
-    public Object test(String channel) {
-        testService.test(channel);
-        return channel;
-    }
+
     @RequestMapping(value = "testZ")
     public Object testZ(String orderId) {
         OrderOperReq req=new OrderOperReq();
