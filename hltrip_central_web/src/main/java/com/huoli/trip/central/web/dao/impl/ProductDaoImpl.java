@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.dao.impl;
 import com.alibaba.fastjson.JSON;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
+import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -86,5 +87,11 @@ public class ProductDaoImpl implements ProductDao {
                 Aggregation.limit(size));
         AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return outputType.getMappedResults();
+    }
+
+    @Override
+    public PricePO getPricePos(String productCode) {
+        Query query = new Query(Criteria.where("productCode").is(productCode));
+        return mongoTemplate.findOne(query, PricePO.class);
     }
 }

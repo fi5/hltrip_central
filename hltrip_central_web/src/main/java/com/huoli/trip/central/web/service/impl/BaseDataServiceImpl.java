@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.huoli.trip.central.api.IBaseDataService;
 import com.huoli.trip.central.web.dao.CityDao;
+import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.entity.CityPO;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,13 @@ public class BaseDataServiceImpl implements IBaseDataService{
 
 	@Override
 	public BaseResponse<List<CityPO>> queryCitys() {
-		List<CityPO> citys = cityDao.queryCitys();
-		return BaseResponse.success(citys);
+		try {
+			List<CityPO> citys = cityDao.queryCitys();
+			return BaseResponse.success(citys);
+		} catch (Exception e) {
+			log.info("",e);
+		}
+		return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+
 	}
 }

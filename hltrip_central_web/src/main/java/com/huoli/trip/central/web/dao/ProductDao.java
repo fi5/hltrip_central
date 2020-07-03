@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.dao;
 
+import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
 
 import java.util.List;
@@ -46,5 +47,12 @@ public interface ProductDao {
     int getListTotal(String city, Integer type);
 
     List<ProductPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size);
+
+	/**
+     * 获取价格日历
+     * @param productCode
+     * @return
+     */
+    PricePO getPricePos(String productCode);
 
 }

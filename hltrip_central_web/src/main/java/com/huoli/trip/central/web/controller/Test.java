@@ -1,16 +1,25 @@
 package com.huoli.trip.central.web.controller;
 
+import com.google.common.collect.Lists;
+import com.huoli.trip.central.api.IBaseDataService;
 import com.huoli.trip.central.api.OrderService;
+import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
+import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.vo.PriceInfo;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
+import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 描述: <br> 可预订查询
@@ -27,6 +36,13 @@ public class Test {
     YcfOrderManger ycfOrderManger;
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    ProductService productService;
+    @Autowired
+    IBaseDataService baseDataService;
+
+
 //    @RequestMapping(value = "getCheckInfos", produces = {"application/json;charset=UTF-8"})
 //    public Object getCheckInfos(@RequestBody BookCheckReq request) {
 //        OrderService orderService =
@@ -45,7 +61,12 @@ public class Test {
         return checkInfos;
     }
 
-
+    @RequestMapping(value = "test")
+    public Object test(String channel) {
+//        testService.test(channel);
+//        return channel;
+      return  baseDataService.queryCitys();
+    }
     @RequestMapping(value = "testZ")
     public Object testZ(String orderId) {
         OrderOperReq req=new OrderOperReq();
@@ -54,4 +75,15 @@ public class Test {
         final BaseResponse<OrderDetailRep> orderDetail = ycfOrderManger.getOrderDetail(req);
         return orderDetail;
     }
+
+    @RequestMapping(value = "testPrice")
+    public Object testPrice(String productCode) {
+        ProductPriceReq productPriceReq=new ProductPriceReq();
+        productPriceReq.setProductCode(productCode);
+        final BaseResponse<List<PriceInfo>> listBaseResponse = productService.productPriceCalendar(productPriceReq);
+        return listBaseResponse;
+    }
+
+
+
 }
