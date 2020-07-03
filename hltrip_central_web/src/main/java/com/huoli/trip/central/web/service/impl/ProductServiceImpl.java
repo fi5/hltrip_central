@@ -81,22 +81,21 @@ public class ProductServiceImpl implements ProductService {
                 map.forEach((k, v) -> {
                     ProductItemPO item = productItems.stream().filter(i -> StringUtils.equals(i.getCode(), k)).findFirst().orElse(new ProductItemPO());
                     v.stream().min(Comparator.comparing(p -> p.getSalePrice())).ifPresent(p -> {
-                        BaseProduct baseProduct = new BaseProduct();
-                        baseProduct.setPrice(p.getSalePrice().doubleValue());
-                        baseProduct.setProductItemId(item.getCode());
-                        baseProduct.setProductName(p.getName());
-                        baseProduct.setDesc(item.getDescription());
-                        if(ListUtils.isNotEmpty(p.getImages())){
-                            baseProduct.setImg(p.getImages().get(0).getUrl());
-                        }
-                        if(ListUtils.isNotEmpty(item.getTags())){
-                            baseProduct.setTags(item.getTags().stream().map(tag -> {
-                                Tag newTag = new Tag();
-                                newTag.setName(tag);
-                                return newTag;
-                            }).collect(Collectors.toList()));
-                        }
-                        baseProducts.add(baseProduct);
+//                        BaseProduct baseProduct = new BaseProduct();
+//                        baseProduct.setPrice(p.getSalePrice().doubleValue());
+//                        baseProduct.setProductName(p.getName());
+//                        baseProduct.setDesc(item.getDescription());
+//                        if(ListUtils.isNotEmpty(p.getImages())){
+//                            baseProduct.setImg(p.getImages().get(0).getUrl());
+//                        }
+//                        if(ListUtils.isNotEmpty(item.getTags())){
+//                            baseProduct.setTags(item.getTags().stream().map(tag -> {
+//                                Tag newTag = new Tag();
+//                                newTag.setName(tag);
+//                                return newTag;
+//                            }).collect(Collectors.toList()));
+//                        }
+//                        baseProducts.add(baseProduct);
                     });
                 });
             }
@@ -146,4 +145,28 @@ public class ProductServiceImpl implements ProductService {
             return product;
         }).collect(Collectors.toList());
     }
+
+//    @Override
+//    public BaseResponse<ProductPageResult> recommendList(ProductPageRequest request){
+//        ProductPageResult result = new ProductPageResult();
+//        List<Integer> types;
+//        // 不限需要查所有类型
+//        if(request.getType() == ProductType.UN_LIMIT.getCode()){
+//            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
+//        } else if (request.getType() == ProductType.SCENIC_TICKET_PLUS.getCode()){  // 门票加需要查门票和门票+
+//            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
+//        } else {  // 其它类型就按传进来的查
+//            types = Lists.newArrayList(request.getType());
+//        }
+//        List<Product> products = Lists.newArrayList();
+//        for (Integer t : types) {
+//            int total = productDao.getListTotal(request.getCity(), request.getType());
+//            List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getPageIndex(), request.getPageSize());
+//            if(ListUtils.isNotEmpty(productPOs)){
+//                products.addAll(convertToProducts(productPOs, total));
+//            }
+//        }
+//        result.setProducts(products);
+//        return BaseResponse.withSuccess(result);
+//    }
 }
