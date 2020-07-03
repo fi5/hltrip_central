@@ -1,25 +1,32 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
+import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ProductType;
+import com.huoli.trip.common.entity.PriceInfoPO;
+import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
 import com.huoli.trip.common.vo.request.central.ProductPageRequest;
+import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.ListResult;
 import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.central.ProductPageResult;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
@@ -34,7 +41,8 @@ import java.util.stream.Collectors;
  * 版本：1.0<br>
  * 创建日期：2020/7/1<br>
  */
-@Service
+@Slf4j
+@Service(timeout = 10000,group = "hltrip")
 public class ProductServiceImpl implements ProductService {
 
     @Autowired
@@ -150,6 +158,25 @@ public class ProductServiceImpl implements ProductService {
         }
         result.setProducts(products);
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<List<PriceInfo>> productPriceCalendar(ProductPriceReq productPriceReq) {
+        try {
+
+            final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
+            List<PriceInfo> priceInfos = Lists.newArrayList();
+            for(PriceInfoPO entry: pricePo.getPriceInfos()){
+                PriceInfo target=new PriceInfo();
+                BeanUtils.copyProperties(entry,target);
+                priceInfos.add(target);
+                log.info("这里的日期:"+ CommonUtils.dateFormat.format(target.getSaleDate()));
+            }
+            return BaseResponse.success(priceInfos);
+        } catch (Exception e) {
+        	log.info("",e);
+        }
+        return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
     }
 
     private List<Integer> getTypes(int type){
