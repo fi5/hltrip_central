@@ -5,14 +5,12 @@ import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.service.OrderFactory;
-import com.huoli.trip.common.constant.ChannelConstant;
-import com.huoli.trip.common.vo.request.BookCheckReq;
-import com.huoli.trip.common.vo.request.OrderOperReq;
-import com.huoli.trip.common.vo.request.OrderStatusRequest;
-import com.huoli.trip.common.vo.request.RefundNoticeReq;
+import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.CenterBookCheckRes;
+import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +46,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public BaseResponse<CenterBookCheckRes> getCheckInfos(BookCheckReq req) throws Exception {
+    public BaseResponse<CenterBookCheckRes> getCheckInfos(BookCheckReq req) {
         OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
@@ -56,13 +54,9 @@ public class OrderServiceImpl implements OrderService {
         CenterBookCheckRes checkRes = new CenterBookCheckRes();
         //供应商对象包装业务实体类
         CenterBookCheckRes.Supplier supplier = new CenterBookCheckRes.Supplier();
-        //定位产品所属供应商类别
-        switch (req.getChannelCode()){
-            case ChannelConstant.SUPPLIER_TYPE_YCF:supplier.setType(1);break;
-            case ChannelConstant.SUPPLIER_TYPE_DFY:supplier.setType(2);break;
-        }
         try {
             supplier.setCenterBookCheckObj(orderManager.getNBCheckInfos(req));
+            supplier.setType(req.getChannelCode());
             checkRes.setSupplier(supplier);
         }catch (Exception e){
             log.error("orderManager --> rpc服务异常",e);
@@ -116,6 +110,41 @@ public class OrderServiceImpl implements OrderService {
         BaseResponse<OrderDetailRep> orderDetail = orderManager.getVochers(req);
         return orderDetail;
     }
+
+    @Override
+    public BaseResponse<CenterCreateOrderRes> createOrder(CreateOrderReq req) {
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        //校验manager处理
+        checkManger(orderManager);
+        BaseResponse<CenterCreateOrderRes> result = new BaseResponse<>();
+        CenterCreateOrderRes data = new CenterCreateOrderRes();
+        try {
+            data = orderManager.getNBCreateOrder(req);
+        } catch (Exception e) {
+            log.error("OrderServiceImpl --> createOrder rpc服务异常", e);
+            result.fail(-100, result.getMessage(), false);
+            throw new RuntimeException("OrderServiceImpl --> createOrder --> rpc服务异常");
+        }
+        return result.withSuccess(data);
+    }
+
+    @Override
+    public BaseResponse<CenterPayOrderRes> payOrder(PayOrderReq req) {
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        //校验manager处理
+        checkManger(orderManager);
+        BaseResponse<CenterPayOrderRes> result = new BaseResponse<>();
+        CenterPayOrderRes data = new CenterPayOrderRes();
+        try {
+            data = orderManager.getCenterPayOrder(req);
+        } catch (Exception e) {
+            log.error("OrderServiceImpl --> payOrder rpc服务异常", e);
+            result.fail(-100, result.getMessage(), false);
+            throw new RuntimeException("OrderServiceImpl --> payOrder --> rpc服务异常");
+        }
+        return result.withSuccess(data);
+    }
+
     /**
      * 校验manager
      * @param manager
