@@ -37,7 +37,7 @@ public class BaseDataServiceImpl implements IBaseDataService{
 	}
 
 	@Override
-	public BaseResponse test() throws HlCentralException {
+	public BaseResponse test() {
 		throw  new HlCentralException(CentralError.ERROR_SERVER_ERROR);
 //		return null;
 	}
