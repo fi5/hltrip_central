@@ -20,7 +20,6 @@ import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.ListResult;
 import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.central.ProductPageResult;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductItemDao productItemDao;
 
-    public ListResult mainList(String city, Integer type, Integer listSize){
+   /* public ListResult mainList(String city, Integer type, Integer listSize){
         ListResult listResult = new ListResult();
         List<Integer> types;
         // 不限需要查所有类型
@@ -108,7 +107,7 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return listResult;
-    }
+    }*/
 
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request){
