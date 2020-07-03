@@ -1,10 +1,8 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
-import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.common.constant.ProductType;
@@ -12,12 +10,13 @@ import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
-import com.huoli.trip.common.vo.request.CategoryDetailRequest;
-import com.huoli.trip.common.vo.request.ProductPageRequest;
+import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
+import com.huoli.trip.common.vo.request.central.ProductPageRequest;
+import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.ListResult;
-import com.huoli.trip.common.vo.response.ProductPageResult;
+import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
+import com.huoli.trip.common.vo.response.central.ProductPageResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -62,7 +61,7 @@ public class ProductServiceImpl implements ProductService {
             }
             List<ProductPO> products = productDao.getProductListByItemIds(productItems.stream().map(item -> item.getCode()).collect(Collectors.toList()));
             if(ListUtils.isNotEmpty(products)){
-                Map<String, List<ProductPO>> map = products.stream().collect(Collectors.groupingBy(productPO -> productPO.getMainItemId()));
+                Map<String, List<ProductPO>> map = products.stream().collect(Collectors.groupingBy(productPO -> productPO.getMainItemCode()));
                 BaseListProduct product = new BaseListProduct();
                 List<BaseProduct> baseProducts = Lists.newArrayList();
                 product.setPros(baseProducts);
@@ -106,18 +105,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request){
         ProductPageResult result = new ProductPageResult();
-        List<Integer> types;
-        // 不限需要查所有类型
-        if(request.getType() == ProductType.UN_LIMIT.getCode()){
-            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
-        } else if (request.getType() == ProductType.SCENIC_TICKET_PLUS.getCode()){  // 门票加需要查门票和门票+
-            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
-        } else {  // 其它类型就按传进来的查
-            types = Lists.newArrayList(request.getType());
-        }
+        List<Integer> types = getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         for (Integer t : types) {
-            int total = productDao.getListTotal(request.getCity(), request.getType());
+            int total = productDao.getListTotal(request.getCity(), t);
             List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getPageIndex(), request.getPageSize());
             if(ListUtils.isNotEmpty(productPOs)){
                 products.addAll(convertToProducts(productPOs, total));
@@ -146,27 +137,31 @@ public class ProductServiceImpl implements ProductService {
         }).collect(Collectors.toList());
     }
 
-//    @Override
-//    public BaseResponse<ProductPageResult> recommendList(ProductPageRequest request){
-//        ProductPageResult result = new ProductPageResult();
-//        List<Integer> types;
-//        // 不限需要查所有类型
-//        if(request.getType() == ProductType.UN_LIMIT.getCode()){
-//            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
-//        } else if (request.getType() == ProductType.SCENIC_TICKET_PLUS.getCode()){  // 门票加需要查门票和门票+
-//            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
-//        } else {  // 其它类型就按传进来的查
-//            types = Lists.newArrayList(request.getType());
-//        }
-//        List<Product> products = Lists.newArrayList();
-//        for (Integer t : types) {
-//            int total = productDao.getListTotal(request.getCity(), request.getType());
-//            List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getPageIndex(), request.getPageSize());
-//            if(ListUtils.isNotEmpty(productPOs)){
-//                products.addAll(convertToProducts(productPOs, total));
-//            }
-//        }
-//        result.setProducts(products);
-//        return BaseResponse.withSuccess(result);
-//    }
+    @Override
+    public BaseResponse<ProductPageResult> recommendList(RecommendRequest request){
+        ProductPageResult result = new ProductPageResult();
+        List<Integer> types = getTypes(request.getProductType());
+        List<Product> products = Lists.newArrayList();
+        for (Integer t : types) {
+            List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, 1, request.getPageSize());
+            if(ListUtils.isNotEmpty(productPOs)){
+                products.addAll(convertToProducts(productPOs, 0));
+            }
+        }
+        result.setProducts(products);
+        return BaseResponse.withSuccess(result);
+    }
+
+    private List<Integer> getTypes(int type){
+        List<Integer> types;
+        // 不限需要查所有类型
+        if(type == ProductType.UN_LIMIT.getCode()){
+            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
+        } else if (type == ProductType.SCENIC_TICKET_PLUS.getCode()){  // 门票加需要查门票和门票+
+            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
+        } else {  // 其它类型就按传进来的查
+            types = Lists.newArrayList(type);
+        }
+        return types;
+    }
 }

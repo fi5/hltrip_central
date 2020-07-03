@@ -29,12 +29,12 @@ public class ProductDaoImpl implements ProductDao {
 
     @Override
     public List<ProductPO> getProductListByItemIds(List<String> itemIds){
-        Query query = new Query(Criteria.where("mainItemId").in(itemIds));
+        Query query = new Query(Criteria.where("mainItemCode").in(itemIds));
         return mongoTemplate.find(query, ProductPO.class);
     }
     @Override
     public List<ProductPO> getProductListByItemId(String itemId){
-        Query query = new Query(Criteria.where("mainItemId").is(itemId));
+        Query query = new Query(Criteria.where("mainItemCode").is(itemId));
         return mongoTemplate.find(query, ProductPO.class);
     }
 
@@ -42,7 +42,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductPO> getPageList(String city, Integer type, int page, int size){
         MatchOperation matchOperation = Aggregation.match(Criteria.where("productType").is(type).and("city").is(city));
-        GroupOperation groupOperation = Aggregation.group("mainItemId").first("mainItemId").as("mainItemId");
+        GroupOperation groupOperation = Aggregation.group("mainItemCode").first("mainItemCode").as("mainItemCode");
 //        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
         long rows = (page - 1) * size;
         Aggregation aggregation = Aggregation.newAggregation(
@@ -58,7 +58,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public int getListTotal(String city, Integer type){
         MatchOperation matchOperation = Aggregation.match(Criteria.where("productType").is(type).and("city").is(city));
-        GroupOperation groupOperation = Aggregation.group("mainItemId").first("mainItemId").as("mainItemId");
+        GroupOperation groupOperation = Aggregation.group("mainItemCode").first("mainItemCode").as("mainItemCode");
         Aggregation aggregationCount = Aggregation.newAggregation(matchOperation,
                 groupOperation.count().as("count"),
                 Aggregation.project(ProductPO.class).andExclude("_id"));
@@ -70,7 +70,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<ProductPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size){
         Criteria criteria = Criteria.where("itype").in(itemIds);
 //        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
-        GroupOperation groupOperation = Aggregation.group("mainItemId").first("mainItemId").as("mainItemId");
+        GroupOperation groupOperation = Aggregation.group("mainItemCode").first("mainItemCode").as("mainItemCode");
         long rows = (page - 1) * size;
         Aggregation aggregation1 = Aggregation.newAggregation(Aggregation.match(criteria),
                 groupOperation.count().as("total"),

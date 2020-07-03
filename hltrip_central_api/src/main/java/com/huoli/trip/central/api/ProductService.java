@@ -1,11 +1,12 @@
 package com.huoli.trip.central.api;
 
-import com.huoli.trip.common.vo.request.CategoryDetailRequest;
-import com.huoli.trip.common.vo.request.ProductPageRequest;
+import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
+import com.huoli.trip.common.vo.request.central.ProductPageRequest;
+import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.ListResult;
-import com.huoli.trip.common.vo.response.ProductPageResult;
+import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
+import com.huoli.trip.common.vo.response.central.ProductPageResult;
 
 
 /**
@@ -19,4 +20,5 @@ public interface ProductService {
 
     BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request);
 
+    BaseResponse<ProductPageResult> recommendList(RecommendRequest request);
 }
