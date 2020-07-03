@@ -15,12 +15,18 @@ import java.util.List;
 public interface ProductDao {
 
     /**
-     * 根据item查产品
+     * 根据多个item查产品
      * @param itemIds
      * @return
      */
     List<ProductPO> getProductListByItemIds(List<String> itemIds);
 
+    /**
+     * 根据单个item查询
+     * @param itemId
+     * @return
+     */
+    List<ProductPO> getProductListByItemId(String itemId);
     /**
      * 列表页
      * @param city
