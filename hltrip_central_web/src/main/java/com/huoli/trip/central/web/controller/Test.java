@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.IBaseDataService;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.api.ProductService;
-import com.huoli.trip.central.web.service.TestService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.vo.PriceInfo;
@@ -32,8 +31,7 @@ import java.util.List;
  */
 @RestController
 public class Test {
-    @Autowired
-    TestService testService;
+
     @Autowired
     YcfOrderManger ycfOrderManger;
     @Autowired
