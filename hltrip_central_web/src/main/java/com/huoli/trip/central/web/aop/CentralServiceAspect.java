@@ -47,7 +47,7 @@ public class CentralServiceAspect {
         }
         stopWatch.start();
         try {
-            log.info("[{}] request: {}", function, JSON.toJSON(argsCopy));
+            log.info("[{}] request: {}", function, JSON.toJSON(args));
             result = joinPoint.proceed(args);
         } catch (Throwable e) {
             throw e;
