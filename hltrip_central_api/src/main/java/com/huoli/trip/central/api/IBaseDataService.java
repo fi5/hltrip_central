@@ -1,6 +1,7 @@
 package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.entity.CityPO;
+import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.vo.response.BaseResponse;
 
 import java.util.List;
@@ -13,5 +14,7 @@ import java.util.List;
 public interface IBaseDataService {
 
 	 BaseResponse<List<CityPO>> queryCitys();
+
+	 BaseResponse test() throws HlCentralException;
 
 }

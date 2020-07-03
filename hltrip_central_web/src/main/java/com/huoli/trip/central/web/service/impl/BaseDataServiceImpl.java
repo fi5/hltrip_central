@@ -5,6 +5,7 @@ import com.huoli.trip.central.api.IBaseDataService;
 import com.huoli.trip.central.web.dao.CityDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.entity.CityPO;
+import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +34,11 @@ public class BaseDataServiceImpl implements IBaseDataService{
 		}
 		return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
 
+	}
+
+	@Override
+	public BaseResponse test() throws HlCentralException {
+		throw  new HlCentralException(CentralError.ERROR_SERVER_ERROR);
+//		return null;
 	}
 }
