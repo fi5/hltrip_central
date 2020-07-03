@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 public class CentralServiceAspect {
 
-    @Pointcut(value = "execution(* com.huoli.trip.central.web.service..*ServiceImpl.*(..))")
+    @Pointcut("@within(com.alibaba.dubbo.config.annotation.Service)")
     public void apiPointCut() {
     }
 
