@@ -12,8 +12,12 @@ import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
+import com.huoli.trip.common.vo.request.CategoryDetailRequest;
+import com.huoli.trip.common.vo.request.ProductPageRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.ListResult;
+import com.huoli.trip.common.vo.response.ProductPageResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -101,8 +105,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse<List<Product>> pageList(ProductPageRequest request){
-        BaseResponse baseResponse = new BaseResponse();
+    public BaseResponse<ProductPageResult> pageList(ProductPageRequest request){
+        ProductPageResult result = new ProductPageResult();
         List<Integer> types;
         // 不限需要查所有类型
         if(request.getType() == ProductType.UN_LIMIT.getCode()){
@@ -116,15 +120,30 @@ public class ProductServiceImpl implements ProductService {
         for (Integer t : types) {
             int total = productDao.getListTotal(request.getCity(), request.getType());
             List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getPageIndex(), request.getPageSize());
-             products.addAll(productPOs.stream().map(po -> {
-                Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
-                ProductItemPO productItemPO = productItemDao.selectByCode(product.getCode());
-                ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
-                product.setMainItem(productItem);
-                product.setTotal(total);
-                return product;
-            }).collect(Collectors.toList()));
+            if(ListUtils.isNotEmpty(productPOs)){
+                products.addAll(convertToProducts(productPOs, total));
+            }
         }
-        return baseResponse.withSuccess(products);
+        result.setProducts(products);
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request){
+        CategoryDetailResult result = new CategoryDetailResult();
+        List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId());
+        result.setProducts(convertToProducts(productPOs, 0));
+        return BaseResponse.success(result);
+    }
+
+    private List<Product> convertToProducts(List<ProductPO> productPOs, int total){
+        return productPOs.stream().map(po -> {
+            Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
+            ProductItemPO productItemPO = productItemDao.selectByCode(product.getCode());
+            ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
+            product.setMainItem(productItem);
+            product.setTotal(total);
+            return product;
+        }).collect(Collectors.toList());
     }
 }

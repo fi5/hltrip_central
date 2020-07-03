@@ -53,8 +53,6 @@ public class OrderServiceImpl implements OrderService {
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
-        BaseResponse<CenterBookCheckRes> result = new BaseResponse<>();
-        //封装中台返回
         CenterBookCheckRes checkRes = new CenterBookCheckRes();
         //供应商对象包装业务实体类
         CenterBookCheckRes.Supplier supplier = new CenterBookCheckRes.Supplier();
@@ -68,10 +66,10 @@ public class OrderServiceImpl implements OrderService {
             checkRes.setSupplier(supplier);
         }catch (Exception e){
             log.error("orderManager --> rpc服务异常",e);
-            result.withFail(-100,result.getMessage(),false);
+            BaseResponse.withFail(-100,"");
             throw new RuntimeException("orderManager --> rpc服务异常");
         }
-        return result.withSuccess(checkRes);
+        return BaseResponse.withSuccess(checkRes);
     }
 
     @Override

@@ -32,6 +32,12 @@ public class ProductDaoImpl implements ProductDao {
         Query query = new Query(Criteria.where("mainItemId").in(itemIds));
         return mongoTemplate.find(query, ProductPO.class);
     }
+    @Override
+    public List<ProductPO> getProductListByItemId(String itemId){
+        Query query = new Query(Criteria.where("mainItemId").is(itemId));
+        return mongoTemplate.find(query, ProductPO.class);
+    }
+
 
     @Override
     public List<ProductPO> getPageList(String city, Integer type, int page, int size){
