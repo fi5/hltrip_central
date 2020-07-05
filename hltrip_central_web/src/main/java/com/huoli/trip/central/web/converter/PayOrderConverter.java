@@ -1,0 +1,37 @@
+package com.huoli.trip.central.web.converter;
+
+import com.huoli.trip.central.web.util.CentralUtils;
+import com.huoli.trip.common.vo.request.PayOrderReq;
+import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
+import com.huoli.trip.supplier.self.yaochufa.vo.YcfPayOrderReq;
+import com.huoli.trip.supplier.self.yaochufa.vo.YcfPayOrderRes;
+import org.springframework.stereotype.Component;
+
+/**
+ * 描述: <br> 支付订单转换
+ * 版权：Copyright (c) 2011-2020<br>
+ * 公司：活力天汇<br>
+ * 作者：王德铭<br>
+ * 版本：1.0<br>
+ * 创建日期：2020/7/5<br>
+ */
+@Component
+public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq, YcfPayOrderRes, CenterPayOrderRes.PayOrderRes> {
+    @Override
+    public YcfPayOrderReq convertRequestToSupplierRequest(PayOrderReq req) {
+        YcfPayOrderReq ycfPayOrderReq = new YcfPayOrderReq();
+        //组装支付流水参数
+        ycfPayOrderReq.setPaySerialNumber(CentralUtils.makeSerialNumber(req.getPartnerOrderId()));
+        ycfPayOrderReq.setPartnerOrderId(req.getPartnerOrderId());
+        ycfPayOrderReq.setPrice(req.getPrice());
+        return ycfPayOrderReq;
+    }
+
+    @Override
+    public CenterPayOrderRes.PayOrderRes convertSupplierResponseToResponse(YcfPayOrderRes supplierResponse) {
+        CenterPayOrderRes.PayOrderRes payOrderRes = new CenterPayOrderRes.PayOrderRes();
+        payOrderRes.setOrderId(supplierResponse.getOrderId());
+        payOrderRes.setOrderStatus(supplierResponse.getOrderStatus());
+        return payOrderRes;
+    }
+}
