@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.converter;
 
+import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
@@ -35,7 +36,8 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         ycfCreateOrderReq.setGuests(converterGuestList(req.getGuests()));
         ycfCreateOrderReq.setMobile(req.getMobile());
         ycfCreateOrderReq.setPartnerOrderId(req.getPartnerOrderId());
-        ycfCreateOrderReq.setProductId(req.getProductId());
+        //产品编码转供应商需要的格式
+        ycfCreateOrderReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         ycfCreateOrderReq.setProductName(req.getProductName());
         ycfCreateOrderReq.setQunatity(req.getQunatity());
         ycfCreateOrderReq.setRemark(req.getRemark());
