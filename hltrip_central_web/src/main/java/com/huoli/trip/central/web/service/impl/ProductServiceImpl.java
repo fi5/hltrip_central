@@ -138,6 +138,13 @@ public class ProductServiceImpl implements ProductService {
             Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
             ProductItemPO productItemPO = productItemDao.selectByCode(product.getCode());
             ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
+            Double[] coordinateArr = productItemPO.getItemCoordinate();
+            if(coordinateArr != null && coordinateArr.length == 2){
+                Coordinate coordinate = new Coordinate();
+                coordinate.setLongitude(coordinateArr[0]);
+                coordinate.setLatitude(coordinateArr[1]);
+                productItem.setItemCoordinate(coordinate);
+            }
             product.setMainItem(productItem);
             product.setTotal(total);
             return product;

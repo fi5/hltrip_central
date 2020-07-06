@@ -1,8 +1,11 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.vo.Coordinate;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -28,6 +31,7 @@ public interface ProductDao {
      * @return
      */
     List<ProductPO> getProductListByItemId(String itemId);
+
     /**
      * 列表页
      * @param city
@@ -46,7 +50,28 @@ public interface ProductDao {
      */
     int getListTotal(String city, Integer type);
 
-    List<ProductPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size);
+    List<ProductItemPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size);
+
+    /**
+     * 坐标推荐列表
+     * @param coordinate
+     * @param type
+     * @param page
+     * @param size
+     * @return
+     */
+    List<ProductPO> getCoordinateRecommendList(Coordinate coordinate, Integer type, int page, int size);
+
+    /**
+     * 目的地推荐列表
+     * @param city
+     * @param type
+     * @param date
+     * @param page
+     * @param size
+     * @return
+     */
+    List<ProductPO> getCityRecommendList(String city, Integer type, Date date, int page, int size);
 
 	/**
      * 获取价格日历

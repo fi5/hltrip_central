@@ -6,6 +6,7 @@ import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.DateUtils;
 import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ public class Test0 {
     @Test
     public void test(){
         List<String> ids = Lists.newArrayList("11", "22","33","44","55","66","77");
-        List<ProductPO> list = productDao.getProductListByItemIdsPage(ids, 2, 3);
+        List<ProductItemPO> list = productDao.getProductListByItemIdsPage(ids, 1, 3);
         log.info("结果 = {}", JSON.toJSONString(list));
     }
 
