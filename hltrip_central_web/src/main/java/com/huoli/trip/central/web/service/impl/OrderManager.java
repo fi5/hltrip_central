@@ -37,14 +37,14 @@ public abstract class OrderManager {
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         return null;
     }
-    public CenterBookCheckRes.CenterBookCheck getNBCheckInfos(BookCheckReq req) throws Exception {
+    public CenterBookCheckRes.CenterBookCheck getNBCheckInfos(BookCheckReq req) throws RuntimeException {
         return null;
     }
-    public CenterCreateOrderRes getNBCreateOrder(CreateOrderReq req) throws Exception {
+    public CenterCreateOrderRes getNBCreateOrder(CreateOrderReq req) throws RuntimeException {
         return null;
     }
 
-    public CenterPayOrderRes getCenterPayOrder(PayOrderReq req) throws Exception{
+    public CenterPayOrderRes getCenterPayOrder(PayOrderReq req) throws RuntimeException{
         return null;
     }
 }
