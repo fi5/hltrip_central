@@ -7,10 +7,10 @@ import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.ListResult;
 import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.central.ProductPageResult;
 import com.huoli.trip.common.vo.response.central.ProductPriceResult;
+import com.huoli.trip.common.vo.response.central.RecommendResult;
 
 import java.util.List;
 
@@ -20,13 +20,26 @@ import java.util.List;
  */
 public interface ProductService {
 
-    ListResult mainList(String city, Integer type, Integer mainPageSize);
-
+    /**
+     * 商品列表
+     * @param request
+     * @return
+     */
     BaseResponse<ProductPageResult> pageList(ProductPageRequest request);
 
+    /**
+     * 商品详情
+     * @param request
+     * @return
+     */
     BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request);
 
-    BaseResponse<ProductPageResult> recommendList(RecommendRequest request);
+    /**
+     * 推荐列表
+     * @param request
+     * @return
+     */
+    BaseResponse<RecommendResult> recommendList(RecommendRequest request);
 
 	/**
      * 价格日历

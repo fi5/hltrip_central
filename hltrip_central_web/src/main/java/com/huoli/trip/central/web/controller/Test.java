@@ -1,18 +1,17 @@
 package com.huoli.trip.central.web.controller;
 
-import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.IBaseDataService;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
-import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.vo.PriceInfo;
 import com.huoli.trip.common.vo.request.BookCheckReq;
+import com.huoli.trip.common.vo.request.CreateOrderReq;
 import com.huoli.trip.common.vo.request.OrderOperReq;
+import com.huoli.trip.common.vo.request.PayOrderReq;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -84,6 +83,27 @@ public class Test {
         return listBaseResponse;
     }
 
+    @RequestMapping(value = "createOrder",method = {RequestMethod.POST, RequestMethod.GET})
+    public Object createOrder(@RequestBody CreateOrderReq request) {
+        Object createOrderRes = null;
+        try {
+            createOrderRes = orderService.createOrder(request);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return createOrderRes;
+    }
+
+    @RequestMapping(value = "payOrder",method = {RequestMethod.POST, RequestMethod.GET})
+    public Object payOrder(@RequestBody PayOrderReq request) {
+        Object payOrderRes = null;
+        try {
+            payOrderRes = orderService.payOrder(request);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return payOrderRes;
+    }
 
 
 }
