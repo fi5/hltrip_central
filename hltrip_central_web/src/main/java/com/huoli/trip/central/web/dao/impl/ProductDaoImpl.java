@@ -94,4 +94,10 @@ public class ProductDaoImpl implements ProductDao {
         Query query = new Query(Criteria.where("productCode").is(productCode));
         return mongoTemplate.findOne(query, PricePO.class);
     }
+
+    @Override
+    public ProductPO getTripProductByCode(String productCode) {
+        Query query = new Query(Criteria.where("code").is(productCode));
+        return mongoTemplate.findOne(query, ProductPO.class);
+    }
 }

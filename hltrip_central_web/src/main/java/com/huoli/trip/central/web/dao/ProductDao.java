@@ -55,4 +55,6 @@ public interface ProductDao {
      */
     PricePO getPricePos(String productCode);
 
+    ProductPO getTripProductByCode(String productCode);
+
 }

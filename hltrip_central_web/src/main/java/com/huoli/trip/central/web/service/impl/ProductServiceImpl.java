@@ -23,6 +23,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.ListResult;
 import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.central.ProductPageResult;
+import com.huoli.trip.common.vo.response.central.ProductPriceResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -136,14 +137,21 @@ public class ProductServiceImpl implements ProductService {
 
     private List<Product> convertToProducts(List<ProductPO> productPOs, int total){
         return productPOs.stream().map(po -> {
-            Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
-            ProductItemPO productItemPO = productItemDao.selectByCode(product.getCode());
-            ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
-            product.setMainItem(productItem);
-            product.setTotal(total);
-            return product;
+            Product product = convertToProduct(po,total);
+            return  product;
         }).collect(Collectors.toList());
     }
+
+    private Product convertToProduct(ProductPO po,int total){
+        Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
+        ProductItemPO productItemPO = productItemDao.selectByCode(product.getCode());
+        ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
+        product.setMainItem(productItem);
+        product.setTotal(total);
+        return product;
+
+    }
+
 
     @Override
     public BaseResponse<ProductPageResult> recommendList(RecommendRequest request){
@@ -161,8 +169,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse<List<PriceInfo>> productPriceCalendar(ProductPriceReq productPriceReq) {
+    public BaseResponse<ProductPriceResult> productPriceCalendar(ProductPriceReq productPriceReq) {
         try {
+            ProductPriceResult result=new ProductPriceResult();
 
             final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
             List<PriceInfo> priceInfos = Lists.newArrayList();
@@ -172,7 +181,25 @@ public class ProductServiceImpl implements ProductService {
                 priceInfos.add(target);
                 log.info("这里的日期:"+ CommonUtils.dateFormat.format(target.getSaleDate()));
             }
-            return BaseResponse.success(priceInfos);
+            ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
+            Product tripProduct = convertToProduct(productPo,0);
+            result.setPriceInfos(priceInfos);
+            result.setRooms(tripProduct.getRooms());
+            result.setBuyMax(tripProduct.getBuyMax());
+            result.setBuyMin(tripProduct.getBuyMin());
+            result.setBuyMaxNight(tripProduct.getBuyMaxNight());
+            result.setBuyMinNight(tripProduct.getBuyMinNight());
+            result.setBookAheadMin(tripProduct.getBookAheadMin());
+            result.setPrice(tripProduct.getPrice());
+            result.setSalePrice(tripProduct.getSalePrice());
+            result.setRefundType(tripProduct.getRefundType());
+            result.setDelayType(tripProduct.getDelayType());
+            result.setRefundAheadMin(tripProduct.getRefundAheadMin());
+            result.setRooms(tripProduct.getRooms());
+            result.setTickets(tripProduct.getTickets());
+            result.setFoods(tripProduct.getFoods());
+
+            return BaseResponse.success(result);
         } catch (Exception e) {
         	log.info("",e);
         }

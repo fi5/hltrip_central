@@ -10,6 +10,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.ListResult;
 import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.central.ProductPageResult;
+import com.huoli.trip.common.vo.response.central.ProductPriceResult;
 
 import java.util.List;
 
@@ -32,5 +33,5 @@ public interface ProductService {
      * @param productPriceReq
      * @return
      */
-    BaseResponse<List<PriceInfo>> productPriceCalendar(ProductPriceReq productPriceReq);
+    BaseResponse<ProductPriceResult> productPriceCalendar(ProductPriceReq productPriceReq);
 }
