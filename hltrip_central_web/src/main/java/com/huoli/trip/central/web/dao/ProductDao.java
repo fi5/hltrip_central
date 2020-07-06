@@ -50,28 +50,23 @@ public interface ProductDao {
      */
     int getListTotal(String city, Integer type);
 
-    List<ProductItemPO> getProductListByItemIdsPage(List<String> itemIds, int page, int size);
-
     /**
      * 坐标推荐列表
      * @param coordinate
      * @param type
-     * @param page
      * @param size
      * @return
      */
-    List<ProductPO> getCoordinateRecommendList(Coordinate coordinate, Integer type, int page, int size);
+    List<ProductPO> getCoordinateRecommendList(Coordinate coordinate, double radius, Integer type, int size);
 
     /**
      * 目的地推荐列表
      * @param city
      * @param type
-     * @param date
-     * @param page
      * @param size
      * @return
      */
-    List<ProductPO> getCityRecommendList(String city, Integer type, Date date, int page, int size);
+    List<ProductPO> getCityRecommendList(String city, Integer type, int size);
 
 	/**
      * 获取价格日历
