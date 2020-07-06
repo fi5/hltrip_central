@@ -1,14 +1,8 @@
 package com.huoli.trip.central.web.service.impl;
 
-import com.huoli.trip.common.vo.request.CreateOrderReq;
-import com.huoli.trip.common.vo.request.OrderOperReq;
-import com.huoli.trip.common.vo.request.PayOrderReq;
+import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.order.CenterBookCheckRes;
-import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
-import com.huoli.trip.common.vo.response.order.OrderDetailRep;
-import com.huoli.trip.common.vo.request.BookCheckReq;
-import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
+import com.huoli.trip.common.vo.response.order.*;
 
 /**
  * 描述：desc<br>
@@ -47,4 +41,8 @@ public abstract class OrderManager {
     public CenterPayOrderRes getCenterPayOrder(PayOrderReq req) throws RuntimeException{
         return null;
     }
+
+    public  CenterCancelOrderRes getCenterCancelOrder(CancelOrderReq req) throws RuntimeException {
+        return null;
+    };
 }

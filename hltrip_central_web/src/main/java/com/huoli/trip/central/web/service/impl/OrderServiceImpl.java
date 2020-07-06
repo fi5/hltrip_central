@@ -8,10 +8,7 @@ import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.order.CenterBookCheckRes;
-import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
-import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
-import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,13 +125,30 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterPayOrderRes> payOrder(PayOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getSupplierId(req.getProductCode()));
+        OrderManager orderManager = orderFactory.getOrderManager((req.getChannelCode()));
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterPayOrderRes> result = new BaseResponse<>();
         CenterPayOrderRes data = new CenterPayOrderRes();
         try {
             data = orderManager.getCenterPayOrder(req);
+        } catch (Exception e) {
+            log.error("OrderServiceImpl --> payOrder rpc服务异常", e);
+            result.fail(-100, result.getMessage(), false);
+            throw new RuntimeException("OrderServiceImpl --> payOrder --> rpc服务异常");
+        }
+        return result.withSuccess(data);
+    }
+
+    @Override
+    public BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req) {
+        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getSupplierId(req.getProductCode()));
+        //校验manager处理
+        checkManger(orderManager);
+        BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
+        CenterCancelOrderRes data = new CenterCancelOrderRes();
+        try {
+            data = orderManager.getCenterCancelOrder(req);
         } catch (Exception e) {
             log.error("OrderServiceImpl --> payOrder rpc服务异常", e);
             result.fail(-100, result.getMessage(), false);

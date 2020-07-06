@@ -21,7 +21,7 @@ public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq,
     public YcfPayOrderReq convertRequestToSupplierRequest(PayOrderReq req) {
         YcfPayOrderReq ycfPayOrderReq = new YcfPayOrderReq();
         //组装支付流水参数
-        ycfPayOrderReq.setPaySerialNumber(CentralUtils.makeSerialNumber(req.getPartnerOrderId()));
+        ycfPayOrderReq.setPaySerialNumber(req.getPaySerialNumber());
         ycfPayOrderReq.setPartnerOrderId(req.getPartnerOrderId());
         ycfPayOrderReq.setPrice(req.getPrice());
         return ycfPayOrderReq;
@@ -30,7 +30,7 @@ public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq,
     @Override
     public CenterPayOrderRes.PayOrderRes convertSupplierResponseToResponse(YcfPayOrderRes supplierResponse) {
         CenterPayOrderRes.PayOrderRes payOrderRes = new CenterPayOrderRes.PayOrderRes();
-        payOrderRes.setOrderId(supplierResponse.getOrderId());
+        payOrderRes.setChannelOrderId(supplierResponse.getOrderId());
         payOrderRes.setOrderStatus(supplierResponse.getOrderStatus());
         return payOrderRes;
     }

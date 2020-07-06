@@ -2,24 +2,20 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.fastjson.JSONObject;
+import com.huoli.trip.central.web.converter.CancelOrderConverter;
 import com.huoli.trip.central.web.converter.CreateOrderConverter;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.PayOrderConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.DateUtils;
+import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.vo.request.BookCheckReq;
-import com.huoli.trip.common.vo.request.CreateOrderReq;
-import com.huoli.trip.common.vo.request.OrderOperReq;
-import com.huoli.trip.common.vo.request.PayOrderReq;
+import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.order.CenterBookCheckRes;
-import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
-import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
-import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.self.yaochufa.vo.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
@@ -54,6 +50,8 @@ public class YcfOrderManger extends OrderManager {
     private CreateOrderConverter createOrderConverter;
     @Autowired
     private PayOrderConverter payOrderConverter;
+    @Autowired
+    private CancelOrderConverter cancelOrderConverter;
     public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_YCF;
     public String getChannel(){
         return CHANNEL;
@@ -67,14 +65,6 @@ public class YcfOrderManger extends OrderManager {
         CenterBookCheckRes.CenterBookCheck centerBookCheck = new CenterBookCheckRes.CenterBookCheck();
         centerBookCheck.setProductId(req.getProductId());
         List<CenterBookCheckRes.ProductStock> productStockList = new ArrayList<>();
-        //todo 校验产品份数查询mongo库存量
-        if(req.getCount()>5){
-            centerBookCheck.setMessage("超过该产品库存量，不能预订");
-            centerBookCheck.setErrorCode("002");
-            //todo 刷新库存逻辑
-
-            return centerBookCheck;
-        }
         String begin = req.getBeginDate();
         String end = req.getEndDate();
         if(StringUtils.isBlank(req.getEndDate())){
@@ -96,23 +86,34 @@ public class YcfOrderManger extends OrderManager {
                 List<PriceInfoPO> priceInfoList = pricePos.getPriceInfos().stream().filter(s -> (s.getSaleDate().compareTo(finalBeginDate)==0||s.getSaleDate().compareTo(finalBeginDate)==1)
                         &&(s.getSaleDate().compareTo(finalEndDate)==0||s.getSaleDate().compareTo(finalEndDate)==-1)).collect(Collectors.toList());
                 if(CollectionUtils.isEmpty(priceInfoList)){
-                    centerBookCheck.setMessage("库存不足，不能预订");
-                    centerBookCheck.setErrorCode("003");
+                    centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
+                    centerBookCheck.setErrorCode(CentralError.NO_PRODUCTSTOCK_ERROR.getCode());
                     //todo 刷新库存逻辑
 
                     return centerBookCheck;
                 }else{
-                    priceInfoList.forEach(priceInfoPO->{
+                    for (PriceInfoPO priceInfoPO:priceInfoList) {
                         CenterBookCheckRes.ProductStock productStock = new CenterBookCheckRes.ProductStock();
                         productStock.setSaleDate(priceInfoPO.getSaleDate());
                         productStock.setStockCount(priceInfoPO.getStock());
+                        // 校验产品份数查询mongo库存量
+                        if(req.getCount()>priceInfoPO.getStock()){
+                            continue;
+                        }
+                        //满足条件的产品
                         productStockList.add(productStock);
-                    });
+                    }
+                    //证明传的产品份数大于库存剩余
+                    if(productStockList.size()==0){
+                        centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
+                        centerBookCheck.setErrorCode(CentralError.NO_PRODUCTSTOCK_ERROR.getCode());
+                        return centerBookCheck;
+                    }
                     centerBookCheck.setProductCount(productStockList);
                 }
             }else{
-                centerBookCheck.setMessage("库存不足，不能预订");
-                centerBookCheck.setErrorCode("003");
+                centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
+                centerBookCheck.setErrorCode(CentralError.NO_PRODUCTSTOCK_ERROR.getCode());
                 //todo 刷新库存逻辑
 
                 return centerBookCheck;
@@ -120,8 +121,8 @@ public class YcfOrderManger extends OrderManager {
         }else{
             log.info("没有该类产品 productCode :{}",req.getProductId());
             centerBookCheck.setProductId(req.getProductId());
-            centerBookCheck.setMessage("请检查输入产品编码，没有该类产品");
-            centerBookCheck.setErrorCode("001");
+            centerBookCheck.setMessage(CentralError.NO_PRODUCT_ERROR.getError());
+            centerBookCheck.setErrorCode(CentralError.NO_PRODUCT_ERROR.getCode());
         }
         //*************************以下是对接供应商校验逻辑***********************************
 //        //供应商输出
@@ -200,8 +201,8 @@ public class YcfOrderManger extends OrderManager {
         bookCheckReq.setEndDate(req.getEndDate());
         bookCheckReq.setCount(req.getQunatity());
         //校验可查询预订
-        if(this.getNBCheckInfos(bookCheckReq).getErrorCode() !=null){
-            log.error("产品编号：{}，不能创建订单",req.getProductId());
+        if(this.getNBCheckInfos(bookCheckReq).getErrorCode() !=0){
+            log.error("预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
             return null;
         }
         //转换客户端传来的参数
@@ -263,10 +264,38 @@ public class YcfOrderManger extends OrderManager {
         //测试数据  end
         //封装中台返回结果
         CenterPayOrderRes.PayOrderRes payOrderRes = payOrderConverter.convertSupplierResponseToResponse(ycfPayOrderRes);
+        //组装本地订单号参数
+        payOrderRes.setLocalOrderId(req.getPartnerOrderId());
         supplier.setPayOrderObj(payOrderRes);
-        supplier.setType(CentralUtils.getSupplierId(req.getProductCode()));
+        supplier.setType(req.getChannelCode());
         centerPayOrderrRes.setSupplier(supplier);
         return centerPayOrderrRes;
     }
 
+    public CenterCancelOrderRes getCenterCancelOrder(CancelOrderReq req) throws RuntimeException{
+        //转换前端传参
+        YcfCancelOrderReq ycfCancelOrderReq = cancelOrderConverter.convertRequestToSupplierRequest(req);
+        //封装中台返回结果
+        CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
+        CenterCancelOrderRes.Supplier supplier = new CenterCancelOrderRes.Supplier();
+        YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
+//        try {
+//            YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
+//            ycfCancelOrderRes = ycfBaseResult.getData();
+//        }catch (RuntimeException e){
+//            log.error("ycfOrderService --> getCenterPayOrder rpc服务异常。。",e);
+//            throw new RuntimeException("ycfOrderService --> rpc服务异常");
+//        }
+        //测试数据 start
+        String jsonString = "{\"data\":{\"orderStatus\":null,\"orderId\":\"45775553335\",\"async\":1},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
+        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
+        ycfCancelOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCancelOrderRes.class);
+        //测试数据  end
+        //组装中台返回结果
+        CenterCancelOrderRes.CancelOrderRes cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
+        supplier.setCenterCancelOrderResObj(cancelOrderRes);
+        supplier.setType(CentralUtils.getSupplierId(req.getProductCode()));
+        centerCancelOrderRes.setSupplier(supplier);
+        return centerCancelOrderRes;
+    }
 }

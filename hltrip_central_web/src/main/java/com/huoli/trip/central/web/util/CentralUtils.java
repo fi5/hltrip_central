@@ -13,6 +13,7 @@ import java.util.Date;
  * 创建日期：2020/7/5<br>
  */
 public class CentralUtils {
+
     //通过前端传的productCode获取供应商渠道标识
     public static String getSupplierId(String productCode){
         if(StringUtils.isBlank(productCode)){
@@ -22,8 +23,9 @@ public class CentralUtils {
         return s[0];
     }
 
-    //生成支付流水号
-    public static String makeSerialNumber(String orderNo) {
-        return String.valueOf(new Date().getTime())+Math.abs(orderNo.hashCode());
-    }
+    //api会传到中台
+//    //生成支付流水号
+//    public static String makeSerialNumber(String orderNo) {
+//        return String.valueOf(new Date().getTime())+Math.abs(orderNo.hashCode());
+//    }
 }

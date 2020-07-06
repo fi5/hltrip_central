@@ -5,10 +5,7 @@ import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
 import com.huoli.trip.common.vo.PriceInfo;
-import com.huoli.trip.common.vo.request.BookCheckReq;
-import com.huoli.trip.common.vo.request.CreateOrderReq;
-import com.huoli.trip.common.vo.request.OrderOperReq;
-import com.huoli.trip.common.vo.request.PayOrderReq;
+import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
@@ -103,6 +100,17 @@ public class Test {
             throw new RuntimeException(e);
         }
         return payOrderRes;
+    }
+
+    @RequestMapping(value = "cancelOrder",method = {RequestMethod.POST, RequestMethod.GET})
+    public Object cancelOrder(@RequestBody CancelOrderReq request) {
+        Object cancelOrderRes = null;
+        try {
+            cancelOrderRes = orderService.cancelOrder(request);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return cancelOrderRes;
     }
 
 
