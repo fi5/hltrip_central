@@ -74,8 +74,9 @@ public class ProductServiceImpl implements ProductService {
         result.setProducts(productPOs.stream().map(po -> {
             Product product = ProductConverter.convertToProduct(po, 0);
             if(result.getMainItem() == null){
-                result.setMainItem(product.getMainItem());
+                result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
             }
+            product.setMainItem(null);
             return product;
         }).collect(Collectors.toList()));
     }
