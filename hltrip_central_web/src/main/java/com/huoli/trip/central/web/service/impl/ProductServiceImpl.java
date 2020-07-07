@@ -6,21 +6,19 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
+import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.util.CommonUtils;
-import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
-import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
-import com.huoli.trip.common.vo.request.central.ProductPageRequest;
-import com.huoli.trip.common.vo.request.central.ProductPriceReq;
-import com.huoli.trip.common.vo.request.central.RecommendRequest;
+import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -41,6 +39,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductDao productDao;
+
+    @Autowired
+    private ProductItemDao productItemDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request){
@@ -165,5 +166,23 @@ public class ProductServiceImpl implements ProductService {
             log.info("",e);
         }
         return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+    }
+
+    @Override
+    public List<ImageBase> getImages(ImageRequest request){
+        if(StringUtils.isNotBlank(request.getProductCode())){
+            ProductPO productPO = productDao.getImagesByCode(request.getProductCode());
+            if(productPO != null && productPO.getImages() != null){
+                return productPO.getImages().stream().map(image ->
+                        ProductConverter.convertToImageBase(image)).collect(Collectors.toList());
+            }
+        } else if(StringUtils.isNotBlank(request.getProductItemCode())){
+            ProductItemPO productItemPO = productItemDao.getImagesByCode(request.getProductItemCode());
+            if(productItemPO != null && ListUtils.isNotEmpty(productItemPO.getImages())){
+                return productItemPO.getImages().stream().map(image ->
+                        ProductConverter.convertToImageBase(image)).collect(Collectors.toList());
+            }
+        }
+        return null;
     }
 }

@@ -22,10 +22,17 @@ public interface ProductItemDao {
      * @param pageSize
      * @return
      */
-    List<ProductItemPO> selectByCityAndType(String city, Integer type, int pageSize);
+    List<ProductItemPO> getByCityAndType(String city, Integer type, int pageSize);
 
     /**
      * 根据code获取项目
      */
-    ProductItemPO selectByCode(String code);
+    ProductItemPO getByCode(String code);
+
+    /**
+     * 根据code获取图片
+     * @param code
+     * @return
+     */
+    ProductItemPO getImagesByCode(String code);
 }

@@ -68,6 +68,13 @@ public interface ProductDao {
      */
     List<ProductPO> getCityRecommendList(String city, Integer type, int size);
 
+    /**
+     * 获取图片列表
+     * @param code
+     * @return
+     */
+    ProductPO getImagesByCode(String code);
+
 	/**
      * 获取价格日历
      * @param productCode

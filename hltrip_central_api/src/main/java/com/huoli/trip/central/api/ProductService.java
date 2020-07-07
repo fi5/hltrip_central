@@ -1,11 +1,11 @@
 package com.huoli.trip.central.api;
 
-import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
-import com.huoli.trip.common.vo.request.central.ProductPageRequest;
-import com.huoli.trip.common.vo.request.central.ProductPriceReq;
-import com.huoli.trip.common.vo.request.central.RecommendRequest;
+import com.huoli.trip.common.vo.ImageBase;
+import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+
+import java.util.List;
 
 
 /**
@@ -40,6 +40,13 @@ public interface ProductService {
      * @return
      */
     BaseResponse<ProductPriceCalendarResult> productPriceCalendar(ProductPriceReq productPriceReq);
+
+    /**
+     * 获取图片
+     * @param request
+     * @return
+     */
+    List<ImageBase> getImages(ImageRequest request);
 
     BaseResponse<ProductPriceDetialResult> priceDetail(ProductPriceReq productPriceReq);
 }

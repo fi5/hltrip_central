@@ -1,15 +1,13 @@
 package com.huoli.trip.central.web.converter;
 
 import com.alibaba.fastjson.JSON;
+import com.huoli.trip.common.entity.ImageBasePO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.entity.RoomInfoPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
-import com.huoli.trip.common.vo.Coordinate;
-import com.huoli.trip.common.vo.Product;
-import com.huoli.trip.common.vo.ProductItem;
-import com.huoli.trip.common.vo.ResourceRoom;
+import com.huoli.trip.common.vo.*;
 
 import java.util.stream.Collectors;
 
@@ -91,5 +89,12 @@ public class ProductConverter {
             productItem.setItemCoordinate(coordinate);
         }
         return productItem;
+    }
+
+    public static ImageBase convertToImageBase(ImageBasePO imageBasePO){
+        ImageBase imageBase = new ImageBase();
+        imageBase.setDesc(imageBasePO.getDesc());
+        imageBase.setUrl(imageBasePO.getUrl());
+        return imageBase;
     }
 }
