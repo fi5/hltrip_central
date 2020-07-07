@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.converter;
 
-import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.vo.request.PayOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfPayOrderReq;

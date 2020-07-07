@@ -42,7 +42,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterBookCheckRes> getCheckInfos(BookCheckReq req) {
-        OrderManager orderManager =orderFactory.getOrderManager(CentralUtils.getSupplierId(req.getProductId()));
+        OrderManager orderManager =orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
@@ -108,7 +108,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterCreateOrderRes> createOrder(CreateOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getSupplierId(req.getProductId()));
+        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCreateOrderRes> result = new BaseResponse<>();
@@ -142,7 +142,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getSupplierId(req.getProductCode()));
+        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductCode()));
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
@@ -155,6 +155,29 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("OrderServiceImpl --> payOrder --> rpc服务异常");
         }
         return result.withSuccess(data);
+    }
+
+    @Override
+    public BaseResponse<CenterCancelOrderRes> applyRefund(CancelOrderReq req) {
+        //todo 退款通知
+        return cancelOrder(req);
+    }
+
+    @Override
+    public void orderStatusNotice(PushOrderStatusReq req) {
+        try {
+            log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
+            String topic = "hltrip_order_orderstatus";
+            JSONObject kafkaInfo = new JSONObject();
+            ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(kafkaInfo));
+            listenableFuture.addCallback(
+                    result -> log.info("订单状态推送kafka成功, params : {}", JSONObject.toJSONString(req)),
+                    ex -> {
+                        log.info("订单状态推送kafka失败, error message:{}", ex.getMessage(), ex);
+                    });
+        } catch (Exception e) {
+            log.info("",e);
+        }
     }
 
     /**

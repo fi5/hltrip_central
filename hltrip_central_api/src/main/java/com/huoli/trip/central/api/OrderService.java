@@ -58,5 +58,24 @@ public interface OrderService {
      */
     BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req);
 
+    /**
+     * 描述: <br> 申请退款
+     * 版权：Copyright (c) 2011-2020<br>
+     * 公司：活力天汇<br>
+     * 作者：王德铭<br>
+     * 版本：1.0<br>
+     * 创建日期：2020/7/7<br>
+     */
+    BaseResponse<CenterCancelOrderRes> applyRefund(CancelOrderReq req);
+
+    /**
+     * 描述: <br> 推送订单状态
+     * 版权：Copyright (c) 2011-2020<br>
+     * 公司：活力天汇<br>
+     * 作者：王德铭<br>
+     * 版本：1.0<br>
+     * 创建日期：2020/7/7<br>
+     */
+    void orderStatusNotice(PushOrderStatusReq req) ;
 
 }

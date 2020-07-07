@@ -25,17 +25,25 @@ public class ProductItemDaoImpl implements ProductItemDao {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public List<ProductItemPO> selectByCityAndType(String city, Integer type, int pageSize){
+    public List<ProductItemPO> getByCityAndType(String city, Integer type, int pageSize){
         Query query = new Query(Criteria.where("city").is(city).and("itemType").is(type)).limit(pageSize);
         List<ProductItemPO> productItems = mongoTemplate.find(query, ProductItemPO.class);
         return productItems;
     }
 
     @Override
-    public ProductItemPO selectByCode(String code){
+    public ProductItemPO getByCode(String code){
         Query query = new Query(Criteria.where("code").is(code));
         ProductItemPO productItem = mongoTemplate.findOne(query, ProductItemPO.class);
         return productItem;
     }
+
+    @Override
+    public ProductItemPO getImagesByCode(String code){
+        Query query = new Query(Criteria.where("code").is(code));
+        query.fields().include("images");
+        return mongoTemplate.findOne(query, ProductItemPO.class);
+    }
+
 
 }

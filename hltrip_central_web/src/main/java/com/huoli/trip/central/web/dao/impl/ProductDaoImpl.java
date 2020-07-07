@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.dao.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
@@ -140,6 +139,13 @@ public class ProductDaoImpl implements ProductDao {
             return null;
         }
         return getRecommendResult(productItemPOs.stream().map(item -> item.getCode()).collect(Collectors.toList()), size);
+    }
+
+    @Override
+    public ProductPO getImagesByCode(String code){
+        Query query = new Query(Criteria.where("code").is(code));
+        query.fields().include("images");
+        return mongoTemplate.findOne(query, ProductPO.class);
     }
 
     /**
