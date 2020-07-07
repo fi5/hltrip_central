@@ -143,8 +143,7 @@ public class YcfOrderManger extends OrderManager {
 //            //测试数据 start
 //            String jsonString = "{\"data\":{\"productId\":\"16\",\"saleInfos\":[{\"date\":\"2016-06-14\",\"price\":99,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-15\",\"price\":98,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-16\",\"price\":97,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":10},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-17\",\"price\":96,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":0},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-18\",\"price\":95,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]}]},\"partnerId\":\"zx1000020160229\",\"success\":true,\"message\":null,\"statusCode\":200}";
 //            YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//            ycfBaseResult = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfBaseResult.class);
-//            ycfBookCheckRes =(YcfBookCheckRes)ycfBaseResult.getData();
+//            ycfBookCheckRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfBookCheckRes.class);
 //            //测试数据  end
             //供应商返回输入中台
             if(ycfBookCheckRes!=null){
@@ -173,10 +172,9 @@ public class YcfOrderManger extends OrderManager {
                 if(productStockList.size()==0){
                     centerBookCheck.setMessage(CentralError.NOTENOUGH_STOCK_ERROR.getError());
                     centerBookCheck.setProductStockList(notEnoughStock);
-                    log.info("传的产品份数大于库存剩余");
+                    log.info("传的产品份数大于库存剩余 产品编号：{}",req.getProductId());
                     return centerBookCheck;
                 }
-                centerBookCheck.setProductId(req.getProductId());
                 centerBookCheck.setProductStockList(productStockList);
             }
         }catch (Exception e){
@@ -256,11 +254,11 @@ public class YcfOrderManger extends OrderManager {
 //            log.error("ycfOrderService --> getNBCreateOrder rpc服务异常。。",e);
 //            throw new RuntimeException("ycfOrderService --> rpc服务异常");
 //        }
-            //测试数据 start
-            String jsonString = "{\"data\":{\"orderStatus\":0,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-            YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-            ycfCreateOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCreateOrderRes.class);
-            //测试数据  end
+        //测试数据 start
+        String jsonString = "{\"data\":{\"orderStatus\":0,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
+        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
+        ycfCreateOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCreateOrderRes.class);
+        //测试数据  end
         CenterCreateOrderRes.CreateOrderRes createOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
         //todo 通过查数据库封装中台结果集
         supplier.setData(createOrderRes);
