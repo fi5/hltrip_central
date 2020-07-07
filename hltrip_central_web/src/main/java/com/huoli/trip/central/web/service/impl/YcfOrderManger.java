@@ -109,11 +109,11 @@ public class YcfOrderManger extends OrderManager {
                     //证明传的产品份数大于库存剩余
                     if(productStockList.size()==0){
                         centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-                        centerBookCheck.setProductCount(notEnoughStock);
+                        centerBookCheck.setProductStockList(notEnoughStock);
                         log.info("传的产品份数大于库存剩余");
                         return centerBookCheck;
                     }
-                    centerBookCheck.setProductCount(productStockList);
+                    centerBookCheck.setProductStockList(productStockList);
                 }
             }else{
                 centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
