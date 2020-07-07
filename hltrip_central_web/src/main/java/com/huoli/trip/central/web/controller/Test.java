@@ -4,18 +4,16 @@ import com.huoli.trip.central.api.IBaseDataService;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
-import com.huoli.trip.common.vo.PriceInfo;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * 描述: <br> 可预订查询
@@ -76,7 +74,7 @@ public class Test {
     public Object testPrice(String productCode) {
         ProductPriceReq productPriceReq=new ProductPriceReq();
         productPriceReq.setProductCode(productCode);
-        final BaseResponse<List<PriceInfo>> listBaseResponse = productService.productPriceCalendar(productPriceReq);
+        final BaseResponse<ProductPriceCalendarResult> listBaseResponse = productService.productPriceCalendar(productPriceReq);
         return listBaseResponse;
     }
 

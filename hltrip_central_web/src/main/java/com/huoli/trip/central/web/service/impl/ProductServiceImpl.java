@@ -11,7 +11,6 @@ import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.util.ListUtils;
@@ -23,7 +22,7 @@ import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.central.ProductPageResult;
-import com.huoli.trip.common.vo.response.central.ProductPriceResult;
+import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.response.central.RecommendResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -118,9 +117,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse<ProductPriceResult> productPriceCalendar(ProductPriceReq productPriceReq) {
+    public BaseResponse<ProductPriceCalendarResult> productPriceCalendar(ProductPriceReq productPriceReq) {
         try {
-            ProductPriceResult result=new ProductPriceResult();
+            ProductPriceCalendarResult result=new ProductPriceCalendarResult();
 
             final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
             List<PriceInfo> priceInfos = Lists.newArrayList();
@@ -133,7 +132,6 @@ public class ProductServiceImpl implements ProductService {
             ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
             Product tripProduct = convertToProduct(productPo,0);
             result.setPriceInfos(priceInfos);
-            result.setRooms(tripProduct.getRoom());
             result.setBuyMax(tripProduct.getBuyMax());
             result.setBuyMin(tripProduct.getBuyMin());
             result.setBuyMaxNight(tripProduct.getBuyMaxNight());
@@ -142,11 +140,10 @@ public class ProductServiceImpl implements ProductService {
             result.setPrice(tripProduct.getPrice());
             result.setSalePrice(tripProduct.getSalePrice());
             result.setRefundType(tripProduct.getRefundType());
-            result.setDelayType(tripProduct.getDelayType());
             result.setRefundAheadMin(tripProduct.getRefundAheadMin());
-            result.setRooms(tripProduct.getRoom());
-            result.setTickets(tripProduct.getTicket());
-            result.setFoods(tripProduct.getFood());
+            result.setRoom(tripProduct.getRoom());
+            result.setTicket(tripProduct.getTicket());
+            result.setFood(tripProduct.getFood());
 
             return BaseResponse.success(result);
         } catch (Exception e) {
