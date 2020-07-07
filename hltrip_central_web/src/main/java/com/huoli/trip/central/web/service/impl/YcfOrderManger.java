@@ -216,9 +216,9 @@ public class YcfOrderManger extends OrderManager {
 //        ycfCreateOrderReq.setRoomDetail();
 //        ycfCreateOrderReq.setSellAmount();
 //        ycfCreateOrderReq.setTicketDetail();
-        //封装中台创建订单返回结果
+        //供应商对象包装业务实体类
         CenterCreateOrderRes centerCreateOrderRes = new CenterCreateOrderRes();
-        CenterCreateOrderRes.Supplier supplier = new CenterCreateOrderRes.Supplier();
+        CenterSupplier<CenterCreateOrderRes.CreateOrderRes> supplier = new CenterSupplier();
         YcfCreateOrderRes ycfCreateOrderRes = new YcfCreateOrderRes();
 //        try {
 //            YcfBaseResult<YcfCreateOrderRes> ycfOrder = ycfOrderService.createOrder(ycfCreateOrderReq);
@@ -234,7 +234,7 @@ public class YcfOrderManger extends OrderManager {
             //测试数据  end
         CenterCreateOrderRes.CreateOrderRes createOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
         //todo 通过查数据库封装中台结果集
-        supplier.setCreateOrderObj(createOrderRes);
+        supplier.setData(createOrderRes);
         supplier.setType(CentralUtils.getSupplierId(req.getProductId()));
         centerCreateOrderRes.setSupplier(supplier);
         return centerCreateOrderRes;
@@ -246,7 +246,7 @@ public class YcfOrderManger extends OrderManager {
         YcfPayOrderReq ycfPayOrderReq = payOrderConverter.convertRequestToSupplierRequest(req);
         //封装中台创建订单返回结果
         CenterPayOrderRes centerPayOrderrRes = new CenterPayOrderRes();
-        CenterPayOrderRes.Supplier supplier = new CenterPayOrderRes.Supplier();
+        CenterSupplier<CenterPayOrderRes.PayOrderRes> supplier = new CenterSupplier();
         YcfPayOrderRes ycfPayOrderRes = new YcfPayOrderRes();
         try {
 //            YcfBaseResult<YcfPayOrderRes> ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
@@ -266,7 +266,7 @@ public class YcfOrderManger extends OrderManager {
         CenterPayOrderRes.PayOrderRes payOrderRes = payOrderConverter.convertSupplierResponseToResponse(ycfPayOrderRes);
         //组装本地订单号参数
         payOrderRes.setLocalOrderId(req.getPartnerOrderId());
-        supplier.setPayOrderObj(payOrderRes);
+        supplier.setData(payOrderRes);
         supplier.setType(req.getChannelCode());
         centerPayOrderrRes.setSupplier(supplier);
         return centerPayOrderrRes;
@@ -277,7 +277,7 @@ public class YcfOrderManger extends OrderManager {
         YcfCancelOrderReq ycfCancelOrderReq = cancelOrderConverter.convertRequestToSupplierRequest(req);
         //封装中台返回结果
         CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
-        CenterCancelOrderRes.Supplier supplier = new CenterCancelOrderRes.Supplier();
+        CenterSupplier<CenterCancelOrderRes.CancelOrderRes> supplier = new CenterSupplier();
         YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
 //        try {
 //            YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
@@ -293,7 +293,7 @@ public class YcfOrderManger extends OrderManager {
         //测试数据  end
         //组装中台返回结果
         CenterCancelOrderRes.CancelOrderRes cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
-        supplier.setCenterCancelOrderResObj(cancelOrderRes);
+        supplier.setData(cancelOrderRes);
         supplier.setType(CentralUtils.getSupplierId(req.getProductCode()));
         centerCancelOrderRes.setSupplier(supplier);
         return centerCancelOrderRes;
