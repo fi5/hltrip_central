@@ -87,17 +87,20 @@ public class YcfOrderManger extends OrderManager {
                         &&(s.getSaleDate().compareTo(finalEndDate)==0||s.getSaleDate().compareTo(finalEndDate)==-1)).collect(Collectors.toList());
                 if(CollectionUtils.isEmpty(priceInfoList)){
                     centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-                    centerBookCheck.setErrorCode(CentralError.NO_PRODUCTSTOCK_ERROR.getCode());
                     //todo 刷新库存逻辑
 
                     return centerBookCheck;
                 }else{
+                    //库存不足的list
+                    List<CenterBookCheckRes.ProductStock>  notEnoughStock = new ArrayList<>();
                     for (PriceInfoPO priceInfoPO:priceInfoList) {
                         CenterBookCheckRes.ProductStock productStock = new CenterBookCheckRes.ProductStock();
                         productStock.setSaleDate(priceInfoPO.getSaleDate());
                         productStock.setStockCount(priceInfoPO.getStock());
                         // 校验产品份数查询mongo库存量
                         if(req.getCount()>priceInfoPO.getStock()){
+                            //库存不足的也要返回提示
+                            notEnoughStock.add(productStock);
                             continue;
                         }
                         //满足条件的产品
@@ -106,14 +109,14 @@ public class YcfOrderManger extends OrderManager {
                     //证明传的产品份数大于库存剩余
                     if(productStockList.size()==0){
                         centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-                        centerBookCheck.setErrorCode(CentralError.NO_PRODUCTSTOCK_ERROR.getCode());
+                        centerBookCheck.setProductCount(notEnoughStock);
+                        log.info("传的产品份数大于库存剩余");
                         return centerBookCheck;
                     }
                     centerBookCheck.setProductCount(productStockList);
                 }
             }else{
                 centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-                centerBookCheck.setErrorCode(CentralError.NO_PRODUCTSTOCK_ERROR.getCode());
                 //todo 刷新库存逻辑
 
                 return centerBookCheck;
@@ -122,7 +125,6 @@ public class YcfOrderManger extends OrderManager {
             log.info("没有该类产品 productCode :{}",req.getProductId());
             centerBookCheck.setProductId(req.getProductId());
             centerBookCheck.setMessage(CentralError.NO_PRODUCT_ERROR.getError());
-            centerBookCheck.setErrorCode(CentralError.NO_PRODUCT_ERROR.getCode());
         }
         //*************************以下是对接供应商校验逻辑***********************************
 //        //供应商输出
@@ -201,8 +203,8 @@ public class YcfOrderManger extends OrderManager {
         bookCheckReq.setEndDate(req.getEndDate());
         bookCheckReq.setCount(req.getQunatity());
         //校验可查询预订
-        if(this.getNBCheckInfos(bookCheckReq).getErrorCode() !=0){
-            log.error("预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
+        if(this.getNBCheckInfos(bookCheckReq).getMessage() !=null){
+            log.error("创建订单失败，预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
             return null;
         }
         //转换客户端传来的参数
