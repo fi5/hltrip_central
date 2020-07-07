@@ -157,6 +157,29 @@ public class OrderServiceImpl implements OrderService {
         return result.withSuccess(data);
     }
 
+    @Override
+    public BaseResponse<CenterCancelOrderRes> applyRefund(CancelOrderReq req) {
+        //todo 退款通知
+        return cancelOrder(req);
+    }
+
+    @Override
+    public void orderStatusNotice(PushOrderStatusReq req) {
+        try {
+            log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
+            String topic = "hltrip_order_orderstatus";
+            JSONObject kafkaInfo = new JSONObject();
+            ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(kafkaInfo));
+            listenableFuture.addCallback(
+                    result -> log.info("订单状态推送kafka成功, params : {}", JSONObject.toJSONString(req)),
+                    ex -> {
+                        log.info("订单状态推送kafka失败, error message:{}", ex.getMessage(), ex);
+                    });
+        } catch (Exception e) {
+            log.info("",e);
+        }
+    }
+
     /**
      * 校验manager
      * @param manager
