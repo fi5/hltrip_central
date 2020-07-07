@@ -8,6 +8,7 @@ import com.huoli.trip.common.vo.PriceInfo;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceResult;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,7 +77,7 @@ public class Test {
     public Object testPrice(String productCode) {
         ProductPriceReq productPriceReq=new ProductPriceReq();
         productPriceReq.setProductCode(productCode);
-        final BaseResponse<List<PriceInfo>> listBaseResponse = productService.productPriceCalendar(productPriceReq);
+        final BaseResponse<ProductPriceResult> listBaseResponse = productService.productPriceCalendar(productPriceReq);
         return listBaseResponse;
     }
 

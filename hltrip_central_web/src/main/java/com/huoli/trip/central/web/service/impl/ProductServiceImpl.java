@@ -133,7 +133,6 @@ public class ProductServiceImpl implements ProductService {
             ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
             Product tripProduct = convertToProduct(productPo,0);
             result.setPriceInfos(priceInfos);
-            result.setRooms(tripProduct.getRoom());
             result.setBuyMax(tripProduct.getBuyMax());
             result.setBuyMin(tripProduct.getBuyMin());
             result.setBuyMaxNight(tripProduct.getBuyMaxNight());
@@ -142,11 +141,10 @@ public class ProductServiceImpl implements ProductService {
             result.setPrice(tripProduct.getPrice());
             result.setSalePrice(tripProduct.getSalePrice());
             result.setRefundType(tripProduct.getRefundType());
-            result.setDelayType(tripProduct.getDelayType());
             result.setRefundAheadMin(tripProduct.getRefundAheadMin());
-            result.setRooms(tripProduct.getRoom());
-            result.setTickets(tripProduct.getTicket());
-            result.setFoods(tripProduct.getFood());
+            result.setRoom(tripProduct.getRoom());
+            result.setTicket(tripProduct.getTicket());
+            result.setFood(tripProduct.getFood());
 
             return BaseResponse.success(result);
         } catch (Exception e) {
