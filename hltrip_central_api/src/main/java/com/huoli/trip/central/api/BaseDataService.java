@@ -14,4 +14,6 @@ public interface BaseDataService {
 
 	 BaseResponse<List<CityPO>> queryCitys();
 
+	 BaseResponse test();
+
 }

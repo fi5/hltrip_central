@@ -1,6 +1,8 @@
 package com.huoli.trip.central.web.aop;
 
 import com.alibaba.fastjson.JSON;
+import com.huoli.trip.common.exception.HlCentralException;
+import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -23,9 +25,9 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 @Aspect
 @Slf4j
-public class CentralServiceAspect {
+public class CentralDubboServiceAspect {
 
-    @Pointcut(value = "execution(* com.huoli.trip.central.web.service..*ServiceImpl.*(..))")
+    @Pointcut("@within(com.alibaba.dubbo.config.annotation.Service)")
     public void apiPointCut() {
     }
 
@@ -33,9 +35,8 @@ public class CentralServiceAspect {
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         String function = joinPoint.getSignature().getName();
         Object args[] = joinPoint.getArgs();
-        Object result;
+        Object result = null;
         StopWatch stopWatch = new StopWatch();
-        Object argsCopy[] = new Object[args.length];
         for (int i = 0; i < args.length; i++) {
             Object argu = args[i];
             if (argu instanceof HttpServletResponse) {
@@ -50,7 +51,11 @@ public class CentralServiceAspect {
             log.info("[{}] request: {}", function, JSON.toJSON(args));
             result = joinPoint.proceed(args);
         } catch (Throwable e) {
-            throw e;
+            if(e instanceof HlCentralException){
+                HlCentralException hlCentralException = (HlCentralException) e;
+                log.error("[{}],e",function,hlCentralException);
+                result= BaseResponse.withFail(hlCentralException.getCode(),hlCentralException.getMessage());
+            }
         } finally {
             stopWatch.stop();
         }
