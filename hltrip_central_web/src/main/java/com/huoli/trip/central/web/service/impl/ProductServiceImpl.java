@@ -4,14 +4,14 @@ import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
+import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
-import com.huoli.trip.common.entity.PriceInfoPO;
-import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.util.CommonUtils;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
@@ -72,7 +72,7 @@ public class ProductServiceImpl implements ProductService {
             return;
         }
         result.setProducts(productPOs.stream().map(po -> {
-            Product product = convertToProduct(po, 0);
+            Product product = ProductConverter.convertToProduct(po, 0);
             if(result.getMainItem() == null){
                 result.setMainItem(product.getMainItem());
             }
@@ -81,21 +81,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private List<Product> convertToProducts(List<ProductPO> productPOs, int total){
-        return productPOs.stream().map(po -> convertToProduct(po, total)).collect(Collectors.toList());
-    }
-
-    private Product convertToProduct(ProductPO po, int total){
-        Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
-        ProductItem productItem = JSON.parseObject(JSON.toJSONString(po.getMainItem()), ProductItem.class);
-        Double[] coordinateArr = po.getMainItem().getItemCoordinate();
-        if(coordinateArr != null && coordinateArr.length == 2){
-            Coordinate coordinate = new Coordinate();
-            coordinate.setLongitude(coordinateArr[0]);
-            coordinate.setLatitude(coordinateArr[1]);
-            productItem.setItemCoordinate(coordinate);
-        }
-        product.setTotal(total);
-        return product;
+        return productPOs.stream().map(po -> ProductConverter.convertToProduct(po, total)).collect(Collectors.toList());
     }
 
     @Override
@@ -171,7 +157,7 @@ public class ProductServiceImpl implements ProductService {
                 log.info("这里的日期:"+ CommonUtils.dateFormat.format(target.getSaleDate()));
             }
             ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
-            Product tripProduct = convertToProduct(productPo,0);
+            Product tripProduct = ProductConverter.convertToProduct(productPo,0);
 
             return BaseResponse.success(result);
         } catch (Exception e) {
