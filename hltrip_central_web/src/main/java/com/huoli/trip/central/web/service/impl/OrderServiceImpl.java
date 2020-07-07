@@ -48,9 +48,9 @@ public class OrderServiceImpl implements OrderService {
         //封装中台返回
         CenterBookCheckRes checkRes = new CenterBookCheckRes();
         //供应商对象包装业务实体类
-        CenterBookCheckRes.Supplier supplier = new CenterBookCheckRes.Supplier();
+        CenterSupplier supplier = new CenterSupplier();
         try {
-            supplier.setCenterBookCheckObj(orderManager.getNBCheckInfos(req));
+            supplier.setData(orderManager.getNBCheckInfos(req));
             supplier.setType(req.getChannelCode());
             checkRes.setSupplier(supplier);
         }catch (RuntimeException e){
