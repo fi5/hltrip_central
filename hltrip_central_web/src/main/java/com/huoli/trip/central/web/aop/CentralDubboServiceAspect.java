@@ -37,7 +37,6 @@ public class CentralDubboServiceAspect {
         Object args[] = joinPoint.getArgs();
         Object result = null;
         StopWatch stopWatch = new StopWatch();
-        Object argsCopy[] = new Object[args.length];
         for (int i = 0; i < args.length; i++) {
             Object argu = args[i];
             if (argu instanceof HttpServletResponse) {
