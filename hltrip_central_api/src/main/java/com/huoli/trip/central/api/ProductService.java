@@ -1,7 +1,5 @@
 package com.huoli.trip.central.api;
 
-import com.huoli.trip.common.vo.PriceInfo;
-import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
 import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
@@ -9,10 +7,8 @@ import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
 import com.huoli.trip.common.vo.response.central.ProductPageResult;
-import com.huoli.trip.common.vo.response.central.ProductPriceResult;
+import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.response.central.RecommendResult;
-
-import java.util.List;
 
 
 /**
@@ -46,5 +42,5 @@ public interface ProductService {
      * @param productPriceReq
      * @return
      */
-    BaseResponse<ProductPriceResult> productPriceCalendar(ProductPriceReq productPriceReq);
+    BaseResponse<ProductPriceCalendarResult> productPriceCalendar(ProductPriceReq productPriceReq);
 }
