@@ -5,10 +5,7 @@ import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
-import com.huoli.trip.common.vo.response.central.ProductPageResult;
-import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
-import com.huoli.trip.common.vo.response.central.RecommendResult;
+import com.huoli.trip.common.vo.response.central.*;
 
 
 /**
@@ -43,4 +40,6 @@ public interface ProductService {
      * @return
      */
     BaseResponse<ProductPriceCalendarResult> productPriceCalendar(ProductPriceReq productPriceReq);
+
+    BaseResponse<ProductPriceDetialResult> priceDetail(ProductPriceReq productPriceReq);
 }

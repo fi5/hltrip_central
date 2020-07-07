@@ -10,7 +10,7 @@ import java.util.List;
  * @time   :2020/7/2
  * @comment:如城市选择
  **/
-public interface IBaseDataService {
+public interface BaseDataService {
 
 	 BaseResponse<List<CityPO>> queryCitys();
 

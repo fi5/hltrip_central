@@ -20,10 +20,7 @@ import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.central.CategoryDetailResult;
-import com.huoli.trip.common.vo.response.central.ProductPageResult;
-import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
-import com.huoli.trip.common.vo.response.central.RecommendResult;
+import com.huoli.trip.common.vo.response.central.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,20 +127,9 @@ public class ProductServiceImpl implements ProductService {
                 log.info("这里的日期:"+ CommonUtils.dateFormat.format(target.getSaleDate()));
             }
             ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
-            Product tripProduct = convertToProduct(productPo,0);
             result.setPriceInfos(priceInfos);
-            result.setBuyMax(tripProduct.getBuyMax());
-            result.setBuyMin(tripProduct.getBuyMin());
-            result.setBuyMaxNight(tripProduct.getBuyMaxNight());
-            result.setBuyMinNight(tripProduct.getBuyMinNight());
-            result.setBookAheadMin(tripProduct.getBookAheadMin());
-            result.setPrice(tripProduct.getPrice());
-            result.setSalePrice(tripProduct.getSalePrice());
-            result.setRefundType(tripProduct.getRefundType());
-            result.setRefundAheadMin(tripProduct.getRefundAheadMin());
-            result.setRoom(tripProduct.getRoom());
-            result.setTicket(tripProduct.getTicket());
-            result.setFood(tripProduct.getFood());
+            result.setBuyMaxNight(productPo.getBuyMaxNight());
+            result.setBuyMinNight(productPo.getBuyMinNight());
 
             return BaseResponse.success(result);
         } catch (Exception e) {
@@ -151,6 +137,7 @@ public class ProductServiceImpl implements ProductService {
         }
         return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
     }
+
 
     private List<Integer> getTypes(int type){
         List<Integer> types;
@@ -163,5 +150,28 @@ public class ProductServiceImpl implements ProductService {
             types = Lists.newArrayList(type);
         }
         return types;
+    }
+
+    @Override
+    public BaseResponse<ProductPriceDetialResult> priceDetail(ProductPriceReq productPriceReq) {
+        try {
+            ProductPriceDetialResult result=new ProductPriceDetialResult();
+
+            final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
+            List<PriceInfo> priceInfos = Lists.newArrayList();
+            for(PriceInfoPO entry: pricePo.getPriceInfos()){
+                PriceInfo target=new PriceInfo();
+                BeanUtils.copyProperties(entry,target);
+                priceInfos.add(target);
+                log.info("这里的日期:"+ CommonUtils.dateFormat.format(target.getSaleDate()));
+            }
+            ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
+            Product tripProduct = convertToProduct(productPo,0);
+
+            return BaseResponse.success(result);
+        } catch (Exception e) {
+            log.info("",e);
+        }
+        return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
     }
 }

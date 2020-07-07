@@ -1,7 +1,7 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
-import com.huoli.trip.central.api.IBaseDataService;
+import com.huoli.trip.central.api.BaseDataService;
 import com.huoli.trip.central.web.dao.CityDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.entity.CityPO;
@@ -18,7 +18,7 @@ import java.util.List;
  **/
 @Slf4j
 @Service(timeout = 10000,group = "hltrip")
-public class BaseDataServiceImpl implements IBaseDataService{
+public class BaseDataServiceImpl implements BaseDataService {
 
 	@Autowired
 	CityDao cityDao;

@@ -1,6 +1,6 @@
 package com.huoli.trip.central.web.controller;
 
-import com.huoli.trip.central.api.IBaseDataService;
+import com.huoli.trip.central.api.BaseDataService;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
@@ -34,7 +34,7 @@ public class Test {
     @Autowired
     ProductService productService;
     @Autowired
-    IBaseDataService baseDataService;
+    BaseDataService baseDataService;
 
 
 //    @RequestMapping(value = "getCheckInfos", produces = {"application/json;charset=UTF-8"})
