@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.dao.ProductDao;
-import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
@@ -43,9 +42,6 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductDao productDao;
 
-    @Autowired
-    private ProductItemDao productItemDao;
-
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request){
         ProductPageResult result = new ProductPageResult();
@@ -66,18 +62,29 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request){
         CategoryDetailResult result = new CategoryDetailResult();
         List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId());
-        result.setProducts(convertToProducts(productPOs, 0));
+        convertToCategoryDetailResult(productPOs, result);
         return BaseResponse.success(result);
     }
 
-    private List<Product> convertToProducts(List<ProductPO> productPOs, int total){
-        return productPOs.stream().map(po -> {
-            Product product = convertToProduct(po,total);
-            return  product;
-        }).collect(Collectors.toList());
+    private void convertToCategoryDetailResult(List<ProductPO> productPOs, CategoryDetailResult result){
+        if(ListUtils.isEmpty(productPOs)){
+            log.info("没有查到商品详情");
+            return;
+        }
+        result.setProducts(productPOs.stream().map(po -> {
+            Product product = convertToProduct(po, 0);
+            if(result.getMainItem() == null){
+                result.setMainItem(product.getMainItem());
+            }
+            return product;
+        }).collect(Collectors.toList()));
     }
 
-    private Product convertToProduct(ProductPO po,int total){
+    private List<Product> convertToProducts(List<ProductPO> productPOs, int total){
+        return productPOs.stream().map(po -> convertToProduct(po, total)).collect(Collectors.toList());
+    }
+
+    private Product convertToProduct(ProductPO po, int total){
         Product product = JSON.parseObject(JSON.toJSONString(po), Product.class);
         ProductItem productItem = JSON.parseObject(JSON.toJSONString(po.getMainItem()), ProductItem.class);
         Double[] coordinateArr = po.getMainItem().getItemCoordinate();
@@ -89,9 +96,7 @@ public class ProductServiceImpl implements ProductService {
         }
         product.setTotal(total);
         return product;
-
     }
-
 
     @Override
     public BaseResponse<RecommendResult> recommendList(RecommendRequest request){
@@ -103,7 +108,7 @@ public class ProductServiceImpl implements ProductService {
             if(request.getPosition() == Constants.RECOMMEND_POSITION_MAIN){
                 productPOs = productDao.getCoordinateRecommendList(request.getCoordinate(), request.getRadius(), t, request.getPageSize());
             } else {
-                productPOs =productDao.getCityRecommendList(request.getCity(), t, request.getPageSize());
+                productPOs = productDao.getCityRecommendList(request.getCity(), t, request.getPageSize());
             }
             if(ListUtils.isNotEmpty(productPOs)){
                 products.addAll(convertToProducts(productPOs, 0));
