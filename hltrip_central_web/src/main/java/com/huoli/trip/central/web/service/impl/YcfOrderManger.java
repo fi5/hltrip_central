@@ -11,7 +11,6 @@ import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.DateUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
-import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
@@ -28,6 +27,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,73 +59,19 @@ public class YcfOrderManger extends OrderManager {
         System.out.println("ycf");
         return "ycf";
     }
-    public CenterBookCheckRes.CenterBookCheck getNBCheckInfos(BookCheckReq req) throws RuntimeException{
+    public CenterBookCheck getNBCheckInfos(BookCheckReq req) throws RuntimeException{
         //中台输出
-        CenterBookCheckRes.CenterBookCheck centerBookCheck = new CenterBookCheckRes.CenterBookCheck();
-        centerBookCheck.setProductId(req.getProductId());
-        List<CenterBookCheckRes.ProductStock> productStockList = new ArrayList<>();
+        CenterBookCheck centerBookCheck = new CenterBookCheck();
+        //封装中台库存量
+        List<Integer> stockList = new ArrayList<>();
+        //销售价就是客户端传的
+        centerBookCheck.setSalePrice(req.getSalePrice());
         String begin = req.getBeginDate();
         String end = req.getEndDate();
+        //没传结束时间这样处理
         if(StringUtils.isBlank(req.getEndDate())){
             end = begin;
         }
-//        Date beginDate = null;
-//        Date endDate = null;
-//        try {
-//            beginDate = DateUtils.parseTimeStringToDate2(begin);
-//            endDate = DateUtils.parseTimeStringToDate2(end);
-//        } catch (ParseException e) {
-//            log.error("");
-//        }
-//        PricePO pricePos = productDao.getPricePos(req.getProductId());
-//        if(pricePos!=null){
-//            if(!CollectionUtils.isEmpty(pricePos.getPriceInfos())&&(beginDate!=null)){
-//                Date finalEndDate = endDate;
-//                Date finalBeginDate = beginDate;
-//                List<PriceInfoPO> priceInfoList = pricePos.getPriceInfos().stream().filter(s -> (s.getSaleDate().compareTo(finalBeginDate)==0||s.getSaleDate().compareTo(finalBeginDate)==1)
-//                        &&(s.getSaleDate().compareTo(finalEndDate)==0||s.getSaleDate().compareTo(finalEndDate)==-1)).collect(Collectors.toList());
-//                if(CollectionUtils.isEmpty(priceInfoList)){
-//                    centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-//                    //todo 刷新库存逻辑
-//
-//                    return centerBookCheck;
-//                }else{
-//                    //库存不足的list
-//                    List<CenterBookCheckRes.ProductStock>  notEnoughStock = new ArrayList<>();
-//                    for (PriceInfoPO priceInfoPO:priceInfoList) {
-//                        CenterBookCheckRes.ProductStock productStock = new CenterBookCheckRes.ProductStock();
-//                        productStock.setSaleDate(DateTimeUtil.formatDate(priceInfoPO.getSaleDate(), DateTimeUtil.YYYYMMDD);
-//                        productStock.setStockCount(priceInfoPO.getStock());
-//                        // 校验产品份数查询mongo库存量
-//                        if(req.getCount()>priceInfoPO.getStock()){
-//                            //库存不足的也要返回提示
-//                            notEnoughStock.add(productStock);
-//                            continue;
-//                        }
-//                        //满足条件的产品
-//                        productStockList.add(productStock);
-//                    }
-//                    //证明传的产品份数大于库存剩余
-//                    if(productStockList.size()==0){
-//                        centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-//                        centerBookCheck.setProductStockList(notEnoughStock);
-//                        log.info("传的产品份数大于库存剩余");
-//                        return centerBookCheck;
-//                    }
-//                    centerBookCheck.setProductStockList(productStockList);
-//                }
-//            }else{
-//                centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-//                //todo 刷新库存逻辑
-//
-//                return centerBookCheck;
-//            }
-//        }else{
-//            log.info("没有该类产品 productCode :{}",req.getProductId());
-//            centerBookCheck.setProductId(req.getProductId());
-//            centerBookCheck.setMessage(CentralError.no.getError());
-//        }
-        //*************************以下是对接供应商校验逻辑***********************************
         //供应商输出
         YcfBaseResult<YcfBookCheckRes> checkInfos = new YcfBaseResult();
         YcfBookCheckRes ycfBookCheckRes = null;
@@ -137,7 +83,7 @@ public class YcfOrderManger extends OrderManager {
             ycfBookCheckReq.setBeginDate(DateUtils.parseTimeStringToDate(begin));
             ycfBookCheckReq.setEndDate(DateUtils.parseTimeStringToDate(end));
         } catch (ParseException e) {
-            log.error("");
+            log.error("时间转换异常 ：{}",e);
         }
         try {
             checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
@@ -149,39 +95,34 @@ public class YcfOrderManger extends OrderManager {
 //            //测试数据  end
             //供应商返回输入中台
             if(ycfBookCheckRes!=null){
-                //库存不足的list
-                List<CenterBookCheckRes.ProductStock>  notEnoughStock = new ArrayList<>();
                 List<YcfBookSaleInfo> saleInfos = ycfBookCheckRes.getSaleInfos();
                 //没有库存
                 if(CollectionUtils.isEmpty(saleInfos)) {
                     centerBookCheck.setMessage(CentralError.NO_STOCK_ERROR.getError());
                     return centerBookCheck;
                 }
-                for (YcfBookSaleInfo saleInfo : saleInfos) {
-                    //中台库存对象
-                    CenterBookCheckRes.ProductStock stock = new CenterBookCheckRes.ProductStock();
-                    stock.setSaleDate(DateTimeUtil.formatDate(saleInfo.getDate(), DateTimeUtil.YYYYMMDD));
-                    //产品库存量
-                    stock.setStockCount(saleInfo.getTotalStock());
-                    if(req.getCount()>saleInfo.getTotalStock()){
-                        //库存不足的也要返回提示
-                        notEnoughStock.add(stock);
-                        continue;
-                    }
-                    productStockList.add(stock);
-                }
-                //证明传的产品份数大于供应商库存剩余
-                if(productStockList.size()==0){
+                saleInfos.forEach(ycfBookSaleInfo -> {
+                    stockList.add(ycfBookSaleInfo.getTotalStock());
+                });
+                //库存数排序从小到大，如果多个库存量就取最小库存数返回去就得了呗
+                Collections.sort(stockList);
+//                if(!CollectionUtils.isEmpty(stockList)&&stockList.size()>1){
+//                    int min = stockList.stream().filter(stock -> stock>0).min(Comparator.naturalOrder()).orElse(null);
+//                }
+                //证明传的产品份数大于供应商库存最小剩余
+                if(req.getCount()>stockList.get(0)){
                     centerBookCheck.setMessage(CentralError.NOTENOUGH_STOCK_ERROR.getError());
-                    centerBookCheck.setProductStockList(notEnoughStock);
+                    centerBookCheck.setStock(stockList.get(0));
                     log.info("传的产品份数大于库存剩余 产品编号：{}",req.getProductId());
                     return centerBookCheck;
                 }
-                centerBookCheck.setProductStockList(productStockList);
             }
         }catch (Exception e){
             log.error("ycfOrderService --> getNBCheckInfos rpc服务异常 :{}",e);
         }
+//        //todo  销售价返回(按照份数来计算的  套餐里的天数是固定的)
+//        centerBookCheck.setSettlePrice();
+        centerBookCheck.setStock(stockList.get(0));
         centerBookCheck.setMessage(checkInfos.getMessage());
         return centerBookCheck;
     }
@@ -247,7 +188,6 @@ public class YcfOrderManger extends OrderManager {
 //        ycfCreateOrderReq.setTicketDetail();
         //供应商对象包装业务实体类
         CenterCreateOrderRes centerCreateOrderRes = new CenterCreateOrderRes();
-        CenterSupplier<CenterCreateOrderRes.CreateOrderRes> supplier = new CenterSupplier();
         YcfCreateOrderRes ycfCreateOrderRes = new YcfCreateOrderRes();
 //        try {
 //            YcfBaseResult<YcfCreateOrderRes> ycfOrder = ycfOrderService.createOrder(ycfCreateOrderReq);
@@ -261,11 +201,8 @@ public class YcfOrderManger extends OrderManager {
         YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
         ycfCreateOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCreateOrderRes.class);
         //测试数据  end
-        CenterCreateOrderRes.CreateOrderRes createOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
+        centerCreateOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
         //todo 通过查数据库封装中台结果集
-        supplier.setData(createOrderRes);
-        supplier.setType(CentralUtils.getChannelCode(req.getProductId()));
-        centerCreateOrderRes.setSupplier(supplier);
         return centerCreateOrderRes;
     }
 
@@ -275,7 +212,6 @@ public class YcfOrderManger extends OrderManager {
         YcfPayOrderReq ycfPayOrderReq = payOrderConverter.convertRequestToSupplierRequest(req);
         //封装中台创建订单返回结果
         CenterPayOrderRes centerPayOrderrRes = new CenterPayOrderRes();
-        CenterSupplier<CenterPayOrderRes.PayOrderRes> supplier = new CenterSupplier();
         YcfPayOrderRes ycfPayOrderRes = new YcfPayOrderRes();
         try {
 //            YcfBaseResult<YcfPayOrderRes> ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
@@ -292,13 +228,10 @@ public class YcfOrderManger extends OrderManager {
         ycfPayOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfPayOrderRes.class);
         //测试数据  end
         //封装中台返回结果
-        CenterPayOrderRes.PayOrderRes payOrderRes = payOrderConverter.convertSupplierResponseToResponse(ycfPayOrderRes);
+        CenterPayOrderRes payOrderRes = payOrderConverter.convertSupplierResponseToResponse(ycfPayOrderRes);
         //组装本地订单号参数
         payOrderRes.setLocalOrderId(req.getPartnerOrderId());
-        supplier.setData(payOrderRes);
-        supplier.setType(req.getChannelCode());
-        centerPayOrderrRes.setSupplier(supplier);
-        return centerPayOrderrRes;
+        return payOrderRes;
     }
 
     public CenterCancelOrderRes getCenterCancelOrder(CancelOrderReq req) throws RuntimeException{
@@ -306,7 +239,6 @@ public class YcfOrderManger extends OrderManager {
         YcfCancelOrderReq ycfCancelOrderReq = cancelOrderConverter.convertRequestToSupplierRequest(req);
         //封装中台返回结果
         CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
-        CenterSupplier<CenterCancelOrderRes.CancelOrderRes> supplier = new CenterSupplier();
         YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
 //        try {
 //            YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
@@ -321,11 +253,8 @@ public class YcfOrderManger extends OrderManager {
         ycfCancelOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCancelOrderRes.class);
         //测试数据  end
         //组装中台返回结果
-        CenterCancelOrderRes.CancelOrderRes cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
-        supplier.setData(cancelOrderRes);
-        supplier.setType(CentralUtils.getChannelCode(req.getProductCode()));
-        centerCancelOrderRes.setSupplier(supplier);
-        return centerCancelOrderRes;
+        CenterCancelOrderRes cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
+        return cancelOrderRes;
     }
 
 

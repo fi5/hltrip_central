@@ -86,7 +86,7 @@ public class ProductConverter {
             Coordinate coordinate = new Coordinate();
             coordinate.setLongitude(coordinateArr[0]);
             coordinate.setLatitude(coordinateArr[1]);
-            productItem.setItemCoordinate(coordinate);
+            productItem.setCoordinate(coordinate);
         }
         return productItem;
     }
