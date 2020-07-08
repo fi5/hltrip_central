@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
  * 创建日期：2020/4/26<br>
  */
 @Component
-public class CancelOrderConverter implements Converter<CancelOrderReq, YcfCancelOrderReq, YcfCancelOrderRes, CenterCancelOrderRes.CancelOrderRes> {
+public class CancelOrderConverter implements Converter<CancelOrderReq, YcfCancelOrderReq, YcfCancelOrderRes, CenterCancelOrderRes> {
     @Override
     public YcfCancelOrderReq convertRequestToSupplierRequest(CancelOrderReq req) {
         YcfCancelOrderReq ycfCancelOrderReq = new YcfCancelOrderReq();
@@ -26,8 +26,8 @@ public class CancelOrderConverter implements Converter<CancelOrderReq, YcfCancel
     }
 
     @Override
-    public CenterCancelOrderRes.CancelOrderRes convertSupplierResponseToResponse(YcfCancelOrderRes supplierResponse) {
-        CenterCancelOrderRes.CancelOrderRes cancelOrderRes = new CenterCancelOrderRes.CancelOrderRes();
+    public CenterCancelOrderRes convertSupplierResponseToResponse(YcfCancelOrderRes supplierResponse) {
+        CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
         cancelOrderRes.setAsync(supplierResponse.getAsync());
         cancelOrderRes.setOrderStatus(supplierResponse.getOrderStatus());
         return cancelOrderRes;

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * 创建日期：2020/7/5<br>
  */
 @Component
-public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq, YcfPayOrderRes, CenterPayOrderRes.PayOrderRes> {
+public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq, YcfPayOrderRes, CenterPayOrderRes> {
     @Override
     public YcfPayOrderReq convertRequestToSupplierRequest(PayOrderReq req) {
         YcfPayOrderReq ycfPayOrderReq = new YcfPayOrderReq();
@@ -27,8 +27,8 @@ public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq,
     }
 
     @Override
-    public CenterPayOrderRes.PayOrderRes convertSupplierResponseToResponse(YcfPayOrderRes supplierResponse) {
-        CenterPayOrderRes.PayOrderRes payOrderRes = new CenterPayOrderRes.PayOrderRes();
+    public CenterPayOrderRes convertSupplierResponseToResponse(YcfPayOrderRes supplierResponse) {
+        CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
         payOrderRes.setChannelOrderId(supplierResponse.getOrderId());
         payOrderRes.setOrderStatus(supplierResponse.getOrderStatus());
         return payOrderRes;

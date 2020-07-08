@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
+import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
@@ -41,22 +42,21 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public BaseResponse<CenterBookCheckRes> getCheckInfos(BookCheckReq req) {
+    public BaseResponse<CenterBookCheck> getCheckInfos(BookCheckReq req) {
         OrderManager orderManager =orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
-        CenterBookCheckRes checkRes = new CenterBookCheckRes();
-        //供应商对象包装业务实体类
-        CenterSupplier supplier = new CenterSupplier();
+        CenterBookCheck checkRes = new CenterBookCheck();
+//        //供应商对象包装业务实体类
+//        CenterSupplier supplier = new CenterSupplier();
         try {
-            supplier.setData(orderManager.getNBCheckInfos(req));
-            supplier.setType(req.getChannelCode());
-            checkRes.setSupplier(supplier);
+            checkRes = orderManager.getNBCheckInfos(req);
+//            supplier.setType(req.getChannelCode());
+//            checkRes.setSupplier(supplier);
         }catch (RuntimeException e){
-            log.error("orderManager --> rpc服务异常",e);
-            BaseResponse.withFail(-100,e.getMessage());
-            throw new RuntimeException("orderManager --> rpc服务异常",e);
+            log.error("OrderServiceImpl --> getCheckInfos rpc服务异常 :{}", e);
+            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
         return BaseResponse.withSuccess(checkRes);
     }
@@ -116,9 +116,8 @@ public class OrderServiceImpl implements OrderService {
         try {
             data = orderManager.getNBCreateOrder(req);
         } catch (Exception e) {
-            log.error("OrderServiceImpl --> createOrder rpc服务异常", e);
-            result.fail(-100, result.getMessage(), false);
-            throw new RuntimeException("OrderServiceImpl --> createOrder --> rpc服务异常");
+            log.error("OrderServiceImpl --> createOrder rpc服务异常 :{}", e);
+            return result.fail(-100, result.getMessage(), false);
         }
         return result.withSuccess(data);
     }
@@ -133,9 +132,8 @@ public class OrderServiceImpl implements OrderService {
         try {
             data = orderManager.getCenterPayOrder(req);
         } catch (Exception e) {
-            log.error("OrderServiceImpl --> payOrder rpc服务异常", e);
-            result.fail(-100, result.getMessage(), false);
-            throw new RuntimeException("OrderServiceImpl --> payOrder --> rpc服务异常");
+            log.error("OrderServiceImpl --> payOrder rpc服务异常 :{}", e);
+            return result.fail(-100, result.getMessage(), false);
         }
         return result.withSuccess(data);
     }
@@ -150,9 +148,8 @@ public class OrderServiceImpl implements OrderService {
         try {
             data = orderManager.getCenterCancelOrder(req);
         } catch (Exception e) {
-            log.error("OrderServiceImpl --> payOrder rpc服务异常", e);
-            result.fail(-100, result.getMessage(), false);
-            throw new RuntimeException("OrderServiceImpl --> payOrder --> rpc服务异常");
+            log.error("OrderServiceImpl --> cancelOrder rpc服务异常 :{}", e);
+            return result.fail(-100, result.getMessage(), false);
         }
         return result.withSuccess(data);
     }

@@ -18,7 +18,7 @@ public interface OrderService {
      * 版本：1.0<br>
      * 创建日期：2020/7/1<br>
      */
-    BaseResponse<CenterBookCheckRes> getCheckInfos(BookCheckReq req);
+    BaseResponse<CenterBookCheck> getCheckInfos(BookCheckReq req);
 
     void refundNotice(RefundNoticeReq req) ;
 

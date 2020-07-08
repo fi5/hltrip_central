@@ -24,7 +24,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreateOrderReq,YcfCreateOrderRes,CenterCreateOrderRes.CreateOrderRes> {
+public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreateOrderReq,YcfCreateOrderRes,CenterCreateOrderRes> {
     @Override
     public YcfCreateOrderReq convertRequestToSupplierRequest(CreateOrderReq req) {
         YcfCreateOrderReq ycfCreateOrderReq = new YcfCreateOrderReq();
@@ -45,8 +45,8 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
     }
 
     @Override
-    public CenterCreateOrderRes.CreateOrderRes convertSupplierResponseToResponse(YcfCreateOrderRes supplierResponse) {
-        CenterCreateOrderRes.CreateOrderRes createOrderRes = new CenterCreateOrderRes.CreateOrderRes();
+    public CenterCreateOrderRes convertSupplierResponseToResponse(YcfCreateOrderRes supplierResponse) {
+        CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
         createOrderRes.setOrderId(supplierResponse.getOrderId());
         createOrderRes.setOrderStatus(supplierResponse.getOrderStatus());
         return createOrderRes;
