@@ -3,6 +3,7 @@ package com.huoli.trip.central.api;
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.PriceCalcResult;
 import com.huoli.trip.common.vo.response.central.*;
 
 import java.util.List;
@@ -46,10 +47,17 @@ public interface ProductService {
      * @param request
      * @return
      */
-    List<ImageBase> getImages(ImageRequest request);
+    BaseResponse<List<ImageBase>> getImages(ImageRequest request);
 
     /**
      * 套餐价格详情
      */
     BaseResponse<ProductPriceDetialResult> getPriceDetail(ProductPriceReq req);
+
+    /**
+     * 计算价格
+     * @param request
+     * @return
+     */
+    BaseResponse<PriceCalcResult> calcTotalPrice(PriceCalcRequest request);
 }
