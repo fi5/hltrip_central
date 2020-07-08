@@ -73,13 +73,18 @@ public class ProductServiceImpl implements ProductService {
             return;
         }
         result.setProducts(productPOs.stream().map(po -> {
-            Product product = ProductConverter.convertToProduct(po, 0);
-            if(result.getMainItem() == null){
-                result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+            try {
+                Product product = ProductConverter.convertToProduct(po, 0);
+                if(result.getMainItem() == null){
+                    result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+                }
+                product.setMainItem(null);
+                return product;
+            } catch (Exception e){
+                log.error("转换商品详情结果异常", e);
+                return null;
             }
-            product.setMainItem(null);
-            return product;
-        }).collect(Collectors.toList()));
+        }).filter(po -> po != null).collect(Collectors.toList()));
     }
 
     private List<Product> convertToProducts(List<ProductPO> productPOs, int total){

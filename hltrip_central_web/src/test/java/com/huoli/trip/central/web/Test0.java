@@ -2,6 +2,7 @@ package com.huoli.trip.central.web;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
+import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.DateUtils;
 import com.huoli.trip.common.constant.Constants;
@@ -9,6 +10,9 @@ import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
+import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
@@ -39,6 +43,8 @@ public class Test0 {
     private ProductDao productDao;
     @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private ProductService productService;
 
     @Test
     public void test(){
@@ -46,8 +52,15 @@ public class Test0 {
 //        List<ProductPO> list = getProductListByItemIdsPage(ids, 1, 3);
 //        List<ProductPO> list = getProductList();
 //        List<ProductPO> list = getGroup();
-        List<ProductPO> list = getPageList("", 1, 1, 60);
-        log.info("结果 = {}", JSON.toJSONString(list));
+//        List<ProductPO> list = getPageList("", 1, 1, 60);
+//        List<ProductPO> list = productDao.getProductListByItemId("yaochufa_29439");
+        CategoryDetailRequest request = new CategoryDetailRequest();
+        request.setProductItemId("yaochufa_29439");
+        ProductPageRequest request1 = new ProductPageRequest();
+        request1.setCity("北京市");
+        request1.setType(0);
+//        log.info("结果 = {}", JSON.toJSONString(productService.pageList(request1)));
+        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
 
     }
 
