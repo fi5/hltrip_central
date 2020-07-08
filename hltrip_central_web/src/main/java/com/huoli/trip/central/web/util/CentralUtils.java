@@ -2,8 +2,6 @@ package com.huoli.trip.central.web.util;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Date;
-
 /**
  * 描述: <br>中台业务工具类
  * 版权：Copyright (c) 2011-2020<br>
@@ -15,12 +13,19 @@ import java.util.Date;
 public class CentralUtils {
 
     //通过前端传的productCode获取供应商渠道标识
-    public static String getSupplierId(String productCode){
+    public static String getChannelCode(String productCode){
         if(StringUtils.isBlank(productCode)){
             return null;
         }
         String[] s = productCode.split("_");
         return s[0];
+    }
+    //将前端传的productCode获取转为要出发的productId
+    public static String getSupplierId(String productCode){
+        if(StringUtils.isBlank(productCode)){
+            return null;
+        }
+        return productCode.substring(productCode.indexOf("_")+1);
     }
 
     //api会传到中台

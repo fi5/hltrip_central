@@ -10,30 +10,12 @@
        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
        http://www.springframework.org/schema/context
        http://www.springframework.org/schema/context/spring-context-4.0.xsd
-	   http://www.springframework.org/schema/util
-	   http://www.springframework.org/schema/util/spring-util-2.0.xsd
        ">
-
-	<!-- 数据初始化 -->
-	<bean id="systemPrereqs"
-		  class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="targetObject" value="#{@systemProperties}" />
-		<property name="targetMethod" value="putAll" />
-		<property name="arguments">
-			<util:properties>
-				<prop key="disconf.conf">
-<!--					/Users/fengzhiqiang/work/航班管家/project_folder/hltrip_central/hltrip_central_web/conf/disconf.properties-->
-					/usr/local/huoli_home/flight_search/disconf.properties
-<!--					D:\hltripworkspace\disconf\disconf.properties-->
-				</prop>
-			</util:properties>
-		</property>
-	</bean>
 
 	<!-- disconf 配置 -->
 	<bean id="disconfMgrBean" class="com.baidu.disconf.client.DisconfMgrBean"
-		  destroy-method="destroy" depends-on="systemPrereqs">
-		<property name="scanPackage" value="com.huoli.trip.common.config" />
+		  destroy-method="destroy">
+		<property name="scanPackage" value="com.huoli.trip" />
 	</bean>
 	<bean id="disconfMgrBean2" class="com.baidu.disconf.client.DisconfMgrBeanSecond"
 		  init-method="init" destroy-method="destroy">

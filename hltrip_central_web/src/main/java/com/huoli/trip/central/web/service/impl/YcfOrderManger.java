@@ -11,8 +11,7 @@ import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.DateUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
-import com.huoli.trip.common.entity.PriceInfoPO;
-import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
@@ -27,9 +26,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 描述：desc<br>
@@ -70,92 +67,120 @@ public class YcfOrderManger extends OrderManager {
         if(StringUtils.isBlank(req.getEndDate())){
             end = begin;
         }
-        Date beginDate = null;
-        Date endDate = null;
-        try {
-            beginDate = DateUtils.parseTimeStringToDate2(begin);
-            endDate = DateUtils.parseTimeStringToDate2(end);
-        } catch (ParseException e) {
-            log.error("");
-        }
-        PricePO pricePos = productDao.getPricePos(req.getProductId());
-        if(pricePos!=null){
-            if(!CollectionUtils.isEmpty(pricePos.getPriceInfos())&&(beginDate!=null)){
-                Date finalEndDate = endDate;
-                Date finalBeginDate = beginDate;
-                List<PriceInfoPO> priceInfoList = pricePos.getPriceInfos().stream().filter(s -> (s.getSaleDate().compareTo(finalBeginDate)==0||s.getSaleDate().compareTo(finalBeginDate)==1)
-                        &&(s.getSaleDate().compareTo(finalEndDate)==0||s.getSaleDate().compareTo(finalEndDate)==-1)).collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(priceInfoList)){
-                    centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-                    //todo 刷新库存逻辑
-
-                    return centerBookCheck;
-                }else{
-                    //库存不足的list
-                    List<CenterBookCheckRes.ProductStock>  notEnoughStock = new ArrayList<>();
-                    for (PriceInfoPO priceInfoPO:priceInfoList) {
-                        CenterBookCheckRes.ProductStock productStock = new CenterBookCheckRes.ProductStock();
-                        productStock.setSaleDate(priceInfoPO.getSaleDate());
-                        productStock.setStockCount(priceInfoPO.getStock());
-                        // 校验产品份数查询mongo库存量
-                        if(req.getCount()>priceInfoPO.getStock()){
-                            //库存不足的也要返回提示
-                            notEnoughStock.add(productStock);
-                            continue;
-                        }
-                        //满足条件的产品
-                        productStockList.add(productStock);
-                    }
-                    //证明传的产品份数大于库存剩余
-                    if(productStockList.size()==0){
-                        centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-                        centerBookCheck.setProductStockList(notEnoughStock);
-                        log.info("传的产品份数大于库存剩余");
-                        return centerBookCheck;
-                    }
-                    centerBookCheck.setProductStockList(productStockList);
-                }
-            }else{
-                centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
-                //todo 刷新库存逻辑
-
-                return centerBookCheck;
-            }
-        }else{
-            log.info("没有该类产品 productCode :{}",req.getProductId());
-            centerBookCheck.setProductId(req.getProductId());
-            centerBookCheck.setMessage(CentralError.NO_PRODUCT_ERROR.getError());
-        }
-        //*************************以下是对接供应商校验逻辑***********************************
-//        //供应商输出
-//        YcfBookCheckRes ycfBookCheckRes = null;
-//        //开始组装供应商请求参数
-//        YcfBookCheckReq ycfBookCheckReq = new YcfBookCheckReq();
-//        ycfBookCheckReq.setProductId(req.getProductId());
+//        Date beginDate = null;
+//        Date endDate = null;
 //        try {
-//            ycfBookCheckReq.setBeginDate(DateUtils.parseTimeStringToDate(begin));
-//            ycfBookCheckReq.setEndDate(DateUtils.parseTimeStringToDate(end));
+//            beginDate = DateUtils.parseTimeStringToDate2(begin);
+//            endDate = DateUtils.parseTimeStringToDate2(end);
 //        } catch (ParseException e) {
 //            log.error("");
 //        }
-//        try {
-//            YcfBaseResult<YcfBookCheckRes> checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
-//            ycfBookCheckRes = checkInfos.getData();
+//        PricePO pricePos = productDao.getPricePos(req.getProductId());
+//        if(pricePos!=null){
+//            if(!CollectionUtils.isEmpty(pricePos.getPriceInfos())&&(beginDate!=null)){
+//                Date finalEndDate = endDate;
+//                Date finalBeginDate = beginDate;
+//                List<PriceInfoPO> priceInfoList = pricePos.getPriceInfos().stream().filter(s -> (s.getSaleDate().compareTo(finalBeginDate)==0||s.getSaleDate().compareTo(finalBeginDate)==1)
+//                        &&(s.getSaleDate().compareTo(finalEndDate)==0||s.getSaleDate().compareTo(finalEndDate)==-1)).collect(Collectors.toList());
+//                if(CollectionUtils.isEmpty(priceInfoList)){
+//                    centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
+//                    //todo 刷新库存逻辑
+//
+//                    return centerBookCheck;
+//                }else{
+//                    //库存不足的list
+//                    List<CenterBookCheckRes.ProductStock>  notEnoughStock = new ArrayList<>();
+//                    for (PriceInfoPO priceInfoPO:priceInfoList) {
+//                        CenterBookCheckRes.ProductStock productStock = new CenterBookCheckRes.ProductStock();
+//                        productStock.setSaleDate(DateTimeUtil.formatDate(priceInfoPO.getSaleDate(), DateTimeUtil.YYYYMMDD);
+//                        productStock.setStockCount(priceInfoPO.getStock());
+//                        // 校验产品份数查询mongo库存量
+//                        if(req.getCount()>priceInfoPO.getStock()){
+//                            //库存不足的也要返回提示
+//                            notEnoughStock.add(productStock);
+//                            continue;
+//                        }
+//                        //满足条件的产品
+//                        productStockList.add(productStock);
+//                    }
+//                    //证明传的产品份数大于库存剩余
+//                    if(productStockList.size()==0){
+//                        centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
+//                        centerBookCheck.setProductStockList(notEnoughStock);
+//                        log.info("传的产品份数大于库存剩余");
+//                        return centerBookCheck;
+//                    }
+//                    centerBookCheck.setProductStockList(productStockList);
+//                }
+//            }else{
+//                centerBookCheck.setMessage(CentralError.NO_PRODUCTSTOCK_ERROR.getError());
+//                //todo 刷新库存逻辑
+//
+//                return centerBookCheck;
+//            }
+//        }else{
+//            log.info("没有该类产品 productCode :{}",req.getProductId());
+//            centerBookCheck.setProductId(req.getProductId());
+//            centerBookCheck.setMessage(CentralError.no.getError());
+//        }
+        //*************************以下是对接供应商校验逻辑***********************************
+        //供应商输出
+        YcfBaseResult<YcfBookCheckRes> checkInfos = new YcfBaseResult();
+        YcfBookCheckRes ycfBookCheckRes = null;
+        //开始组装供应商请求参数
+        YcfBookCheckReq ycfBookCheckReq = new YcfBookCheckReq();
+        //转供应商productId
+        ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
+        try {
+            ycfBookCheckReq.setBeginDate(DateUtils.parseTimeStringToDate(begin));
+            ycfBookCheckReq.setEndDate(DateUtils.parseTimeStringToDate(end));
+        } catch (ParseException e) {
+            log.error("");
+        }
+        try {
+            checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
+            ycfBookCheckRes = checkInfos.getData();
 //            //测试数据 start
 //            String jsonString = "{\"data\":{\"productId\":\"16\",\"saleInfos\":[{\"date\":\"2016-06-14\",\"price\":99,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-15\",\"price\":98,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-16\",\"price\":97,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":10},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-17\",\"price\":96,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":0},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-18\",\"price\":95,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]}]},\"partnerId\":\"zx1000020160229\",\"success\":true,\"message\":null,\"statusCode\":200}";
 //            YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
+//            ycfBookCheckRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfBookCheckRes.class);
 //            //测试数据  end
-//            //供应商返回输入中台
-//            if(ycfBookCheckRes!=null){
-//                centerBookCheck.setProductId(req.getProductId());
-//                centerBookCheck.setProductCount(10);
-//            centerBookCheck = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), CenterBookCheckRes.CenterBookCheck.class);
-//            }
-//        }catch (Exception e){
-//            centerBookCheck.setErrorCode("001");
-//            centerBookCheck.setMessage("这是业务异常..");
-//            log.error("ycfOrderService --> getNBCheckInfos rpc服务异常。。",e);
-//        }
+            //供应商返回输入中台
+            if(ycfBookCheckRes!=null){
+                //库存不足的list
+                List<CenterBookCheckRes.ProductStock>  notEnoughStock = new ArrayList<>();
+                List<YcfBookSaleInfo> saleInfos = ycfBookCheckRes.getSaleInfos();
+                //没有库存
+                if(CollectionUtils.isEmpty(saleInfos)) {
+                    centerBookCheck.setMessage(CentralError.NO_STOCK_ERROR.getError());
+                    return centerBookCheck;
+                }
+                for (YcfBookSaleInfo saleInfo : saleInfos) {
+                    //中台库存对象
+                    CenterBookCheckRes.ProductStock stock = new CenterBookCheckRes.ProductStock();
+                    stock.setSaleDate(DateTimeUtil.formatDate(saleInfo.getDate(), DateTimeUtil.YYYYMMDD));
+                    //产品库存量
+                    stock.setStockCount(saleInfo.getTotalStock());
+                    if(req.getCount()>saleInfo.getTotalStock()){
+                        //库存不足的也要返回提示
+                        notEnoughStock.add(stock);
+                        continue;
+                    }
+                    productStockList.add(stock);
+                }
+                //证明传的产品份数大于供应商库存剩余
+                if(productStockList.size()==0){
+                    centerBookCheck.setMessage(CentralError.NOTENOUGH_STOCK_ERROR.getError());
+                    centerBookCheck.setProductStockList(notEnoughStock);
+                    log.info("传的产品份数大于库存剩余 产品编号：{}",req.getProductId());
+                    return centerBookCheck;
+                }
+                centerBookCheck.setProductStockList(productStockList);
+            }
+        }catch (Exception e){
+            log.error("ycfOrderService --> getNBCheckInfos rpc服务异常 :{}",e);
+        }
+        centerBookCheck.setMessage(checkInfos.getMessage());
         return centerBookCheck;
     }
 
@@ -229,15 +254,15 @@ public class YcfOrderManger extends OrderManager {
 //            log.error("ycfOrderService --> getNBCreateOrder rpc服务异常。。",e);
 //            throw new RuntimeException("ycfOrderService --> rpc服务异常");
 //        }
-            //测试数据 start
-            String jsonString = "{\"data\":{\"orderStatus\":0,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-            YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-            ycfCreateOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCreateOrderRes.class);
-            //测试数据  end
+        //测试数据 start
+        String jsonString = "{\"data\":{\"orderStatus\":0,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
+        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
+        ycfCreateOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCreateOrderRes.class);
+        //测试数据  end
         CenterCreateOrderRes.CreateOrderRes createOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
         //todo 通过查数据库封装中台结果集
         supplier.setData(createOrderRes);
-        supplier.setType(CentralUtils.getSupplierId(req.getProductId()));
+        supplier.setType(CentralUtils.getChannelCode(req.getProductId()));
         centerCreateOrderRes.setSupplier(supplier);
         return centerCreateOrderRes;
     }
@@ -296,7 +321,7 @@ public class YcfOrderManger extends OrderManager {
         //组装中台返回结果
         CenterCancelOrderRes.CancelOrderRes cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
         supplier.setData(cancelOrderRes);
-        supplier.setType(CentralUtils.getSupplierId(req.getProductCode()));
+        supplier.setType(CentralUtils.getChannelCode(req.getProductCode()));
         centerCancelOrderRes.setSupplier(supplier);
         return centerCancelOrderRes;
     }

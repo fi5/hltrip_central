@@ -160,8 +160,9 @@ public class ProductServiceImpl implements ProductService {
             for(PriceInfoPO entry: pricePo.getPriceInfos()){
                 PriceInfo target=new PriceInfo();
                 BeanUtils.copyProperties(entry,target);
+                target.setSaleDate(CommonUtils.curDate.format(entry.getSaleDate()));
                 priceInfos.add(target);
-                log.info("这里的日期:"+ CommonUtils.dateFormat.format(target.getSaleDate()));
+                log.info("这里的日期:"+ CommonUtils.curDate.format(entry.getSaleDate()));
             }
             ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
             Product tripProduct = ProductConverter.convertToProduct(productPo,0);
