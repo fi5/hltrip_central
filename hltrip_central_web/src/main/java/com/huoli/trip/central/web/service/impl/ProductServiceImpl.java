@@ -2,11 +2,13 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
+import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
@@ -42,6 +44,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductItemDao productItemDao;
+    @Autowired
+    OrderFactory orderFactory;
 
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request){
@@ -123,6 +127,10 @@ public class ProductServiceImpl implements ProductService {
             result.setPriceInfos(priceInfos);
             result.setBuyMaxNight(productPo.getBuyMaxNight());
             result.setBuyMinNight(productPo.getBuyMinNight());
+            if(productPo.getRoom()!=null){
+                final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
+                result.setBaseNum(baseNum);
+            }
 
             return BaseResponse.success(result);
         } catch (Exception e) {
@@ -146,27 +154,49 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse<ProductPriceDetialResult> priceDetail(ProductPriceReq productPriceReq) {
-        try {
-            ProductPriceDetialResult result=new ProductPriceDetialResult();
+    public BaseResponse<ProductPriceDetialResult> getPriceDetail(ProductPriceReq req) {
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        if (orderManager == null) {
+            return null;
+        }
 
-            final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
-            List<PriceInfo> priceInfos = Lists.newArrayList();
-            for(PriceInfoPO entry: pricePo.getPriceInfos()){
-                PriceInfo target=new PriceInfo();
-                BeanUtils.copyProperties(entry,target);
-                target.setSaleDate(CommonUtils.curDate.format(entry.getSaleDate()));
-                priceInfos.add(target);
-                log.info("这里的日期:"+ CommonUtils.curDate.format(entry.getSaleDate()));
-            }
-            ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
-            Product tripProduct = ProductConverter.convertToProduct(productPo,0);
+        try {
+            ProductPO productPo = productDao.getTripProductByCode(req.getProductCode());
+            final Product product = ProductConverter.convertToProduct(productPo, 0);
+            ProductPriceDetialResult result =new ProductPriceDetialResult();
+            req.setSupplierProductId(product.getSupplierProductId());
+            final ProductPriceDetialResult stockPrice = orderManager.getStockPrice(req);
+            result.setSupplierProductId(product.getSupplierProductId());
+            result.setBookAheadMin(product.getBookAheadMin());
+            result.setBuyMax(product.getBuyMax());
+            result.setBuyMaxNight(product.getBuyMaxNight());
+            result.setBuyMin(product.getBuyMin());
+            result.setBuyMinNight(product.getBuyMinNight());
+            result.setDelayType(product.getDelayType());
+            result.setDescription(product.getDescription());
+            result.setExcludeDesc(product.getExcludeDesc());
+            result.setName(product.getName());
+            result.setProductType(product.getProductType());
+            result.setImages(product.getImages());
+            result.setIncludeDesc(product.getIncludeDesc());
+            result.setRefundType(product.getRefundType());
+            result.setDelayType(product.getDelayType());
+            result.setRefundAheadMin(product.getRefundAheadMin());
+            result.setRefundDesc(product.getRefundDesc());
+            result.setBookRules(product.getBookRules());
+            result.setLimitRules(product.getLimitRules());
+            result.setRoom(product.getRoom());
+            result.setTicket(product.getTicket());
+            result.setFood(product.getFood());
+//TODO  调用统一的价格计算并设值
+
 
             return BaseResponse.success(result);
         } catch (Exception e) {
-            log.info("",e);
+        	log.info("",e);
+            return null;
         }
-        return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+
     }
 
     @Override

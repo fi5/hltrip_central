@@ -148,6 +148,7 @@ public class ProductDaoImpl implements ProductDao {
         return mongoTemplate.findOne(query, ProductPO.class);
     }
 
+
     /**
      * 查推荐结果
      * @param itemCodes

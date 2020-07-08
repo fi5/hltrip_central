@@ -1,8 +1,11 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.*;
+import com.huoli.trip.supplier.self.yaochufa.vo.YcfGetPriceRequest;
 
 /**
  * 描述：desc<br>
@@ -28,6 +31,13 @@ public abstract class OrderManager {
 
         return null;
     }
+
+    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
+
+        return null;
+    }
+
+
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         return null;
     }

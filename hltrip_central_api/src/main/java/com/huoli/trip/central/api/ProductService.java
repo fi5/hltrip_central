@@ -48,5 +48,8 @@ public interface ProductService {
      */
     List<ImageBase> getImages(ImageRequest request);
 
-    BaseResponse<ProductPriceDetialResult> priceDetail(ProductPriceReq productPriceReq);
+    /**
+     * 套餐价格详情
+     */
+    BaseResponse<ProductPriceDetialResult> getPriceDetail(ProductPriceReq req);
 }

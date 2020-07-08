@@ -82,6 +82,11 @@ public interface ProductDao {
      */
     PricePO getPricePos(String productCode);
 
+	/**
+     * 获取product
+     * @param productCode
+     * @return
+     */
     ProductPO getTripProductByCode(String productCode);
 
 }

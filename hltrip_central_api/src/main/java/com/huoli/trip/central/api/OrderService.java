@@ -1,7 +1,9 @@
 package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.*;
 
 /**
@@ -28,6 +30,7 @@ public interface OrderService {
      * 重新获取凭证
      */
     BaseResponse<OrderDetailRep> getVochers(OrderOperReq req);
+
 
     /**
      * 描述: <br> 创建订单

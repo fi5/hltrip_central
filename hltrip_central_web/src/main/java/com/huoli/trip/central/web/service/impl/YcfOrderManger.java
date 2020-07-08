@@ -13,7 +13,9 @@ import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.self.yaochufa.vo.*;
@@ -195,7 +197,7 @@ public class YcfOrderManger extends OrderManager {
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(data.getOrderId());
             rep.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(data.getOrderStatus(),1));
-            rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
+//            rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
             return BaseResponse.success(rep);
         } catch (Exception e) {
             log.info("",e);
@@ -324,5 +326,22 @@ public class YcfOrderManger extends OrderManager {
         supplier.setType(CentralUtils.getChannelCode(req.getProductCode()));
         centerCancelOrderRes.setSupplier(supplier);
         return centerCancelOrderRes;
+    }
+
+
+    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
+
+        YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
+        stockPriceReq.setProductID(req.getSupplierProductId());
+        stockPriceReq.setPartnerProductID(req.getProductCode());
+        stockPriceReq.setStartDate(req.getStartDate());
+        stockPriceReq.setEndDate(req.getEndDate());
+        try {
+            final YcfBaseResult<YcfGetPriceResponse> stockPrice = ycfOrderService.getStockPrice(stockPriceReq);
+            return  null;//TODo
+        } catch (Exception e) {
+            log.info("",e);
+            return  null;
+        }
     }
 }
