@@ -41,18 +41,25 @@ public abstract class OrderManager {
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         return null;
     }
-    public CenterBookCheck getNBCheckInfos(BookCheckReq req) throws RuntimeException {
+    public BaseResponse<CenterBookCheck>  getNBCheckInfos(BookCheckReq req){
         return null;
     }
-    public CenterCreateOrderRes getNBCreateOrder(CreateOrderReq req) throws RuntimeException {
-        return null;
-    }
-
-    public CenterPayOrderRes getCenterPayOrder(PayOrderReq req) throws RuntimeException{
+    public BaseResponse<CenterCreateOrderRes> getNBCreateOrder(CreateOrderReq req){
         return null;
     }
 
-    public  CenterCancelOrderRes getCenterCancelOrder(CancelOrderReq req) throws RuntimeException {
+    public BaseResponse<CenterPayOrderRes> getCenterPayOrder(PayOrderReq req){
         return null;
-    };
+    }
+
+    public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
+        return null;
+    }
+    public  BaseResponse<Boolean> payCheck(PayOrderReq req){
+        return null;
+    }
+
+    public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
+        return null;
+    }
 }
