@@ -3,7 +3,6 @@ package com.huoli.trip.central.api;
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.PriceCalcResult;
 import com.huoli.trip.common.vo.response.central.*;
 
 import java.util.List;

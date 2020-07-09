@@ -25,7 +25,6 @@ import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.ProductItem;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.PriceCalcResult;
 import com.huoli.trip.common.vo.response.central.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
