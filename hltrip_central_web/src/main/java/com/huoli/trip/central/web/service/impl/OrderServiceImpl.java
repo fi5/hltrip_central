@@ -26,10 +26,10 @@ import org.springframework.util.concurrent.ListenableFuture;
  * 创建日期：2020/6/30<br>
  */
 @Slf4j
-@Service(timeout = 10000,group = "hllx")
+@Service(timeout = 10000,group = "hltrip")
 public class OrderServiceImpl implements OrderService {
 
-    @Reference(group = "hllx")
+    @Reference(group = "hltrip")
     private YcfOrderService ycfOrderService;
     @Autowired
     KafkaTemplate kafkaTemplate;

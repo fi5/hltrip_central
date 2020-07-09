@@ -344,19 +344,20 @@ public class YcfOrderManger extends OrderManager {
     }
 
 
-    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
-
-        YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
-        stockPriceReq.setProductID(req.getSupplierProductId());
-        stockPriceReq.setPartnerProductID(req.getProductCode());
-        stockPriceReq.setStartDate(req.getStartDate());
-        stockPriceReq.setEndDate(req.getEndDate());
-        try {
-            final YcfBaseResult<YcfGetPriceResponse> stockPrice = ycfOrderService.getStockPrice(stockPriceReq);
-            return  null;//TODo
-        } catch (Exception e) {
-            log.info("",e);
-            return  null;
-        }
-    }
+    //先调用同步价格的服务,这个先不调用了
+//    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
+//
+//        YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
+//        stockPriceReq.setProductID(req.getSupplierProductId());
+//        stockPriceReq.setPartnerProductID(req.getProductCode());
+//        stockPriceReq.setStartDate(req.getStartDate());
+//        stockPriceReq.setEndDate(req.getEndDate());
+//        try {
+//            final YcfBaseResult<YcfGetPriceResponse> stockPrice = ycfOrderService.getStockPrice(stockPriceReq);
+//            return  null;//TODo
+//        } catch (Exception e) {
+//            log.info("",e);
+//            return  null;
+//        }
+//    }
 }
