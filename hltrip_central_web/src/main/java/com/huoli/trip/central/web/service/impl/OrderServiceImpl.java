@@ -134,7 +134,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductCode()));
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
