@@ -32,6 +32,12 @@ public abstract class OrderManager {
         return null;
     }
 
+    public void refreshStockPrice(ProductPriceReq req){
+
+    }
+
+
+
 
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         return null;

@@ -18,6 +18,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
+import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.yaochufa.vo.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +43,12 @@ import java.util.List;
 @Component
 @Slf4j
 public class YcfOrderManger extends OrderManager {
-    @Reference(group = "hllx")
+    @Reference(group = "hltrip")
     private YcfOrderService ycfOrderService;
+
+    @Reference(group = "hltrip")
+    private YcfSyncService ycfSynService;
+
     @Autowired
     private ProductDao productDao;
     @Autowired
@@ -156,13 +161,15 @@ public class YcfOrderManger extends OrderManager {
         final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
         try {
             final YcfVouchersResult data = vochers.getData();
+            if(!vochers.getStatusCode().equals("200"))
+                return BaseResponse.fail(9999,vochers.getMessage(),null);
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(req.getOrderId());
             rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
             return BaseResponse.success(rep);
         } catch (Exception e) {
             log.info("",e);
-            return BaseResponse.fail(-101,vochers.getMessage(),null);
+            return BaseResponse.fail(9999,vochers.getMessage(),null);
         }
 
     }
@@ -345,20 +352,18 @@ public class YcfOrderManger extends OrderManager {
     }
 
 
-    //先调用同步价格的服务,这个先不调用了
-//    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
-//
-//        YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
-//        stockPriceReq.setProductID(req.getSupplierProductId());
-//        stockPriceReq.setPartnerProductID(req.getProductCode());
-//        stockPriceReq.setStartDate(req.getStartDate());
-//        stockPriceReq.setEndDate(req.getEndDate());
-//        try {
-//            final YcfBaseResult<YcfGetPriceResponse> stockPrice = ycfOrderService.getStockPrice(stockPriceReq);
-//            return  null;//TODo
-//        } catch (Exception e) {
-//            log.info("",e);
-//            return  null;
-//        }
-//    }
+    public void refreshStockPrice(ProductPriceReq req){
+
+        try {
+            YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
+            stockPriceReq.setProductID(req.getSupplierProductId());
+            stockPriceReq.setPartnerProductID(req.getProductCode());
+            stockPriceReq.setStartDate(req.getStartDate());
+            stockPriceReq.setEndDate(req.getEndDate());
+            ycfSynService.getPrice(stockPriceReq);
+
+        } catch (Exception e) {
+            log.info("",e);
+        }
+    }
 }

@@ -27,6 +27,7 @@ import com.huoli.trip.common.vo.ProductItem;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfGetPriceRequest;
@@ -60,8 +61,6 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     OrderFactory orderFactory;
 
-    @Reference(group = "hltrip")
-    private YcfSyncService ycfOrderService;
 
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request) {
@@ -183,12 +182,13 @@ public class ProductServiceImpl implements ProductService {
             ProductPriceDetialResult result = new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
 
-            YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
-            stockPriceReq.setProductID(req.getSupplierProductId());
-            stockPriceReq.setPartnerProductID(req.getProductCode());
-            stockPriceReq.setStartDate(req.getStartDate());
-            stockPriceReq.setEndDate(req.getEndDate());
-            ycfOrderService.getPrice(stockPriceReq);//这个方法会查最新价格,存mongo
+
+
+            OrderManager orderManager = orderFactory.getOrderManager(productPo.getSupplierId());
+            if (orderManager == null) {
+                return null;
+            }
+            orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
 
             result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());

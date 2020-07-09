@@ -7,7 +7,9 @@ import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.RefundKafka;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
@@ -63,7 +65,17 @@ public class OrderServiceImpl implements OrderService {
         try {
             log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
             String topic = "hltrip_order_refund";
-            JSONObject kafkaInfo = new JSONObject();
+            RefundKafka kafkaInfo = new RefundKafka();
+            kafkaInfo.setOrderId(req.getPartnerOrderId());
+            kafkaInfo.setRefundStatus(req.getRefundStatus());
+            kafkaInfo.setExpense(req.getRefundCharge());
+            kafkaInfo.setHandleRemark(req.getHandleRemark());
+            kafkaInfo.setRefundPrice(req.getRefundPrice());
+            kafkaInfo.setRefundReason(req.getRefundReason());
+            if(null!=req.getRefundTime())
+            kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
+            if(null!=req.getResponseTime())
+                kafkaInfo.setResponseTime(CommonUtils.dateFormat.format(req.getResponseTime()));
             ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(kafkaInfo));
             listenableFuture.addCallback(
                     result -> log.info("订单发送kafka成功, params : {}", JSONObject.toJSONString(req)),
