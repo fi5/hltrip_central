@@ -57,7 +57,7 @@ public class CentralDubboServiceAspect {
                 result = joinPoint.proceed(args);
             } catch (HlCentralException e) {
                 log.error("[{}] 业务异常: ", function, e);
-                result = BaseResponse.withFail(e.getCode(), e.getMessage());
+                result = BaseResponse.withFail(e.getCode(), e.getMessage(), e.getData());
             } catch (ValidationException | TypeMismatchException | MethodArgumentNotValidException e){
                 log.error("[{}] 请求参数异常: ", function, e);
                 result = BaseResponse.withFail(CentralError.ERROR_BAD_REQUEST);

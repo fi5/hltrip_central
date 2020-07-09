@@ -28,7 +28,6 @@ import com.huoli.trip.common.vo.ProductItem;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
-import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfGetPriceRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -271,7 +270,8 @@ public class ProductServiceImpl implements ProductService {
         PriceCalcResult result = new PriceCalcResult();
         ProductPO productPO = productDao.getTripProductByCode(request.getProductCode());
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
-        if (productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
+        // 含酒店
+        if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
             // 天比晚多1
             int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate()) - 1;
             int baseNight = productPO.getRoom().getRooms().get(0).getBaseNight();
@@ -297,24 +297,27 @@ public class ProductServiceImpl implements ProductService {
                 Date startDate = DateTimeUtil.addDay(request.getStartDate(), i * baseNight);
                 checkPrice(pricePO.getPriceInfos(), startDate, quantityTotal, result);
             }
-            return BaseResponse.withSuccess(result);
-        } else {
+        } else { // 不含酒店
             checkPrice(pricePO.getPriceInfos(), request.getStartDate(), request.getQuantity(), result);
-            return BaseResponse.withSuccess(result);
         }
+        return BaseResponse.withSuccess(result);
     }
 
     private void checkPrice(List<PriceInfoPO> priceInfoPOs, Date startDate, int quantityTotal, PriceCalcResult result){
+        // 拿到当前日期价格信息
         PriceInfoPO priceInfoPO = priceInfoPOs.stream().filter(price -> price.getSaleDate().getTime() == startDate.getTime()).findFirst().orElse(null);
+        String dateStr = DateTimeUtil.format(startDate, DateTimeUtil.defaultDatePattern);
         if (priceInfoPO == null) {
-            String msg = String.format("%s的价格缺失", DateTimeUtil.format(startDate, DateTimeUtil.defaultDatePattern));
+            String msg = String.format("%s的价格缺失", dateStr);
             log.error(msg);
             throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR.getCode(), msg);
         }
         if (priceInfoPO.getStock() < quantityTotal) {
-            String msg = String.format("库存不足，剩余库存={}, 购买份数={}", priceInfoPO.getStock(), quantityTotal);
+            String msg = String.format("库存不足，{}剩余库存={}, 购买份数={}", dateStr, priceInfoPO.getStock(), quantityTotal);
             log.error(msg);
-            throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg);
+            // 库存不足要返回具体库存
+            result.setMinStock(priceInfoPO.getStock());
+            throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg, result);
         }
         BigDecimal salesTotal = new BigDecimal(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSalePrice(), quantityTotal).doubleValue()));
