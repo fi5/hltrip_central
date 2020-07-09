@@ -149,13 +149,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Boolean payCheck(PayOrderReq req) {
+    public BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         //todo 支付前校验逻辑
-//        Boolean result = orderManager.payCheck(req);
-        return true;
+        BaseResponse<CenterPayCheckRes> result = orderManager.payCheck(req);
+        return result;
     }
 
     /**

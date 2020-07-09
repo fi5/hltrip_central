@@ -363,9 +363,11 @@ public class YcfOrderManger extends OrderManager {
         return new BaseResponse(0,true,null,cancelOrderRes);
     }
 
-    public  BaseResponse<Boolean> payCheck(PayOrderReq req){
+    public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
         //todo 支付前校验逻辑
-        return BaseResponse.success(true);
+        CenterPayCheckRes result = new CenterPayCheckRes();
+        result.setResult(true);
+        return BaseResponse.success(result);
     }
 
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
