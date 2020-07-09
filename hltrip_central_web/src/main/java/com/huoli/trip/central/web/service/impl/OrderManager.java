@@ -41,10 +41,10 @@ public abstract class OrderManager {
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         return null;
     }
-    public BaseResponse<CenterBookCheck>  getNBCheckInfos(BookCheckReq req){
+    public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
         return null;
     }
-    public BaseResponse<CenterCreateOrderRes> getNBCreateOrder(CreateOrderReq req){
+    public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
         return null;
     }
 

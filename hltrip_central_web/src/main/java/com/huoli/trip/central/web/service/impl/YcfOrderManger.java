@@ -60,7 +60,7 @@ public class YcfOrderManger extends OrderManager {
         System.out.println("ycf");
         return "ycf";
     }
-    public BaseResponse<CenterBookCheck> getNBCheckInfos(BookCheckReq req) throws RuntimeException{
+    public BaseResponse<CenterBookCheck> getCenterCheckInfos(BookCheckReq req) throws RuntimeException{
         //中台输出
         BaseResponse<CenterBookCheck> centerBookCheck = new BaseResponse<CenterBookCheck>();
         CenterBookCheck  bookCheck = new CenterBookCheck();
@@ -167,7 +167,7 @@ public class YcfOrderManger extends OrderManager {
 
     }
 
-    public BaseResponse<CenterCreateOrderRes> getNBCreateOrder(CreateOrderReq req) throws RuntimeException{
+    public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req) throws RuntimeException{
         //中台封装返回
         CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
         //先校验是否可以预定

@@ -49,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
         //封装中台返回
         BaseResponse<CenterBookCheck> checkRes = new BaseResponse<CenterBookCheck>();
         try {
-            checkRes = orderManager.getNBCheckInfos(req);
+            checkRes = orderManager.getCenterCheckInfos(req);
         }catch (RuntimeException e){
             log.error("OrderServiceImpl --> getCheckInfos rpc服务异常 :{}", e);
             return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
@@ -109,7 +109,7 @@ public class OrderServiceImpl implements OrderService {
         checkManger(orderManager);
         BaseResponse<CenterCreateOrderRes> result = new BaseResponse<>();
         try {
-            result = orderManager.getNBCreateOrder(req);
+            result = orderManager.getCenterCreateOrder(req);
         } catch (RuntimeException e) {
             log.error("OrderServiceImpl --> createOrder rpc服务异常 :{}", e);
             return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
