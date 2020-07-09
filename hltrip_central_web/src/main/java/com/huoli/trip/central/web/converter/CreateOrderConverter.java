@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.converter;
 
 import com.huoli.trip.central.web.util.CentralUtils;
+import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
@@ -27,6 +28,9 @@ import java.util.List;
 public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreateOrderReq,YcfCreateOrderRes,CenterCreateOrderRes> {
     @Override
     public YcfCreateOrderReq convertRequestToSupplierRequest(CreateOrderReq req) {
+        if(req==null){
+            return null;
+        }
         YcfCreateOrderReq ycfCreateOrderReq = new YcfCreateOrderReq();
         ycfCreateOrderReq.setCName(req.getCName());
         ycfCreateOrderReq.setCredential(req.getCredential());
@@ -48,9 +52,22 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
     @Override
     public CenterCreateOrderRes convertSupplierResponseToResponse(YcfCreateOrderRes supplierResponse) {
+        if(supplierResponse==null){
+            return null;
+        }
         CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
         createOrderRes.setOrderId(supplierResponse.getOrderId());
-        createOrderRes.setOrderStatus(supplierResponse.getOrderStatus());
+        switch (supplierResponse.getOrderStatus()){
+            case 0:createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());break;
+            case 10:createOrderRes.setOrderStatus(OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode());break;
+            case 11:createOrderRes.setOrderStatus(OrderStatus.TO_BE_CONFIRMED.getCode());break;
+            case 12:createOrderRes.setOrderStatus(OrderStatus.WAITING_APPOINTMENT.getCode());break;
+            case 13:createOrderRes.setOrderStatus(OrderStatus.TO_PAID_TWICE.getCode());break;
+            case 20:createOrderRes.setOrderStatus(OrderStatus.WAITING_TO_TRAVEL.getCode());break;
+            case 30:createOrderRes.setOrderStatus(OrderStatus.CONSUMED.getCode());break;
+            case 40:createOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());break;
+            default : log.info("创建订单服务 订单状态返回异类 ：{}",supplierResponse.getOrderStatus()); break;
+        }
         return createOrderRes;
     }
 

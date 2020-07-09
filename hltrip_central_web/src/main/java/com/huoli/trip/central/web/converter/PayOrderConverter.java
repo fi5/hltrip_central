@@ -21,6 +21,9 @@ import org.springframework.stereotype.Component;
 public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq, YcfPayOrderRes, CenterPayOrderRes> {
     @Override
     public YcfPayOrderReq convertRequestToSupplierRequest(PayOrderReq req) {
+        if(req == null){
+            return null;
+        }
         YcfPayOrderReq ycfPayOrderReq = new YcfPayOrderReq();
         //组装支付流水参数
         ycfPayOrderReq.setPaySerialNumber(req.getPaySerialNumber());
@@ -31,6 +34,9 @@ public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq,
 
     @Override
     public CenterPayOrderRes convertSupplierResponseToResponse(YcfPayOrderRes supplierResponse) {
+        if(supplierResponse == null){
+            return null;
+        }
         CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
         payOrderRes.setChannelOrderId(supplierResponse.getOrderId());
         switch (supplierResponse.getOrderStatus()){

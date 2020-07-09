@@ -21,6 +21,9 @@ import org.springframework.stereotype.Component;
 public class ApplyRefundConverter implements Converter<CancelOrderReq, YcfCancelOrderReq, YcfCancelOrderRes, CenterCancelOrderRes> {
     @Override
     public YcfCancelOrderReq convertRequestToSupplierRequest(CancelOrderReq req) {
+        if(req == null){
+            return null;
+        }
         YcfCancelOrderReq ycfCancelOrderReq = new YcfCancelOrderReq();
         ycfCancelOrderReq.setPartnerOrderId(req.getPartnerOrderId());
         ycfCancelOrderReq.setRemark(req.getRemark());
@@ -39,6 +42,9 @@ public class ApplyRefundConverter implements Converter<CancelOrderReq, YcfCancel
      */
     @Override
     public CenterCancelOrderRes convertSupplierResponseToResponse(YcfCancelOrderRes supplierResponse) {
+        if(supplierResponse == null){
+            return null;
+        }
         CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
         switch (supplierResponse.getOrderStatus()){
             case 40:cancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());break;

@@ -300,7 +300,7 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         } else {
             checkPrice(pricePO.getPriceInfos(), request.getStartDate(), request.getQuantity(), result);
-            return BaseResponse.withSuccess(request);
+            return BaseResponse.withSuccess(result);
         }
     }
 
