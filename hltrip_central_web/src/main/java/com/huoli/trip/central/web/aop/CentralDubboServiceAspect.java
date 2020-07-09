@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.aop;
 
 import com.alibaba.fastjson.JSON;
+import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -8,11 +9,14 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ValidationException;
 
 /**
  * 描述：desc<br>
@@ -32,38 +36,50 @@ public class CentralDubboServiceAspect {
     }
 
     @Around(value = "apiPointCut()")
-    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        String function = joinPoint.getSignature().getName();
-        Object args[] = joinPoint.getArgs();
-        Object result = null;
-        StopWatch stopWatch = new StopWatch();
-        for (int i = 0; i < args.length; i++) {
-            Object argu = args[i];
-            if (argu instanceof HttpServletResponse) {
-                continue;
-            }
-            if (argu instanceof HttpServletRequest) {
-                continue;
-            }
-        }
-        stopWatch.start();
+    public Object around(ProceedingJoinPoint joinPoint){
         try {
-            log.info("[{}] request: {}", function, JSON.toJSON(args));
-            result = joinPoint.proceed(args);
-        } catch (Throwable e) {
-            if(e instanceof HlCentralException){
-                HlCentralException hlCentralException = (HlCentralException) e;
-                log.error("[{}],e",function,hlCentralException);
-                result= BaseResponse.withFail(hlCentralException.getCode(),hlCentralException.getMessage());
+            String function = joinPoint.getSignature().getName();
+            Object args[] = joinPoint.getArgs();
+            Object result;
+            StopWatch stopWatch = new StopWatch();
+            for (int i = 0; i < args.length; i++) {
+                Object argu = args[i];
+                if (argu instanceof HttpServletResponse) {
+                    continue;
+                }
+                if (argu instanceof HttpServletRequest) {
+                    continue;
+                }
             }
-        } finally {
-            stopWatch.stop();
-        }
-        if (result != null) {
-            log.info("[{}],response: {}, cost: {},", function, JSON.toJSON(result),
+            stopWatch.start();
+            try {
+                log.info("[{}] request: {}", function, JSON.toJSON(args));
+                result = joinPoint.proceed(args);
+            } catch (HlCentralException e) {
+                log.error("[{}] 业务异常: ", function, e);
+                result = BaseResponse.withFail(e.getCode(), e.getMessage());
+            } catch (ValidationException | TypeMismatchException | MethodArgumentNotValidException e){
+                log.error("[{}] 请求参数异常: ", function, e);
+                result = BaseResponse.withFail(CentralError.ERROR_BAD_REQUEST);
+            } catch (NullPointerException e) {
+                log.error("[{}] 数据不完整异常: ", function, e);
+                result = BaseResponse.withFail(CentralError.DATA_NULL_ERROR);
+            } catch  (Throwable e) {
+                log.error("[{}] 服务器内部错误异常: ", function, e);
+                result = BaseResponse.withFail(CentralError.ERROR_SERVER_ERROR);
+            } finally {
+                stopWatch.stop();
+            }
+            if (result == null) {
+                log.error("[{}] result 为空", function);
+                result = BaseResponse.fail(CentralError.UN_KNOW_ERROR);
+            }
+            log.info("[{}], response: {}, cost: {},", function, JSON.toJSON(result),
                     stopWatch.getTotalTimeMillis());
+            return result;
+        } catch (Throwable e) {
+            log.error("切面执行异常：", e);
+            return BaseResponse.fail(CentralError.UN_KNOW_ERROR);
         }
-        return result;
     }
-
 }
