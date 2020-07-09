@@ -62,9 +62,9 @@ public class OrderServiceImpl implements OrderService {
             RefundKafka kafkaInfo = new RefundKafka();
             kafkaInfo.setOrderId(req.getPartnerOrderId());
             kafkaInfo.setRefundStatus(req.getRefundStatus());
+            kafkaInfo.setRefundPrice(req.getRefundPrice());
             kafkaInfo.setExpense(req.getRefundCharge());
             kafkaInfo.setHandleRemark(req.getHandleRemark());
-            kafkaInfo.setRefundPrice(req.getRefundPrice());
             kafkaInfo.setRefundReason(req.getRefundReason());
             if(null!=req.getRefundTime())
             kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
