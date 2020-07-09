@@ -8,9 +8,7 @@ import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.vo.request.*;
-import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,22 +43,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterBookCheck> getCheckInfos(BookCheckReq req) {
-        OrderManager orderManager =orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
+        OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
-        CenterBookCheck checkRes = new CenterBookCheck();
-//        //供应商对象包装业务实体类
-//        CenterSupplier supplier = new CenterSupplier();
+        BaseResponse<CenterBookCheck> checkRes = new BaseResponse<CenterBookCheck>();
         try {
-            checkRes = orderManager.getNBCheckInfos(req);
-//            supplier.setType(req.getChannelCode());
-//            checkRes.setSupplier(supplier);
+            checkRes = orderManager.getCenterCheckInfos(req);
         }catch (RuntimeException e){
             log.error("OrderServiceImpl --> getCheckInfos rpc服务异常 :{}", e);
             return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
-        return BaseResponse.withSuccess(checkRes);
+        return checkRes;
     }
 
     @Override
@@ -114,52 +108,58 @@ public class OrderServiceImpl implements OrderService {
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCreateOrderRes> result = new BaseResponse<>();
-        CenterCreateOrderRes data = new CenterCreateOrderRes();
         try {
-            data = orderManager.getNBCreateOrder(req);
-        } catch (Exception e) {
+            result = orderManager.getCenterCreateOrder(req);
+        } catch (RuntimeException e) {
             log.error("OrderServiceImpl --> createOrder rpc服务异常 :{}", e);
-            return result.fail(-100, result.getMessage(), false);
+            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
-        return result.withSuccess(data);
+        return result;
     }
 
     @Override
     public BaseResponse<CenterPayOrderRes> payOrder(PayOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager((req.getChannelCode()));
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterPayOrderRes> result = new BaseResponse<>();
-        CenterPayOrderRes data = new CenterPayOrderRes();
         try {
-            data = orderManager.getCenterPayOrder(req);
-        } catch (Exception e) {
+            result = orderManager.getCenterPayOrder(req);
+        } catch (RuntimeException e) {
             log.error("OrderServiceImpl --> payOrder rpc服务异常 :{}", e);
-            return result.fail(-100, result.getMessage(), false);
+            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
-        return result.withSuccess(data);
+        return result;
     }
 
     @Override
     public BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductCode()));
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
-        CenterCancelOrderRes data = new CenterCancelOrderRes();
         try {
-            data = orderManager.getCenterCancelOrder(req);
-        } catch (Exception e) {
+            result = orderManager.getCenterCancelOrder(req);
+        } catch (RuntimeException e) {
             log.error("OrderServiceImpl --> cancelOrder rpc服务异常 :{}", e);
-            return result.fail(-100, result.getMessage(), false);
+            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
-        return result.withSuccess(data);
+        return result;
     }
 
     @Override
     public BaseResponse<CenterCancelOrderRes> applyRefund(CancelOrderReq req) {
-        //todo 退款通知
-        return cancelOrder(req);
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        //校验manager处理
+        checkManger(orderManager);
+        BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
+        try {
+            result = orderManager.getCenterApplyRefund(req);
+        } catch (RuntimeException e) {
+            log.error("OrderServiceImpl --> applyRefund rpc服务异常 :{}", e);
+            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
+        }
+        return result;
     }
 
     @Override
@@ -177,6 +177,16 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.info("",e);
         }
+    }
+
+    @Override
+    public Boolean payCheck(PayOrderReq req) {
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        //校验manager处理
+        checkManger(orderManager);
+        //todo 支付前校验逻辑
+//        Boolean result = orderManager.payCheck(req);
+        return true;
     }
 
     /**

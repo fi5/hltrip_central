@@ -4,13 +4,11 @@ import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.dao.ProductDao;
-import com.huoli.trip.central.web.util.DateUtils;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
-import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
 import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -143,8 +141,8 @@ public class Test0 {
         if(StringUtils.isBlank(end)){
             end = begin;
         }
-        Date date1 = DateUtils.parseTimeStringToDate2(begin);
-        Date date2 = DateUtils.parseTimeStringToDate2(end);
+        Date date1 = DateTimeUtil.parseDate(begin);
+        Date date2 = DateTimeUtil.parseDate(end);
 //        Document queryObject = new Document();
 //        queryObject.put("productCode", productCode);
         PricePO pricePos = productDao.getPricePos(productCode);

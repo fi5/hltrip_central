@@ -28,7 +28,6 @@ public class CancelOrderConverter implements Converter<CancelOrderReq, YcfCancel
     @Override
     public CenterCancelOrderRes convertSupplierResponseToResponse(YcfCancelOrderRes supplierResponse) {
         CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
-        cancelOrderRes.setAsync(supplierResponse.getAsync());
         cancelOrderRes.setOrderStatus(supplierResponse.getOrderStatus());
         return cancelOrderRes;
     }
