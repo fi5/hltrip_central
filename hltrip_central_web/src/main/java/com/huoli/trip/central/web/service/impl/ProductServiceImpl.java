@@ -26,7 +26,6 @@ import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.ProductItem;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.PriceCalcResult;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
@@ -177,10 +176,6 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<ProductPriceDetialResult> getPriceDetail(ProductPriceReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
-        if (orderManager == null) {
-            return null;
-        }
 
         try {
             ProductPO productPo = productDao.getTripProductByCode(req.getProductCode());
@@ -195,6 +190,7 @@ public class ProductServiceImpl implements ProductService {
             stockPriceReq.setEndDate(req.getEndDate());
             ycfOrderService.getPrice(stockPriceReq);//这个方法会查最新价格,存mongo
 
+            result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());
             result.setBuyMax(product.getBuyMax());
@@ -219,7 +215,16 @@ public class ProductServiceImpl implements ProductService {
             result.setFood(product.getFood());
 //  调用统一的价格计算并设值
 
-            ca
+            PriceCalcRequest priceCal=new PriceCalcRequest();
+            priceCal.setQuantity(req.getCount());
+            priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
+            priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
+            priceCal.setProductCode(req.getProductCode());
+            final BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = calcTotalPrice(priceCal);
+            final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
+            result.setSalePrice(priceCalData.getSalesTotal());
+            result.setSettlePrice(priceCalData.getSettlesTotal());
+            result.setStock(priceCalData.getMinStock());
 
 
             return BaseResponse.success(result);
