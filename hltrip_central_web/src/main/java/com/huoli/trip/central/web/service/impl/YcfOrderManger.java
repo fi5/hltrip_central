@@ -2,10 +2,7 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.fastjson.JSONObject;
-import com.huoli.trip.central.web.converter.CancelOrderConverter;
-import com.huoli.trip.central.web.converter.CreateOrderConverter;
-import com.huoli.trip.central.web.converter.OrderInfoTranser;
-import com.huoli.trip.central.web.converter.PayOrderConverter;
+import com.huoli.trip.central.web.converter.*;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.CentralError;
@@ -52,6 +49,8 @@ public class YcfOrderManger extends OrderManager {
     private PayOrderConverter payOrderConverter;
     @Autowired
     private CancelOrderConverter cancelOrderConverter;
+    @Autowired
+    private ApplyRefundConverter applyRefundConverter;
     public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_YCF;
     public String getChannel(){
         return CHANNEL;
@@ -322,7 +321,7 @@ public class YcfOrderManger extends OrderManager {
 
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req) throws RuntimeException{
         //转换前端传参
-        YcfCancelOrderReq ycfCancelOrderReq = cancelOrderConverter.convertRequestToSupplierRequest(req);
+        YcfCancelOrderReq ycfCancelOrderReq = applyRefundConverter.convertRequestToSupplierRequest(req);
         //封装中台返回结果
         CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
         YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
@@ -339,25 +338,26 @@ public class YcfOrderManger extends OrderManager {
         ycfCancelOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCancelOrderRes.class);
         //测试数据  end
         //组装中台返回结果
-        cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
+        cancelOrderRes = applyRefundConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
         //todo 退款返回文案与取消订单不一样
         return new BaseResponse(0,true,"退款成功",cancelOrderRes);
     }
 
 
-    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
-
-        YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
-        stockPriceReq.setProductID(req.getSupplierProductId());
-        stockPriceReq.setPartnerProductID(req.getProductCode());
-        stockPriceReq.setStartDate(req.getStartDate());
-        stockPriceReq.setEndDate(req.getEndDate());
-        try {
-            final YcfBaseResult<YcfGetPriceResponse> stockPrice = ycfOrderService.getStockPrice(stockPriceReq);
-            return  null;//TODo
-        } catch (Exception e) {
-            log.info("",e);
-            return  null;
-        }
-    }
+    //先调用同步价格的服务,这个先不调用了
+//    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
+//
+//        YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
+//        stockPriceReq.setProductID(req.getSupplierProductId());
+//        stockPriceReq.setPartnerProductID(req.getProductCode());
+//        stockPriceReq.setStartDate(req.getStartDate());
+//        stockPriceReq.setEndDate(req.getEndDate());
+//        try {
+//            final YcfBaseResult<YcfGetPriceResponse> stockPrice = ycfOrderService.getStockPrice(stockPriceReq);
+//            return  null;//TODo
+//        } catch (Exception e) {
+//            log.info("",e);
+//            return  null;
+//        }
+//    }
 }
