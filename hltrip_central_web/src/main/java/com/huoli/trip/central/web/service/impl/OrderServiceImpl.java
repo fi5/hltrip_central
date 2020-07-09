@@ -49,13 +49,7 @@ public class OrderServiceImpl implements OrderService {
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
-        BaseResponse<CenterBookCheck> checkRes = new BaseResponse<CenterBookCheck>();
-        try {
-            checkRes = orderManager.getCenterCheckInfos(req);
-        }catch (RuntimeException e){
-            log.error("OrderServiceImpl --> getCheckInfos rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterBookCheck> checkRes = orderManager.getCenterCheckInfos(req);;
         return checkRes;
     }
 
@@ -119,13 +113,7 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCreateOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getCenterCreateOrder(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> createOrder rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);;
         return result;
     }
 
@@ -134,28 +122,16 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterPayOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getCenterPayOrder(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> payOrder rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterPayOrderRes> result = orderManager.getCenterPayOrder(req);;
         return result;
     }
 
     @Override
     public BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductCode()));
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getCenterCancelOrder(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> cancelOrder rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterCancelOrderRes> result = orderManager.getCenterCancelOrder(req);
         return result;
     }
 
@@ -164,13 +140,7 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getCenterApplyRefund(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> applyRefund rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterCancelOrderRes> result = orderManager.getCenterApplyRefund(req);
         return result;
     }
 
@@ -192,13 +162,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Boolean payCheck(PayOrderReq req) {
+    public BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         //todo 支付前校验逻辑
-//        Boolean result = orderManager.payCheck(req);
-        return true;
+        BaseResponse<CenterPayCheckRes> result = orderManager.payCheck(req);
+        return result;
     }
 
     /**

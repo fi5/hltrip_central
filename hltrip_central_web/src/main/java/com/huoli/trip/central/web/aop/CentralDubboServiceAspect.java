@@ -57,7 +57,7 @@ public class CentralDubboServiceAspect {
                 result = joinPoint.proceed(args);
             } catch (HlCentralException e) {
                 log.error("[{}] 业务异常: ", function, e);
-                result = BaseResponse.withFail(e.getCode(), e.getMessage());
+                result = BaseResponse.withFail(e.getCode(), e.getMessage(), e.getData());
             } catch (ValidationException | TypeMismatchException | MethodArgumentNotValidException e){
                 log.error("[{}] 请求参数异常: ", function, e);
                 result = BaseResponse.withFail(CentralError.ERROR_BAD_REQUEST);
@@ -72,14 +72,14 @@ public class CentralDubboServiceAspect {
             }
             if (result == null) {
                 log.error("[{}] result 为空", function);
-                result = BaseResponse.fail(CentralError.UN_KNOW_ERROR);
+                result = BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             }
             log.info("[{}], response: {}, cost: {},", function, JSON.toJSON(result),
                     stopWatch.getTotalTimeMillis());
             return result;
         } catch (Throwable e) {
             log.error("切面执行异常：", e);
-            return BaseResponse.fail(CentralError.UN_KNOW_ERROR);
+            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
     }
 }

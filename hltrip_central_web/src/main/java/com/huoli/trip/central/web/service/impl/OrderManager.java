@@ -56,7 +56,7 @@ public abstract class OrderManager {
     public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
         return null;
     }
-    public  BaseResponse<Boolean> payCheck(PayOrderReq req){
+    public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
         return null;
     }
 

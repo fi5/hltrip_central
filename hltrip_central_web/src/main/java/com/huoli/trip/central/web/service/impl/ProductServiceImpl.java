@@ -16,6 +16,7 @@ import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.util.DateTimeUtil;
@@ -67,6 +68,7 @@ public class ProductServiceImpl implements ProductService {
         ProductPageResult result = new ProductPageResult();
         List<Integer> types = getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
+        result.setProducts(products);
         for (Integer t : types) {
             int total = productDao.getListTotal(request.getCity(), t);
             List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getPageIndex(), request.getPageSize());
@@ -74,7 +76,9 @@ public class ProductServiceImpl implements ProductService {
                 products.addAll(convertToProducts(productPOs, total));
             }
         }
-        result.setProducts(products);
+        if(ListUtils.isNotEmpty(products)){
+            return BaseResponse.withFail(CentralError.NO_RESULT_PRODUCT_LIST_ERROR);
+        }
         return BaseResponse.withSuccess(result);
     }
 
@@ -89,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
     private void convertToCategoryDetailResult(List<ProductPO> productPOs, CategoryDetailResult result) {
         if (ListUtils.isEmpty(productPOs)) {
             log.info("没有查到商品详情");
-            return;
+            throw new HlCentralException(CentralError.NO_RESULT_DETAIL_LIST_ERROR);
         }
         result.setProducts(productPOs.stream().map(po -> {
             try {
@@ -100,7 +104,7 @@ public class ProductServiceImpl implements ProductService {
                 product.setMainItem(null);
                 return product;
             } catch (Exception e) {
-                log.error("转换商品详情结果异常", e);
+                log.error("转换商品详情结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;
             }
         }).filter(po -> po != null).collect(Collectors.toList()));
@@ -115,6 +119,7 @@ public class ProductServiceImpl implements ProductService {
         RecommendResult result = new RecommendResult();
         List<Integer> types = getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
+        result.setProducts(products);
         for (Integer t : types) {
             List<ProductPO> productPOs;
             if (request.getPosition() == Constants.RECOMMEND_POSITION_MAIN) {
@@ -126,7 +131,9 @@ public class ProductServiceImpl implements ProductService {
                 products.addAll(convertToProducts(productPOs, 0));
             }
         }
-        result.setProducts(products);
+        if(ListUtils.isNotEmpty(products)){
+            return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+        }
         return BaseResponse.withSuccess(result);
     }
 
@@ -242,15 +249,21 @@ public class ProductServiceImpl implements ProductService {
             if (productPO != null && productPO.getImages() != null) {
                 return BaseResponse.withSuccess(productPO.getImages().stream().map(image ->
                         ProductConverter.convertToImageBase(image)).collect(Collectors.toList()));
+            } else {
+                log.error("未查询到产品图片，productCode = {}", request.getProductCode());
+                return BaseResponse.withFail(CentralError.NO_RESULT_PRODUCT_IMAGE_LIST_ERROR);
             }
         } else if (StringUtils.isNotBlank(request.getProductItemCode())) {
             ProductItemPO productItemPO = productItemDao.getImagesByCode(request.getProductItemCode());
             if (productItemPO != null && ListUtils.isNotEmpty(productItemPO.getImages())) {
                 return BaseResponse.withSuccess(productItemPO.getImages().stream().map(image ->
                         ProductConverter.convertToImageBase(image)).collect(Collectors.toList()));
+            } else {
+                log.error("未查询到项目图片，productItemCode = {}", request.getProductCode());
+                return BaseResponse.withFail(CentralError.NO_RESULT_ITEM_IMAGE_LIST_ERROR);
             }
         }
-        return null;
+        return BaseResponse.withFail(CentralError.ERROR_BAD_REQUEST);
     }
 
     @Override
@@ -258,47 +271,54 @@ public class ProductServiceImpl implements ProductService {
         PriceCalcResult result = new PriceCalcResult();
         ProductPO productPO = productDao.getTripProductByCode(request.getProductCode());
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
-        if (productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
+        // 含酒店
+        if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
             // 天比晚多1
             int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate()) - 1;
             int baseNight = productPO.getRoom().getRooms().get(0).getBaseNight();
             if (nightDiff % baseNight != 0) {
-                log.error("日期不符合购买标准，购买晚数应该为{}的整数倍，startDate={}, endDate={}",
+                String msg = String.format("日期不符合购买标准，购买晚数应该为%s的整数倍，startDate=%s, endDate=%s",
                         baseNight,
                         DateTimeUtil.format(request.getStartDate(), DateTimeUtil.defaultDatePattern),
                         DateTimeUtil.format(request.getEndDate(), DateTimeUtil.defaultDatePattern));
-                // todo 定义错误码
-                return null;
+                log.error(msg);
+                return BaseResponse.withFail(CentralError.PRICE_CALC_DATE_INVALID_ERROR.getCode(), msg);
             }
             // 日期维度的份数
             int dayQuantity = nightDiff / baseNight;
             // 总份数 = 日期维度的份数 * 购买数量的份数
             int quantityTotal = dayQuantity * request.getQuantity();
             if (quantityTotal > productPO.getBuyMax() || quantityTotal < productPO.getBuyMin()) {
-                log.error("数量不符合购买标准，最少购买{}份，最多购买{}份， quantity={}", productPO.getBuyMin(), productPO.getBuyMax(), quantityTotal);
-                return null; // todo 定义错误码
+                String msg = String.format("数量不符合购买标准，最少购买%s份，最多购买%s份， quantity=%s", productPO.getBuyMin(), productPO.getBuyMax(), quantityTotal);
+                log.error(msg);
+                return BaseResponse.withFail(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR.getCode(), msg);
             }
             for (int i = 0; i <= dayQuantity; i++) {
                 // 日期维度中每份产品的起始日期 = 第一份起始日期 + 第n份 * 基准晚数
                 Date startDate = DateTimeUtil.addDay(request.getStartDate(), i * baseNight);
                 checkPrice(pricePO.getPriceInfos(), startDate, quantityTotal, result);
             }
-            return BaseResponse.withSuccess(result);
-        } else {
+        } else { // 不含酒店
             checkPrice(pricePO.getPriceInfos(), request.getStartDate(), request.getQuantity(), result);
-            return BaseResponse.withSuccess(request);
         }
+        return BaseResponse.withSuccess(result);
     }
 
     private void checkPrice(List<PriceInfoPO> priceInfoPOs, Date startDate, int quantityTotal, PriceCalcResult result){
+        // 拿到当前日期价格信息
         PriceInfoPO priceInfoPO = priceInfoPOs.stream().filter(price -> price.getSaleDate().getTime() == startDate.getTime()).findFirst().orElse(null);
+        String dateStr = DateTimeUtil.format(startDate, DateTimeUtil.defaultDatePattern);
         if (priceInfoPO == null) {
-            log.error("没有找到{}的价格", DateTimeUtil.format(startDate, DateTimeUtil.defaultDatePattern));
-            return; // todo 定义错误码
+            String msg = String.format("%s的价格缺失", dateStr);
+            log.error(msg);
+            throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR.getCode(), msg);
         }
         if (priceInfoPO.getStock() < quantityTotal) {
-            log.error("库存不足，剩余库存={}, 购买份数={}", priceInfoPO.getStock(), quantityTotal);
-            return; // todo 定义错误码
+            String msg = String.format("库存不足，{}剩余库存={}, 购买份数={}", dateStr, priceInfoPO.getStock(), quantityTotal);
+            log.error(msg);
+            // 库存不足要返回具体库存
+            result.setMinStock(priceInfoPO.getStock());
+            throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg, result);
         }
         BigDecimal salesTotal = new BigDecimal(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSalePrice(), quantityTotal).doubleValue()));
