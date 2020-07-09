@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -19,6 +20,9 @@ import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.supplier.api.YcfOrderService;
+import com.huoli.trip.supplier.api.YcfSyncService;
+import com.huoli.trip.supplier.self.yaochufa.vo.YcfGetPriceRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -46,6 +50,9 @@ public class ProductServiceImpl implements ProductService {
     private ProductItemDao productItemDao;
     @Autowired
     OrderFactory orderFactory;
+
+    @Reference(group = "hltrip")
+    private YcfSyncService ycfOrderService;
 
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request){
@@ -170,7 +177,14 @@ public class ProductServiceImpl implements ProductService {
             final Product product = ProductConverter.convertToProduct(productPo, 0);
             ProductPriceDetialResult result =new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
-            final ProductPriceDetialResult stockPrice = orderManager.getStockPrice(req);
+
+            YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
+            stockPriceReq.setProductID(req.getSupplierProductId());
+            stockPriceReq.setPartnerProductID(req.getProductCode());
+            stockPriceReq.setStartDate(req.getStartDate());
+            stockPriceReq.setEndDate(req.getEndDate());
+            ycfOrderService.getPrice(stockPriceReq);//这个方法会查最新价格,存mongo
+
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());
             result.setBuyMax(product.getBuyMax());
@@ -193,7 +207,9 @@ public class ProductServiceImpl implements ProductService {
             result.setRoom(product.getRoom());
             result.setTicket(product.getTicket());
             result.setFood(product.getFood());
-//TODO  调用统一的价格计算并设值
+//  调用统一的价格计算并设值
+
+            ca
 
 
             return BaseResponse.success(result);
