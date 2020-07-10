@@ -12,6 +12,10 @@ import java.util.List;
  **/
 public interface BaseDataService {
 
+	/**
+	 * 城市信息
+	 * @return
+	 */
 	 BaseResponse<List<CityPO>> queryCitys();
 
 	 BaseResponse test();

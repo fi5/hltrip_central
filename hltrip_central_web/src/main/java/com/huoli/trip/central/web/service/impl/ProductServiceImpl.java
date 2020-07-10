@@ -152,7 +152,7 @@ public class ProductServiceImpl implements ProductService {
             }
             ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
             result.setPriceInfos(priceInfos);
-            result.setBuyMaxNight(productPo.getBuyMaxNight());
+            result.setBuyMaxNight(productPo.getBuyMaxNight());//购买晚数限制
             result.setBuyMinNight(productPo.getBuyMinNight());
             if (productPo.getRoom() != null) {
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
@@ -184,12 +184,11 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<ProductPriceDetialResult> getPriceDetail(ProductPriceReq req) {
 
         try {
+            //获取trip_product
             ProductPO productPo = productDao.getTripProductByCode(req.getProductCode());
             final Product product = ProductConverter.convertToProduct(productPo, 0);
             ProductPriceDetialResult result = new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
-
-
 
             OrderManager orderManager = orderFactory.getOrderManager(productPo.getSupplierId());
             if (orderManager == null) {
@@ -228,6 +227,11 @@ public class ProductServiceImpl implements ProductService {
             priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
             priceCal.setProductCode(req.getProductCode());
             final BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = calcTotalPrice(priceCal);
+            if(priceCalcResultBaseResponse.getCode()!=0){
+                //抛出价格计算异常,如库存不足
+                return BaseResponse.fail(priceCalcResultBaseResponse.getCode(),priceCalcResultBaseResponse.getMessage(),priceCalcResultBaseResponse.getData());
+            }
+
             final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
             result.setSalePrice(priceCalData.getSalesTotal());
             result.setSettlePrice(priceCalData.getSettlesTotal());

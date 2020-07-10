@@ -24,6 +24,11 @@ public interface OrderService {
 
     void refundNotice(RefundNoticeReq req) ;
 
+	/**
+     * 查询供应商最新订单状态等
+     * @param req
+     * @return
+     */
     BaseResponse<OrderDetailRep> getOrder(OrderOperReq req);
 
     /**
