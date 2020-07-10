@@ -9,8 +9,9 @@ import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
-import com.huoli.trip.common.vo.request.central.CategoryDetailRequest;
-import com.huoli.trip.common.vo.request.central.ProductPageRequest;
+import com.huoli.trip.common.vo.Coordinate;
+import com.huoli.trip.common.vo.request.central.ImageRequest;
+import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
@@ -44,22 +45,42 @@ public class Test0 {
     @Autowired
     private ProductService productService;
 
-    @Test
+//    @Test
     public void test(){
         List<String> ids = Lists.newArrayList("11", "22","33","44","55","66","77");
-//        List<ProductPO> list = getProductListByItemIdsPage(ids, 1, 3);
+        List<ProductPO> list = getProductListByItemIdsPage(ids, 1, 10);
 //        List<ProductPO> list = getProductList();
 //        List<ProductPO> list = getGroup();
 //        List<ProductPO> list = getPageList("", 1, 1, 60);
 //        List<ProductPO> list = productDao.getProductListByItemId("yaochufa_29439");
-        CategoryDetailRequest request = new CategoryDetailRequest();
-        request.setProductItemId("yaochufa_29439");
-        ProductPageRequest request1 = new ProductPageRequest();
-        request1.setCity("北京市");
-        request1.setType(0);
+//        CategoryDetailRequest request = new CategoryDetailRequest();
+//        request.setProductItemId("yaochufa_29439");
+//        ProductPageRequest request1 = new ProductPageRequest();
+//        request1.setCity("北京市");
+//        request1.setType(0);
 //        log.info("结果 = {}", JSON.toJSONString(productService.pageList(request1)));
-        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
+//        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
+        log.info("结果 = {}", JSON.toJSONString(list));
+    }
 
+//    @Test
+    public void test1(){
+        ImageRequest request = new ImageRequest();
+//        request.setProductCode("yaochufa_247533_1724328");
+        request.setProductItemCode("yaochufa_29439");
+        log.info("================================={}", JSON.toJSONString(productService.getImages(request)));
+    }
+
+    @Test
+    public void test2(){
+        RecommendRequest request = new RecommendRequest();
+        request.setPosition(1);
+        request.setCity("北京市");
+        Coordinate coordinate = new Coordinate();
+        coordinate.setLatitude(40d);
+        coordinate.setLongitude(116d);
+        request.setCoordinate(coordinate);
+        log.info("================================={}", JSON.toJSONString(productService.recommendList(request)));
     }
 
     public List<ProductPO> getPageList(String city, Integer type, int page, int size){

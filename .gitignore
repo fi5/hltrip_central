@@ -31,3 +31,4 @@ build/
 .vscode/
 /logs/
 /hltrip_central_web/logs/
+/disconf/download/

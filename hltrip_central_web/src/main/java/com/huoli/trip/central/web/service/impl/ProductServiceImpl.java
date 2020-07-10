@@ -77,7 +77,7 @@ public class ProductServiceImpl implements ProductService {
                 products.addAll(convertToProducts(productPOs, total));
             }
         }
-        if(ListUtils.isNotEmpty(products)){
+        if(ListUtils.isEmpty(products)){
             return BaseResponse.withFail(CentralError.NO_RESULT_PRODUCT_LIST_ERROR);
         }
         return BaseResponse.withSuccess(result);
@@ -132,7 +132,7 @@ public class ProductServiceImpl implements ProductService {
                 products.addAll(convertToProducts(productPOs, 0));
             }
         }
-        if(ListUtils.isNotEmpty(products)){
+        if(ListUtils.isEmpty(products)){
             return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
         }
         return BaseResponse.withSuccess(result);
