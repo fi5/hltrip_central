@@ -77,7 +77,7 @@ public class OrderServiceImpl implements OrderService {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
         } catch (Exception e) {
-        	log.info("",e);
+        	log.info("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
         }
 
     }
@@ -86,14 +86,14 @@ public class OrderServiceImpl implements OrderService {
     public BaseResponse<OrderDetailRep> getOrder(OrderOperReq req) {
         OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
         if(orderManager==null){
-            return null;
+            return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
         }
         try {
             BaseResponse<OrderDetailRep> orderDetail = orderManager.getOrderDetail(req);
             return orderDetail;
         } catch (Exception e) {
-        	log.info("",e);
-            return  null;
+        	log.info("getOrder查询订单报错",e);
+            return  BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
 
     }
@@ -102,7 +102,7 @@ public class OrderServiceImpl implements OrderService {
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         if (orderManager == null) {
-            return null;
+            return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
         }
         BaseResponse<OrderDetailRep> orderDetail = orderManager.getVochers(req);
         return orderDetail;

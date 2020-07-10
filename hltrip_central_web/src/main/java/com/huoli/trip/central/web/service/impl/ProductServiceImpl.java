@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
@@ -148,20 +149,21 @@ public class ProductServiceImpl implements ProductService {
                 PriceInfo target = new PriceInfo();
                 BeanUtils.copyProperties(entry, target);
                 priceInfos.add(target);
-                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
+//                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }
             ProductPO productPo = productDao.getTripProductByCode(productPriceReq.getProductCode());
             result.setPriceInfos(priceInfos);
             result.setBuyMaxNight(productPo.getBuyMaxNight());//购买晚数限制
             result.setBuyMinNight(productPo.getBuyMinNight());
             if (productPo.getRoom() != null) {
+                //设置基准晚数
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
                 result.setBaseNum(baseNum);
             }
 
             return BaseResponse.success(result);
         } catch (Exception e) {
-            log.info("", e);
+            log.info("productPriceCalendar价格日历报错:"+JSONObject.toJSONString(productPriceReq), e);
         }
         return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
     }
@@ -192,7 +194,7 @@ public class ProductServiceImpl implements ProductService {
 
             OrderManager orderManager = orderFactory.getOrderManager(productPo.getSupplierId());
             if (orderManager == null) {
-                return null;
+                return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             }
             orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
 
@@ -240,8 +242,8 @@ public class ProductServiceImpl implements ProductService {
 
             return BaseResponse.success(result);
         } catch (Exception e) {
-            log.info("", e);
-            return null;
+            log.info("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
+            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
 
     }
