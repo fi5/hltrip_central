@@ -1,5 +1,7 @@
 package com.huoli.trip.central.web.converter;
 
+import com.huoli.trip.common.constant.OrderStatus;
+
 /**
  * @author :zhouwenbin
  * @time   :2020/7/2
@@ -20,7 +22,7 @@ public class OrderInfoTranser {
 //	40	已取消：订单已取消
 			switch (orderStatus) {
 				case 0:
-					rtnStatus = 1;
+					rtnStatus = OrderStatus.TO_BE_PAID.getCode();//1
 					break;
 				case 10:
 					rtnStatus=10;

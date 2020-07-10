@@ -111,5 +111,16 @@ public class Test {
         return cancelOrderRes;
     }
 
+    @RequestMapping(value = "payCheck",method = {RequestMethod.POST, RequestMethod.GET})
+    public Object payCheck(@RequestBody PayOrderReq request) {
+        Object payCheck = null;
+        try {
+            payCheck = orderService.payCheck(request);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return payCheck;
+    }
+
 
 }

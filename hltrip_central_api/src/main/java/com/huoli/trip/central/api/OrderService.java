@@ -24,6 +24,11 @@ public interface OrderService {
 
     void refundNotice(RefundNoticeReq req) ;
 
+	/**
+     * 查询供应商最新订单状态等
+     * @param req
+     * @return
+     */
     BaseResponse<OrderDetailRep> getOrder(OrderOperReq req);
 
     /**
@@ -89,6 +94,6 @@ public interface OrderService {
      * 版本：1.0<br>
      * 创建日期：2020/7/8<br>
      */
-    Boolean payCheck(PayOrderReq req) ;
+    BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) ;
 
 }

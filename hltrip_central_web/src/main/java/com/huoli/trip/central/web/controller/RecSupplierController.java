@@ -27,6 +27,7 @@ public class RecSupplierController {
 
 	@RequestMapping(value = "/refundNotice", method = RequestMethod.POST)
 	public BaseResponse refundNotice(@RequestBody RefundNoticeReq req) {
+		orderService.refundNotice(req);
 		return BaseResponse.success(null);
 	}
 

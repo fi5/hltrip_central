@@ -32,19 +32,20 @@ public abstract class OrderManager {
         return null;
     }
 
-    public ProductPriceDetialResult getStockPrice(ProductPriceReq req){
+    public void refreshStockPrice(ProductPriceReq req){
 
-        return null;
     }
+
+
 
 
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         return null;
     }
-    public BaseResponse<CenterBookCheck>  getNBCheckInfos(BookCheckReq req){
+    public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
         return null;
     }
-    public BaseResponse<CenterCreateOrderRes> getNBCreateOrder(CreateOrderReq req){
+    public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
         return null;
     }
 
@@ -55,7 +56,7 @@ public abstract class OrderManager {
     public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
         return null;
     }
-    public  BaseResponse<Boolean> payCheck(PayOrderReq req){
+    public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
         return null;
     }
 

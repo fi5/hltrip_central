@@ -9,16 +9,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * 描述: <br> 取消订单转换
+ * 描述: <br> 申请退款转换
  * 版权：Copyright (c) 2011-2020<br>
  * 公司：活力天汇<br>
  * 作者：王德铭<br>
  * 版本：1.0<br>
- * 创建日期：2020/7/3<br>
+ * 创建日期：2020/7/9<br>
  */
 @Component
 @Slf4j
-public class CancelOrderConverter implements Converter<CancelOrderReq, YcfCancelOrderReq, YcfCancelOrderRes, CenterCancelOrderRes> {
+public class ApplyRefundConverter implements Converter<CancelOrderReq, YcfCancelOrderReq, YcfCancelOrderRes, CenterCancelOrderRes> {
     @Override
     public YcfCancelOrderReq convertRequestToSupplierRequest(CancelOrderReq req) {
         if(req == null){
@@ -47,15 +47,8 @@ public class CancelOrderConverter implements Converter<CancelOrderReq, YcfCancel
         }
         CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
         switch (supplierResponse.getOrderStatus()){
-            case 0:cancelOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());break;
-            case 10:cancelOrderRes.setOrderStatus(OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode());break;
-            case 11:cancelOrderRes.setOrderStatus(OrderStatus.TO_BE_CONFIRMED.getCode());break;
-            case 12:cancelOrderRes.setOrderStatus(OrderStatus.WAITING_APPOINTMENT.getCode());break;
-            case 13:cancelOrderRes.setOrderStatus(OrderStatus.TO_PAID_TWICE.getCode());break;
-            case 20:cancelOrderRes.setOrderStatus(OrderStatus.WAITING_TO_TRAVEL.getCode());break;
-            case 30:cancelOrderRes.setOrderStatus(OrderStatus.CONSUMED.getCode());break;
             case 40:cancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());break;
-            default : log.info("取消订单服务 订单状态返回异类 ：{}",supplierResponse.getOrderStatus()); break;
+            default : cancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode()); break;
         }
         return cancelOrderRes;
     }

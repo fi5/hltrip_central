@@ -7,7 +7,9 @@ import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.RefundKafka;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
@@ -26,10 +28,10 @@ import org.springframework.util.concurrent.ListenableFuture;
  * 创建日期：2020/6/30<br>
  */
 @Slf4j
-@Service(timeout = 10000,group = "hllx")
+@Service(timeout = 10000,group = "hltrip")
 public class OrderServiceImpl implements OrderService {
 
-    @Reference(group = "hllx")
+    @Reference(group = "hltrip")
     private YcfOrderService ycfOrderService;
     @Autowired
     KafkaTemplate kafkaTemplate;
@@ -43,17 +45,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterBookCheck> getCheckInfos(BookCheckReq req) {
-        OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
+        OrderManager orderManager =orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
-        BaseResponse<CenterBookCheck> checkRes = new BaseResponse<CenterBookCheck>();
-        try {
-            checkRes = orderManager.getNBCheckInfos(req);
-        }catch (RuntimeException e){
-            log.error("OrderServiceImpl --> getCheckInfos rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterBookCheck> checkRes = orderManager.getCenterCheckInfos(req);;
         return checkRes;
     }
 
@@ -63,7 +59,17 @@ public class OrderServiceImpl implements OrderService {
         try {
             log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
             String topic = "hltrip_order_refund";
-            JSONObject kafkaInfo = new JSONObject();
+            RefundKafka kafkaInfo = new RefundKafka();
+            kafkaInfo.setOrderId(req.getPartnerOrderId());
+            kafkaInfo.setRefundStatus(req.getRefundStatus());
+            kafkaInfo.setRefundPrice(req.getRefundPrice());
+            kafkaInfo.setExpense(req.getRefundCharge());
+            kafkaInfo.setHandleRemark(req.getHandleRemark());
+            kafkaInfo.setRefundReason(req.getRefundReason());
+            if(null!=req.getRefundTime())
+            kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
+            if(null!=req.getResponseTime())
+                kafkaInfo.setResponseTime(CommonUtils.dateFormat.format(req.getResponseTime()));
             ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(kafkaInfo));
             listenableFuture.addCallback(
                     result -> log.info("订单发送kafka成功, params : {}", JSONObject.toJSONString(req)),
@@ -71,7 +77,7 @@ public class OrderServiceImpl implements OrderService {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
         } catch (Exception e) {
-        	log.info("",e);
+        	log.info("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
         }
 
     }
@@ -80,14 +86,14 @@ public class OrderServiceImpl implements OrderService {
     public BaseResponse<OrderDetailRep> getOrder(OrderOperReq req) {
         OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
         if(orderManager==null){
-            return null;
+            return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
         }
         try {
             BaseResponse<OrderDetailRep> orderDetail = orderManager.getOrderDetail(req);
             return orderDetail;
         } catch (Exception e) {
-        	log.info("",e);
-            return  null;
+        	log.info("getOrder查询订单报错",e);
+            return  BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
 
     }
@@ -96,7 +102,7 @@ public class OrderServiceImpl implements OrderService {
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req) {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         if (orderManager == null) {
-            return null;
+            return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
         }
         BaseResponse<OrderDetailRep> orderDetail = orderManager.getVochers(req);
         return orderDetail;
@@ -107,13 +113,7 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCreateOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getNBCreateOrder(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> createOrder rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);;
         return result;
     }
 
@@ -122,28 +122,16 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterPayOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getCenterPayOrder(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> payOrder rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterPayOrderRes> result = orderManager.getCenterPayOrder(req);;
         return result;
     }
 
     @Override
     public BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
+        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductCode()));
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getCenterCancelOrder(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> cancelOrder rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterCancelOrderRes> result = orderManager.getCenterCancelOrder(req);
         return result;
     }
 
@@ -152,13 +140,7 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCancelOrderRes> result = new BaseResponse<>();
-        try {
-            result = orderManager.getCenterApplyRefund(req);
-        } catch (RuntimeException e) {
-            log.error("OrderServiceImpl --> applyRefund rpc服务异常 :{}", e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-        }
+        BaseResponse<CenterCancelOrderRes> result = orderManager.getCenterApplyRefund(req);
         return result;
     }
 
@@ -180,13 +162,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Boolean payCheck(PayOrderReq req) {
+    public BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         //todo 支付前校验逻辑
-//        Boolean result = orderManager.payCheck(req);
-        return true;
+        BaseResponse<CenterPayCheckRes> result = orderManager.payCheck(req);
+        return result;
     }
 
     /**

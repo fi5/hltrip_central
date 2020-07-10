@@ -28,11 +28,12 @@ public class BaseDataServiceImpl implements BaseDataService {
 	public BaseResponse<List<CityPO>> queryCitys() {
 		try {
 			List<CityPO> citys = cityDao.queryCitys();
+			//目前只有code与城市名
 			return BaseResponse.success(citys);
 		} catch (Exception e) {
 			log.info("",e);
 		}
-		return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+		return BaseResponse.fail(CentralError.DATA_NULL_ERROR);
 
 	}
 
