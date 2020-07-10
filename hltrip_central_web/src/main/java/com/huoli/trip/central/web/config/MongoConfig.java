@@ -1,63 +1,52 @@
-//package com.huoli.trip.central.web.config;
-//
-//
-//import com.huoli.trip.common.util.ConfigGetter;
-//import com.mongodb.MongoClientOptions;
-//import com.mongodb.WriteConcern;
-//import com.mongodb.client.MongoClients;
-//import org.springframework.boot.autoconfigure.mongo.MongoProperties;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.data.mongodb.MongoDbFactory;
-//import org.springframework.data.mongodb.core.MongoTemplate;
-//import org.springframework.data.mongodb.core.SimpleMongoClientDbFactory;
-//
-//import java.net.URLEncoder;
-//import java.net.UnknownHostException;
-//import java.nio.charset.StandardCharsets;
-//
-//@Configuration
-//public class MongoConfig {
-//
-//    private MongoTemplate createMongoTemplate(MongoProperties mongoProperties) throws UnknownHostException {
-//        MongoClientOptions options = MongoClientOptions.builder()
-//                .connectionsPerHost(1200).maxConnectionIdleTime(20000)
-//                .writeConcern(WriteConcern.UNACKNOWLEDGED).build();
-//        //MongoClient mongoClient = new MongoClient(mongoProperties.getHost(),options);
-//        com.mongodb.client.MongoClient mongoClient = MongoClients.create(mongoProperties.getUri());
-//        MongoDbFactory mongoDbFactory = new SimpleMongoClientDbFactory(mongoClient, mongoProperties.getDatabase());
-//        return new MongoTemplate(mongoDbFactory);
-//    }
-//
-//    private MongoProperties createMongoProperties(String prefix) {
-//        String host = ConfigGetter.getByFileItemString(ConstConfig.MONGO_FILE, prefix + ".host");
-//        Integer port = ConfigGetter.getByFileItemInteger(ConstConfig.MONGO_FILE, prefix + ".port");
-//        String database = ConfigGetter.getByFileItemString(ConstConfig.MONGO_FILE, prefix + ".dbname");
-//        String username = ConfigGetter.getByFileItemString(ConstConfig.MONGO_FILE, prefix + ".username");
-//        String password = ConfigGetter.getByFileItemString(ConstConfig.MONGO_FILE, prefix + ".password");
-//        String replicaSet = ConfigGetter.getByFileItemString(ConstConfig.MONGO_FILE, prefix + ".replicaSet");
-//
-//        String uri;
-//        try {
-//            uri = "mongodb://" + URLEncoder.encode(username, StandardCharsets.UTF_8.name()) + ":" + URLEncoder.encode(password, StandardCharsets.UTF_8.name()) + "@" + replicaSet + "/" + database;
-//        } catch (Exception ex) {
-//            throw new RuntimeException(ex);
-//        }
-//        MongoProperties prop = new MongoProperties();
-//        prop.setDatabase(database);
-//        prop.setUri(uri);
-//        return prop;
-//    }
-//
-//    @Bean
-//    public MongoProperties flightMongoProperties() {
-//        return createMongoProperties("ticket.mongo");
-//    }
-//
-//    @Bean(name = "flightMongoTemplate")
-//    public MongoTemplate flightMongoTemplate() throws UnknownHostException {
-//        MongoProperties mongoProperties = flightMongoProperties();
-//        return createMongoTemplate(mongoProperties);
-//    }
-//
-//}
+package com.huoli.trip.central.web.config;
+
+
+import com.huoli.trip.common.config.ConvertToBigDecimal;
+import com.huoli.trip.common.config.ConvertToDouble;
+import com.huoli.trip.common.constant.ConfigConstants;
+import com.huoli.trip.common.util.ConfigGetter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
+import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Configuration
+public class MongoConfig {
+
+    @Bean
+    public MappingMongoConverter mappingMongoConverter(){
+        DefaultDbRefResolver dbRefResolver = new DefaultDbRefResolver(this.dbFactory());
+        MappingMongoConverter converter = new MappingMongoConverter(dbRefResolver, this.mongoMappingContext());
+        List<Object> list = new ArrayList<>();
+        list.add(new ConvertToBigDecimal());//自定义的类型转换器
+        list.add(new ConvertToDouble());//自定义的类型转换器
+        converter.setCustomConversions(new MongoCustomConversions(list));
+        return converter;
+    }
+
+    @Bean
+    public MongoDatabaseFactory dbFactory(){
+        return new SimpleMongoClientDatabaseFactory(ConfigGetter.getByFileItemString(ConfigConstants.CONFIG_FILE_NAME_COMMON, ConfigConstants.CONFIG_ITEM_MONGO_URI));
+    }
+
+    @Bean
+    public MongoMappingContext mongoMappingContext() {
+        MongoMappingContext mappingContext = new MongoMappingContext();
+        mappingContext.setAutoIndexCreation(true);
+        mappingContext.afterPropertiesSet();
+        return mappingContext;
+    }
+
+    @Bean
+    public MongoTemplate mongoTemplate(){
+        return new MongoTemplate(this.dbFactory(), this.mappingMongoConverter());
+    }
+}
