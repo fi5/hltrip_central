@@ -59,7 +59,7 @@ public class Test {
     public Object test(String channel) {
 //        testService.test(channel);
 //        return channel;
-      return  baseDataService.queryCitys();
+        return  baseDataService.queryCitys();
     }
     @RequestMapping(value = "testZ")
     public Object testZ(String orderId) {
@@ -68,6 +68,14 @@ public class Test {
         req.setOrderId(orderId);
         final BaseResponse<OrderDetailRep> orderDetail = ycfOrderManger.getOrderDetail(req);
         return orderDetail;
+    }
+
+    @RequestMapping(value = "testkafka")
+    public String testkafka() {
+        RefundNoticeReq req=new RefundNoticeReq();
+        req.setPartnerOrderId("1234");
+         orderService.refundNotice(req);
+        return "ok";
     }
 
     @RequestMapping(value = "testPrice")
