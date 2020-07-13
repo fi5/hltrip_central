@@ -8,6 +8,7 @@ import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.Coordinate;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Distance;
@@ -21,6 +22,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -91,8 +93,13 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductPO> getPageList(String city, Integer type, int page, int size){
-        MatchOperation matchOperation = Aggregation.match(Criteria.where("productType").is(type).and("city").is(city));
+    public List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size){
+        Criteria criteria = Criteria.where("productType").is(type).and("city").is(city);
+        if(StringUtils.isNotBlank(keyWord)){
+            Pattern pattern = Pattern.compile("^?:" + keyWord + "+$");
+            criteria.orOperator(Criteria.where("city").regex(pattern), Criteria.where("name").regex(pattern));
+        }
+        MatchOperation matchOperation = Aggregation.match(criteria);
         GroupOperation groupOperation = getGroupField();
 //        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
         long rows = (page - 1) * size;
@@ -147,7 +154,6 @@ public class ProductDaoImpl implements ProductDao {
         query.fields().include("images");
         return mongoTemplate.findOne(query, ProductPO.class);
     }
-
 
     /**
      * 查推荐结果

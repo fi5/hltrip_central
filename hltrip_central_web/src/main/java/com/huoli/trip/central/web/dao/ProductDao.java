@@ -36,11 +36,12 @@ public interface ProductDao {
      * 列表页
      * @param city
      * @param type
+     * @param keyWord
      * @param page
      * @param size
      * @return
      */
-    List<ProductPO> getPageList(String city, Integer type, int page, int size);
+    List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size);
 
     /**
      * 总数
