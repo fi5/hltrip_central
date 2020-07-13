@@ -62,12 +62,6 @@ public class ProductConverter {
      */
     public static ResourceRoom convertToResourceRoom(RoomInfoPO roomInfoPO){
         ResourceRoom resourceRoom = JSON.parseObject(JSON.toJSONString(roomInfoPO), ResourceRoom.class);
-        if(roomInfoPO.getEarliestTime() != null){
-            resourceRoom.setEarliestTime(DateTimeUtil.formatDate(roomInfoPO.getEarliestTime(), DateTimeUtil.YYYYMMDD));
-        }
-        if(roomInfoPO.getLatestTime() != null){
-            resourceRoom.setLatestTime(DateTimeUtil.formatDate(roomInfoPO.getLatestTime(), DateTimeUtil.YYYYMMDD));
-        }
         return resourceRoom;
     }
 
