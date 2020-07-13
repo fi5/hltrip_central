@@ -70,7 +70,6 @@ public class YcfOrderManger extends OrderManager {
     }
     public BaseResponse<CenterBookCheck> getCenterCheckInfos(BookCheckReq req){
         //中台输出
-        BaseResponse<CenterBookCheck> centerBookCheck = new BaseResponse<CenterBookCheck>();
         CenterBookCheck  bookCheck = new CenterBookCheck();
         //封装中台库存量
         List<Integer> stockList = new ArrayList<>();
@@ -318,7 +317,7 @@ public class YcfOrderManger extends OrderManager {
 
     public BaseResponse<CenterPayOrderRes> getCenterPayOrder(PayOrderReq req){
         //封装中台创建订单返回结果
-        CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
+        CenterPayOrderRes payOrderRes = null;
         //转换前端传参
         YcfPayOrderReq ycfPayOrderReq = payOrderConverter.convertRequestToSupplierRequest(req);
         //供应商输出
@@ -350,10 +349,10 @@ public class YcfOrderManger extends OrderManager {
     }
 
     public BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req) throws RuntimeException{
+        //封装中台返回结果
+        CenterCancelOrderRes cancelOrderRes = null;
         //转换前端传参
         YcfCancelOrderReq ycfCancelOrderReq = cancelOrderConverter.convertRequestToSupplierRequest(req);
-        //封装中台返回结果
-        CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
         //供应商输出
         YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = new YcfBaseResult<>();
         YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
@@ -386,10 +385,10 @@ public class YcfOrderManger extends OrderManager {
     }
 
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
+        //封装中台返回结果
+        CenterCancelOrderRes applyRefundRes = null;
         //转换前端传参
         YcfCancelOrderReq ycfCancelOrderReq = applyRefundConverter.convertRequestToSupplierRequest(req);
-        //封装中台返回结果
-        CenterCancelOrderRes applyRefundRes = new CenterCancelOrderRes();
         //供应商输出
         YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = new YcfBaseResult<>();
         YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
