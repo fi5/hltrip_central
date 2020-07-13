@@ -29,6 +29,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -88,6 +89,20 @@ public class YcfOrderManger extends OrderManager {
         ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         ycfBookCheckReq.setBeginDate(DateTimeUtil.parseDate(begin));
         ycfBookCheckReq.setEndDate(DateTimeUtil.parseDate(end));
+        /**
+         * 开始日期大于结束日期
+         */
+        if(ycfBookCheckReq.getBeginDate().after(ycfBookCheckReq.getEndDate())){
+            log.error("预订前校验 开始日期大于结束日期 错误 产品编号：{}",req.getProductId());
+            throw new HlCentralException(CentralError.ERROR_BAD_REQUEST);
+        }
+        /**
+         * 时间跨度大于90天
+         */
+        if(this.isOutTime(ycfBookCheckReq.getBeginDate(),ycfBookCheckReq.getEndDate())){
+            log.error("预订前校验 时间跨度大于90天 错误 产品编号：{}",req.getProductId());
+            throw new HlCentralException(CentralError.ERROR_BAD_REQUEST);
+        }
         try {
             checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
             if(checkInfos!=null&&StringUtils.equals(checkInfos.getStatusCode(),"200")){
@@ -437,5 +452,20 @@ public class YcfOrderManger extends OrderManager {
         } catch (Exception e) {
             log.info("",e);
         }
+    }
+
+    /**
+     * 判断时间跨度超过90天
+     * @param begin
+     * @param end
+     * @return
+     */
+    public Boolean isOutTime(Date begin,Date end){
+        long margin = end.getTime() - begin.getTime();
+        margin = margin / (1000 * 60 * 60 * 24);
+        if(margin>90){
+            return true;
+        }
+        return false;
     }
 }
