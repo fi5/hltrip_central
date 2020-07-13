@@ -207,12 +207,12 @@ public class YcfOrderManger extends OrderManager {
         bookCheckReq.setBeginDate(req.getBeginDate());
         bookCheckReq.setEndDate(req.getEndDate());
         bookCheckReq.setCount(req.getQunatity());
-//        //校验可查询预订
-//        CenterBookCheck checkInfo = this.getNBCheckInfos(bookCheckReq);
-//        if(checkInfo.getStock()<1){
-//            log.error("创建订单失败，预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
-//            return centerCreateOrderRes;
-//        }
+        //校验可查询预订
+        BaseResponse<CenterBookCheck> centerCheckInfos = this.getCenterCheckInfos(bookCheckReq);
+        if(centerCheckInfos.getCode() != 0){
+            log.error("创建订单失败，预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
+            return BaseResponse.fail(CentralError.ERROR_BOOKBEFORE_ORDER);
+        }
         //转换客户端传来的参数
         YcfCreateOrderReq ycfCreateOrderReq = createOrderConverter.convertRequestToSupplierRequest(req);
         //以下 查产品数据库组装供应商需要的请求
