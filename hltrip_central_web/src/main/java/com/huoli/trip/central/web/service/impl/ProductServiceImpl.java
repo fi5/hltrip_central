@@ -34,6 +34,7 @@ import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfGetPriceRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -155,7 +156,7 @@ public class ProductServiceImpl implements ProductService {
             result.setPriceInfos(priceInfos);
             result.setBuyMaxNight(productPo.getBuyMaxNight());//购买晚数限制
             result.setBuyMinNight(productPo.getBuyMinNight());
-            if (productPo.getRoom() != null) {
+            if (productPo.getRoom() != null&& CollectionUtils.isNotEmpty(productPo.getRoom().getRooms()))  {
                 //设置基准晚数
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
                 result.setBaseNum(baseNum);
