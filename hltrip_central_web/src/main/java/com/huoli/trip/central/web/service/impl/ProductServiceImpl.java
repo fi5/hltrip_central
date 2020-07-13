@@ -145,10 +145,26 @@ public class ProductServiceImpl implements ProductService {
             ProductPriceCalendarResult result = new ProductPriceCalendarResult();
 
             final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
+            if(null==pricePo || CollectionUtils.isEmpty(pricePo.getPriceInfos()))
+                return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             List<PriceInfo> priceInfos = Lists.newArrayList();
             for (PriceInfoPO entry : pricePo.getPriceInfos()) {
+                String saleDate = CommonUtils.curDate.format(entry.getSaleDate());
+                //过滤日期
+                if(StringUtils.isNotBlank(productPriceReq.getStartDate())){
+                    if(saleDate.compareTo(productPriceReq.getStartDate())<0)
+                        continue;
+
+                }
+                if(StringUtils.isNotBlank(productPriceReq.getEndDate())){
+                    if(saleDate.compareTo(productPriceReq.getEndDate())>0)
+                        continue;
+                }
                 PriceInfo target = new PriceInfo();
+                target.setSaleDate(saleDate);
+
                 BeanUtils.copyProperties(entry, target);
+
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }
@@ -189,6 +205,8 @@ public class ProductServiceImpl implements ProductService {
         try {
             //获取trip_product
             ProductPO productPo = productDao.getTripProductByCode(req.getProductCode());
+            if(null==productPo )
+                return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             final Product product = ProductConverter.convertToProduct(productPo, 0);
             ProductPriceDetialResult result = new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
@@ -198,7 +216,9 @@ public class ProductServiceImpl implements ProductService {
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             }
             orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
-
+            if (product.getMainItem() == null) {
+                result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+            }
             result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());
@@ -229,7 +249,16 @@ public class ProductServiceImpl implements ProductService {
             priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
             priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
             priceCal.setProductCode(req.getProductCode());
-            final BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = calcTotalPrice(priceCal);
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
+            try {
+                priceCalcResultBaseResponse= calcTotalPrice(priceCal);
+            } catch (HlCentralException he) {
+                return BaseResponse.fail(he.getCode(),he.getError(),he.getData());
+            } catch (Exception e) {
+            	log.info("",e);
+                return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
+            }
+
             if(priceCalcResultBaseResponse.getCode()!=0){
                 //抛出价格计算异常,如库存不足
                 return BaseResponse.fail(priceCalcResultBaseResponse.getCode(),priceCalcResultBaseResponse.getMessage(),priceCalcResultBaseResponse.getData());

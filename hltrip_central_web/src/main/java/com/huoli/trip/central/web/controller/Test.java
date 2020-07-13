@@ -80,9 +80,7 @@ public class Test {
     }
 
     @RequestMapping(value = "testPrice")
-    public Object testPrice(String productCode) {
-        ProductPriceReq productPriceReq=new ProductPriceReq();
-        productPriceReq.setProductCode(productCode);
+    public Object testPrice(ProductPriceReq productPriceReq) {
         final BaseResponse<ProductPriceCalendarResult> listBaseResponse = productService.productPriceCalendar(productPriceReq);
         return listBaseResponse;
     }
