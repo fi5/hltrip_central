@@ -80,7 +80,7 @@ public class YcfOrderManger extends OrderManager {
             end = begin;
         }
         //供应商输出
-        YcfBaseResult<YcfBookCheckRes> checkInfos = new YcfBaseResult();
+        YcfBaseResult<YcfBookCheckRes> checkInfos = null;
         YcfBookCheckRes ycfBookCheckRes = null;
         //开始组装供应商请求参数
         YcfBookCheckReq ycfBookCheckReq = new YcfBookCheckReq();
@@ -90,7 +90,9 @@ public class YcfOrderManger extends OrderManager {
         ycfBookCheckReq.setEndDate(DateTimeUtil.parseDate(end));
         try {
             checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
-            ycfBookCheckRes = checkInfos.getData();
+            if(checkInfos!=null&&StringUtils.equals(checkInfos.getStatusCode(),"200")){
+                ycfBookCheckRes = checkInfos.getData();
+            }
         }catch (Exception e){
             log.error("ycfOrderService --> getNBCheckInfos rpc服务异常 ：{}",e);
             return BaseResponse.fail(9999,checkInfos.getMessage(),null);//异常消息以供应商返回的
@@ -293,11 +295,13 @@ public class YcfOrderManger extends OrderManager {
         ycfCreateOrderReq.setRoomDetail(ycfBookRooms);
         ycfCreateOrderReq.setTicketDetail(ycfBookTickets);
         //供应商对象包装业务实体类
-        YcfBaseResult<YcfCreateOrderRes> ycfOrder = new YcfBaseResult<>();
+        YcfBaseResult<YcfCreateOrderRes> ycfOrder =null;
         YcfCreateOrderRes ycfCreateOrderRes = null;
         try {
             ycfOrder = ycfOrderService.createOrder(ycfCreateOrderReq);
-            ycfCreateOrderRes = ycfOrder.getData();
+            if(ycfOrder!=null&&StringUtils.equals(ycfOrder.getStatusCode(),"200")){
+                ycfCreateOrderRes = ycfOrder.getData();
+            }
         }catch (Exception e){
             log.error("ycfOrderService --> getNBCreateOrder rpc服务异常 :{}",e);
             return BaseResponse.fail(9999,ycfOrder.getMessage(),null);//异常消息以供应商返回的
@@ -321,11 +325,13 @@ public class YcfOrderManger extends OrderManager {
         //转换前端传参
         YcfPayOrderReq ycfPayOrderReq = payOrderConverter.convertRequestToSupplierRequest(req);
         //供应商输出
-        YcfBaseResult<YcfPayOrderRes> ycfPayOrder = new YcfBaseResult<>();
+        YcfBaseResult<YcfPayOrderRes> ycfPayOrder = null;
         YcfPayOrderRes ycfPayOrderRes = null;
         try {
             ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
-            ycfPayOrderRes = ycfPayOrder.getData();
+            if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
+                ycfPayOrderRes = ycfPayOrder.getData();
+            }
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
             return BaseResponse.fail(9999,ycfPayOrder.getMessage(),null);//异常消息以供应商返回的
@@ -354,11 +360,13 @@ public class YcfOrderManger extends OrderManager {
         //转换前端传参
         YcfCancelOrderReq ycfCancelOrderReq = cancelOrderConverter.convertRequestToSupplierRequest(req);
         //供应商输出
-        YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = new YcfBaseResult<>();
+        YcfBaseResult<YcfCancelOrderRes> ycfBaseResult=null;
         YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
         try {
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
-            ycfCancelOrderRes = ycfBaseResult.getData();
+            if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
+                ycfCancelOrderRes = ycfBaseResult.getData();
+            }
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 ：{}",e);
             return BaseResponse.fail(9999,ycfBaseResult.getMessage(),null);//异常消息以供应商返回的
@@ -390,11 +398,13 @@ public class YcfOrderManger extends OrderManager {
         //转换前端传参
         YcfCancelOrderReq ycfCancelOrderReq = applyRefundConverter.convertRequestToSupplierRequest(req);
         //供应商输出
-        YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = new YcfBaseResult<>();
+        YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = null;
         YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
         try {
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
-            ycfCancelOrderRes = ycfBaseResult.getData();
+            if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
+                ycfCancelOrderRes = ycfBaseResult.getData();
+            }
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 ：{}",e);
             return BaseResponse.fail(9999,ycfBaseResult.getMessage(),null);//异常消息以供应商返回的
