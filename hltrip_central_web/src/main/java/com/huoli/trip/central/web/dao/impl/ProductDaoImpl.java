@@ -96,8 +96,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size){
         Criteria criteria = Criteria.where("productType").is(type).and("city").is(city);
         if(StringUtils.isNotBlank(keyWord)){
-            Pattern pattern = Pattern.compile("^?:" + keyWord + "+$");
-            criteria.orOperator(Criteria.where("city").regex(pattern), Criteria.where("name").regex(pattern));
+            criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
         GroupOperation groupOperation = getGroupField();
