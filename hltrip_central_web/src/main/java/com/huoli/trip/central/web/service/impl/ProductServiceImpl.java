@@ -216,7 +216,7 @@ public class ProductServiceImpl implements ProductService {
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             }
             orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
-            if (product.getMainItem() == null) {
+            if (product.getMainItem() != null) {
                 result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
             }
             result.setSupplierId(product.getSupplierId());
