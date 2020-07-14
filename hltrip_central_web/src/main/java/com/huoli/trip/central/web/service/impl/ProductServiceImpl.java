@@ -256,7 +256,7 @@ public class ProductServiceImpl implements ProductService {
                 return BaseResponse.fail(he.getCode(),he.getError(),he.getData());
             } catch (Exception e) {
             	log.info("",e);
-                return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
+                return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             }
 
             if(priceCalcResultBaseResponse.getCode()!=0){
@@ -273,7 +273,7 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.success(result);
         } catch (Exception e) {
             log.info("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
+            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
 
     }
