@@ -168,7 +168,7 @@ public class YcfOrderManger extends OrderManager {
             final YcfOrderStatusResult data = order.getData();
             //如果数据为空,直接返回错
             if(!order.getStatusCode().equals("200"))
-                return BaseResponse.fail(9999,order.getMessage(),null);//异常消息以供应商返回的
+                return BaseResponse.fail(CentralError.ERROR_NO_ORDER);//异常消息以供应商返回的
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(data.getOrderId());
             //转换成consumer统一的订单状态
@@ -177,7 +177,7 @@ public class YcfOrderManger extends OrderManager {
             return BaseResponse.success(rep);
         } catch (Exception e) {
             log.info("YCFgetOrderDetail报错:"+JSONObject.toJSONString(req),e);
-            return BaseResponse.fail(-100,order.getMessage(),null);
+            return BaseResponse.fail(9999,order.getMessage(),null);
         }
 
     }
@@ -188,7 +188,7 @@ public class YcfOrderManger extends OrderManager {
         try {
             final YcfVouchersResult data = vochers.getData();
             if(!vochers.getStatusCode().equals("200"))
-                return BaseResponse.fail(9999,vochers.getMessage(),null);//异常消息以供应商返回的
+                return BaseResponse.fail(OrderInfoTranser.findCentralError(vochers.getMessage()));//异常消息以供应商返回的
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(req.getOrderId());
             rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));

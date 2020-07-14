@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.converter;
 
+import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.OrderStatus;
 
 /**
@@ -50,5 +51,19 @@ public class OrderInfoTranser {
 			}
 		}
 		return rtnStatus;
+	}
+
+	public static CentralError findCentralError(String msg){
+		CentralError rtnError=null;
+		for (CentralError entry : CentralError.values()){
+			if(entry.getError().equals(msg)){
+				rtnError=entry;
+				break;
+			}
+		}
+		if(null==rtnError)
+			rtnError=CentralError.ERROR_UNKNOWN;
+
+		return rtnError;
 	}
 }
