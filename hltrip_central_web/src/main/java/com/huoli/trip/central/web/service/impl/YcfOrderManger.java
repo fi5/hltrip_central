@@ -27,8 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -88,6 +90,20 @@ public class YcfOrderManger extends OrderManager {
         ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         ycfBookCheckReq.setBeginDate(DateTimeUtil.parseDate(begin));
         ycfBookCheckReq.setEndDate(DateTimeUtil.parseDate(end));
+        /**
+         * 开始日期大于结束日期
+         */
+        if(ycfBookCheckReq.getBeginDate().after(ycfBookCheckReq.getEndDate())){
+            log.error("预订前校验 开始日期大于结束日期 错误 产品编号：{}",req.getProductId());
+            throw new HlCentralException(CentralError.ERROR_BAD_REQUEST);
+        }
+        /**
+         * 时间跨度大于90天
+         */
+        if(this.isOutTime(ycfBookCheckReq.getBeginDate(),ycfBookCheckReq.getEndDate())){
+            log.error("预订前校验 时间跨度大于90天 错误 产品编号：{}",req.getProductId());
+            throw new HlCentralException(CentralError.ERROR_BAD_REQUEST);
+        }
         try {
             checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
             if(checkInfos!=null&&StringUtils.equals(checkInfos.getStatusCode(),"200")){
@@ -217,6 +233,10 @@ public class YcfOrderManger extends OrderManager {
         }
         //转换客户端传来的参数
         YcfCreateOrderReq ycfCreateOrderReq = createOrderConverter.convertRequestToSupplierRequest(req);
+        //订单的份数小于或等于0
+        if(ycfCreateOrderReq.getQunatity()<=0){
+            throw new HlCentralException(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR);
+        }
         //以下 查产品数据库组装供应商需要的请求
         //获取中台价格日历
         PricePO pricePos = productDao.getPricePos(req.getProductId());
@@ -290,10 +310,21 @@ public class YcfOrderManger extends OrderManager {
             //总的结算价
             ycfCreateOrderReq.setAmount(priceCalcResultBaseResponse.getData().getSettlesTotal());
         }
+        //总结算价不能小于0
+        int amountFlag = ycfCreateOrderReq.getAmount().compareTo(BigDecimal.ZERO);
+        if(amountFlag ==-1||amountFlag == 0){
+            throw new HlCentralException(CentralError.ERROR_AMOUNT_ORDER);
+        }
         ycfCreateOrderReq.setFoodDetail(ycfBookFoods);
         ycfCreateOrderReq.setPriceDetail(ycfPriceItemList);
         ycfCreateOrderReq.setRoomDetail(ycfBookRooms);
         ycfCreateOrderReq.setTicketDetail(ycfBookTickets);
+        //传入参数没有包含任何资源(房，票，餐)
+        if(CollectionUtils.isEmpty(ycfCreateOrderReq.getFoodDetail())
+                && CollectionUtils.isEmpty(ycfCreateOrderReq.getRoomDetail())
+                && CollectionUtils.isEmpty(ycfCreateOrderReq.getTicketDetail())){
+            throw new HlCentralException(CentralError.ERROR_RESOURCE_ORDER);
+        }
         //供应商对象包装业务实体类
         YcfBaseResult<YcfCreateOrderRes> ycfOrder =null;
         YcfCreateOrderRes ycfCreateOrderRes = null;
@@ -437,5 +468,20 @@ public class YcfOrderManger extends OrderManager {
         } catch (Exception e) {
             log.info("",e);
         }
+    }
+
+    /**
+     * 判断时间跨度超过90天
+     * @param begin
+     * @param end
+     * @return
+     */
+    public Boolean isOutTime(Date begin,Date end){
+        long margin = end.getTime() - begin.getTime();
+        margin = margin / (1000 * 60 * 60 * 24);
+        if(margin>90){
+            return true;
+        }
+        return false;
     }
 }
