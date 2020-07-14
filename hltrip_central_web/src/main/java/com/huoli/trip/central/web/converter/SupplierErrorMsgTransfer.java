@@ -18,18 +18,15 @@ public class SupplierErrorMsgTransfer {
         switch (msg){
             case "请填写联系人手机号码" :
             case "请填写联系人姓名" :
+            case "订单缺失出行人信息" :
+            case "订单缺失身份证信息，至少需要一个身份证" :
+            case "订单缺失身份证信息，至少需N个身份证" :
+                return BaseResponse.fail(2017,msg,null);
             case "门票使用日期不在入住范围内" :
             case "餐券使用日期不在入住范围内" :
             case "餐券使用日期不在票范围内" :
             case "同一类型资源产品使用时间必须相同" :
-            case "订单缺失出行人信息" :
-            case "订单缺失身份证信息，至少需要一个身份证" :
-            case "订单缺失身份证信息，至少需N个身份证" :
-            case "创建订单失败，购买数少于最小购买数" :
-            case "创建订单失败，购买数超出最多购买数" :
-            case "创建订单失败，入住晚数少于最小入住晚数" :
-            case "创建订单失败，入住晚数超出最大入住晚数" :
-                return BaseResponse.fail(400,msg,null);
+                return BaseResponse.fail(2012,msg,null);
             case "该产品不存在" :
                 return BaseResponse.fail(CentralError.ERROR_NO_PRODUCT_SUPPLIER);
             case "该产品已下架" :
@@ -44,9 +41,28 @@ public class SupplierErrorMsgTransfer {
                 return BaseResponse.fail(2014,msg,null);
             case "库存不足" :
                 return BaseResponse.fail(CentralError.ERROR_ORDER_STOCK_SUPPLIER);
+            case "创建订单失败，购买数少于最小购买数" :
+            case "创建订单失败，购买数超出最多购买数" :
+            case "创建订单失败，入住晚数少于最小入住晚数" :
+            case "创建订单失败，入住晚数超出最大入住晚数" :
+                return BaseResponse.fail(2016,msg,null);
+            case "支付失败，该订单号不存在":
+                return BaseResponse.fail(CentralError.ERROR_PAY_NO_ORDER);
+            case "支付失败，对应支付流水号已存在":
+                return BaseResponse.fail(CentralError.ERROR_ORDER_SERIALNUMBER_ISEXIST_SUPPLIER);
+            case "订单已过期，不允许支付，请重新下单":
+                return BaseResponse.fail(CentralError.ERROR_ORDER_EXPIRE_SUPPLIER);
+            case "订单已支付":
+                return BaseResponse.fail(CentralError.ERROR_ORDER_HASPAY_SUPPLIER);
+            case "支付订单金额错误":
+                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_PRICE_SUPPLIER);
+            case "支付失败，已超过该产品的可预订时间，请重新选择日期":
+                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_TIMEOUTBOOK_SUPPLIER);
+            case "额度支付扣减出错":
+                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_AMOUNT_DEDUCTION_SUPPLIER);
             default:
                 log.error("错误异常描述是 ：{}",msg);
-                return BaseResponse.fail(400,msg,null);
+                return BaseResponse.fail(9999,msg,null);
         }
     }
 }
