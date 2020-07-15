@@ -2,9 +2,8 @@ package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.PriceSinglePO;
-import org.bson.Document;
 
-import java.util.Map;
+import java.util.Date;
 
 /**
  * 描述：<br/>
@@ -28,4 +27,12 @@ public interface PriceDao {
      * @return
      */
     PriceSinglePO selectByProductCode(String productCode);
+
+    /**
+     * 根据产品编码和日期查价格
+     * @param productCode
+     * @param saleDate
+     * @return
+     */
+    PriceSinglePO selectByDate(String productCode, Date saleDate);
 }

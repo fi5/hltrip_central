@@ -50,22 +50,23 @@ public class Test0 {
     @Autowired
     private ProductService productService;
 
-//    @Test
+    @Test
     public void test(){
-        List<String> ids = Lists.newArrayList("11", "22","33","44","55","66","77");
-        List<ProductPO> list = getProductListByItemIdsPage(ids, 1, 10);
+//        List<String> ids = Lists.newArrayList("11", "22","33","44","55","66","77");
+//        List<ProductPO> list = getProductListByItemIdsPage(ids, 1, 10);
 //        List<ProductPO> list = getProductList();
 //        List<ProductPO> list = getGroup();
 //        List<ProductPO> list = getPageList("", 1, 1, 60);
 //        List<ProductPO> list = productDao.getProductListByItemId("yaochufa_29439");
-//        CategoryDetailRequest request = new CategoryDetailRequest();
-//        request.setProductItemId("yaochufa_29439");
+        CategoryDetailRequest request = new CategoryDetailRequest();
+        request.setProductItemId("yaochufa_29439");
+        request.setSaleDate(DateTimeUtil.trancateToDate(new Date()));
 //        ProductPageRequest request1 = new ProductPageRequest();
 //        request1.setCity("北京市");
 //        request1.setType(0);
 //        log.info("结果 = {}", JSON.toJSONString(productService.pageList(request1)));
-//        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
-        log.info("结果 = {}", JSON.toJSONString(list));
+        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
+//        log.info("结果 = {}", JSON.toJSONString(list));
     }
 
 //    @Test

@@ -80,15 +80,40 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
+    /**
+     * 构建商品列表
+     * @param productPOs
+     * @param total
+     * @return
+     */
+    private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
+        return productPOs.stream().map(po -> {
+            try {
+                Product product = ProductConverter.convertToProduct(po, total);
+                // 查最近的价格
+                PriceSinglePO priceSinglePO = priceDao.selectByProductCode(product.getCode());
+                return setPriceInfo(product, priceSinglePO);
+            } catch (Exception e) {
+                log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
+                return null;
+            }
+        }).filter(po -> po != null).collect(Collectors.toList());
+    }
+
     @Override
     public BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request) {
         CategoryDetailResult result = new CategoryDetailResult();
         List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId());
-        convertToCategoryDetailResult(productPOs, result);
+        convertToCategoryDetailResult(productPOs, request.getSaleDate(), result);
         return BaseResponse.success(result);
     }
 
-    private void convertToCategoryDetailResult(List<ProductPO> productPOs, CategoryDetailResult result) {
+    /**
+     * 构建商品详情结果
+     * @param productPOs
+     * @param result
+     */
+    private void convertToCategoryDetailResult(List<ProductPO> productPOs, Date saleDate, CategoryDetailResult result) {
         if (ListUtils.isEmpty(productPOs)) {
             log.info("没有查到商品详情");
             throw new HlCentralException(CentralError.NO_RESULT_DETAIL_LIST_ERROR);
@@ -96,11 +121,13 @@ public class ProductServiceImpl implements ProductService {
         result.setProducts(productPOs.stream().map(po -> {
             try {
                 Product product = ProductConverter.convertToProduct(po, 0);
+                // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
                     result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
                 }
                 product.setMainItem(null);
-                return product;
+                PriceSinglePO priceSinglePO = priceDao.selectByDate(product.getCode(), saleDate);
+                return setPriceInfo(product, priceSinglePO);
             } catch (Exception e) {
                 log.error("转换商品详情结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;
@@ -108,22 +135,22 @@ public class ProductServiceImpl implements ProductService {
         }).filter(po -> po != null).collect(Collectors.toList()));
     }
 
-    private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
-        return productPOs.stream().map(po -> {
-            Product product = ProductConverter.convertToProduct(po, total);
-            // 查最近的价格
-            PriceSinglePO priceSinglePO = priceDao.selectByProductCode(po.getCode());
-            // 设置产品价格信息
-            if(priceSinglePO != null && priceSinglePO.getPriceInfos() != null && priceSinglePO.getPriceInfos().getSalePrice() != null){
-                PriceInfo priceInfo = ProductConverter.convertToPriceInfo(priceSinglePO);
-                product.setPriceInfo(priceInfo);
-                // 产品销售价用价格日历的
-                product.setSalePrice(priceInfo.getSalePrice());
-            } else { // 没有价格就不返回该产品
-                return null;
-            }
-            return product;
-        }).filter(po -> po != null).collect(Collectors.toList());
+    /**
+     * 构建产品价格信息
+     * @param product
+     * @return
+     */
+    private Product setPriceInfo(Product product, PriceSinglePO priceSinglePO){
+        // 设置产品价格信息
+        if(priceSinglePO != null && priceSinglePO.getPriceInfos() != null && priceSinglePO.getPriceInfos().getSalePrice() != null){
+            PriceInfo priceInfo = ProductConverter.convertToPriceInfo(priceSinglePO);
+            product.setPriceInfo(priceInfo);
+            // 产品销售价用价格日历的
+            product.setSalePrice(priceInfo.getSalePrice());
+        } else { // 没有价格就不返回该产品
+            return null;
+        }
+        return product;
     }
 
     @Override
@@ -134,9 +161,10 @@ public class ProductServiceImpl implements ProductService {
         result.setProducts(products);
         for (Integer t : types) {
             List<ProductPO> productPOs;
+            // 主页推荐列表，根据位置推荐
             if (request.getPosition() == Constants.RECOMMEND_POSITION_MAIN) {
                 productPOs = productDao.getCoordinateRecommendList(request.getCoordinate(), request.getRadius(), t, request.getPageSize());
-            } else {
+            } else {  // 其它根据城市推荐
                 productPOs = productDao.getCityRecommendList(request.getCity(), t, request.getPageSize());
             }
             if (ListUtils.isNotEmpty(productPOs)) {
@@ -195,7 +223,11 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
     }
 
-
+    /**
+     * 根据前台类型转换对应数据库类型
+     * @param type
+     * @return
+     */
     private List<Integer> getTypes(int type) {
         List<Integer> types;
         // 不限需要查所有类型
