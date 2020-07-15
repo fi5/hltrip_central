@@ -1,6 +1,8 @@
 package com.huoli.trip.central.web.converter;
 
 import com.alibaba.fastjson.JSON;
+import com.huoli.trip.common.constant.Constants;
+import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
@@ -109,5 +111,22 @@ public class ProductConverter {
         priceInfo.setStock(priceSinglePO.getPriceInfos().getStock());
         priceInfo.setSupplierPriceId(priceSinglePO.getSupplierProductId());
         return priceInfo;
+    }
+
+    /**
+     * 把product type转成productitem type
+     * @param productType
+     * @return
+     */
+    public static int getItemType(int productType){
+        int itemType;
+        if(productType == ProductType.SCENIC_TICKET_PLUS.getCode() || productType == ProductType.SCENIC_TICKET.getCode()){
+            itemType = Constants.PRODUCT_ITEM_TYPE_TICKET;
+        } else if(productType == ProductType.RESTAURANT.getCode()){
+            itemType = Constants.PRODUCT_ITEM_TYPE_FOOD;
+        } else {
+            itemType = Constants.PRODUCT_ITEM_TYPE_HOTEL;
+        }
+        return itemType;
     }
 }

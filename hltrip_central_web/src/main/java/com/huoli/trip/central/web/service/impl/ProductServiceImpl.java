@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.lang.ref.ReferenceQueue;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -160,12 +161,37 @@ public class ProductServiceImpl implements ProductService {
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
-            List<ProductPO> productPOs;
-            // 主页推荐列表，根据位置推荐
-            if (request.getPosition() == Constants.RECOMMEND_POSITION_MAIN) {
-                productPOs = productDao.getCoordinateRecommendList(request.getCoordinate(), request.getRadius(), t, request.getPageSize());
+            List<ProductPO> productPOs = null;
+            // app主页推荐列表
+            if (request.getPosition() == Constants.RECOMMEND_POSITION_MAIN ) {
+                // 优先定位推荐，按坐标查低价
+                if(request.getCoordinate() != null) {
+                    List<ProductItemPO> productItemPOs = productItemDao.getByCoordinate(t, request.getCoordinate(), request.getRadius());
+                    if(ListUtils.isEmpty(productItemPOs)){
+                        return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+                    }
+                    productPOs = productDao.getLowPriceRecommendResult(productItemPOs.stream().map(item ->
+                            item.getCode()).collect(Collectors.toList()), request.getPageSize());
+                } else if(ListUtils.isNotEmpty(request.getProductCodes())){ // 按销量推荐
+                    productPOs = productDao.getSalesRecommendList(request.getProductCodes());
+                } else { // 最后用推荐标记查询
+                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
+                }
+            } else if(request.getPosition() == Constants.RECOMMEND_POSITION_TRIP_MAIN){  // 旅游首页推荐
+                // 优先销量推荐
+                if(ListUtils.isNotEmpty(request.getProductCodes())){
+                    productPOs = productDao.getSalesRecommendList(request.getProductCodes());
+                } else { // 按推荐标记推荐
+                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
+                }
             } else {  // 其它根据城市推荐
-                productPOs = productDao.getCityRecommendList(request.getCity(), t, request.getPageSize());
+                if(StringUtils.isNotBlank(request.getCity())){
+                    List<ProductItemPO> productItemPOs = productItemDao.getByCity(t, request.getCity());
+                    if(ListUtils.isNotEmpty(productItemPOs)){
+                        productPOs = productDao.getLowPriceRecommendResult(productItemPOs.stream().map(item ->
+                                item.getCode()).collect(Collectors.toList()), request.getPageSize());
+                    }
+                }
             }
             if (ListUtils.isNotEmpty(productPOs)) {
                 products.addAll(convertToProducts(productPOs, 0));

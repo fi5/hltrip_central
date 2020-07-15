@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.ProductItemPO;
+import com.huoli.trip.common.vo.Coordinate;
 
 import java.util.List;
 
@@ -35,4 +36,21 @@ public interface ProductItemDao {
      * @return
      */
     ProductItemPO getImagesByCode(String code);
+
+    /**
+     * 根据坐标查询
+     * @param productType
+     * @param coordinate
+     * @param radius
+     * @return
+     */
+    List<ProductItemPO> getByCoordinate(int productType, Coordinate coordinate, double radius);
+
+    /**
+     * 根据城市查询
+     * @param productType
+     * @param city
+     * @return
+     */
+    List<ProductItemPO> getByCity(int productType, String city);
 }

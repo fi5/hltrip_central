@@ -2,27 +2,18 @@ package com.huoli.trip.central.web.dao.impl;
 
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
-import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
-import com.huoli.trip.common.util.ListUtils;
-import com.huoli.trip.common.vo.Coordinate;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.Metrics;
-import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
-import org.springframework.data.mongodb.core.geo.Sphere;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 描述：<br/>
@@ -123,28 +114,20 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductPO> getCoordinateRecommendList(Coordinate coordinate, double radius, Integer type, int size){
-        int itemType = getItemType(type);
-        Point point = new Point(coordinate.getLongitude(), coordinate.getLatitude());
-        Sphere sphere = new Sphere(point, new Distance(radius, Metrics.KILOMETERS));
-        Query query = new Query(Criteria.where("itemType").is(itemType).and("itemCoordinate").within(sphere));
-        List<ProductItemPO> productItemPOs = mongoTemplate.find(query, ProductItemPO.class);
-        if(ListUtils.isEmpty(productItemPOs)){
-            return null;
-        }
-        return getRecommendResult(productItemPOs.stream().map(item -> item.getCode()).collect(Collectors.toList()), size);
+    public List<ProductPO> getSalesRecommendList(List<String> productCodes){
+        return mongoTemplate.find(new Query(Criteria.where("code").in(productCodes)), ProductPO.class);
     }
 
     @Override
-    public List<ProductPO> getCityRecommendList(String city, Integer type, int size){
-        int itemType = getItemType(type);
-        Query query = new Query(Criteria.where("itemType").is(itemType).and("city").is(city));
-        List<ProductItemPO> productItemPOs = mongoTemplate.find(query, ProductItemPO.class);
-        if(ListUtils.isEmpty(productItemPOs)){
-            return null;
+    public List<ProductPO> getFlagRecommendResult(Integer type, int size){
+        Criteria criteria = Criteria.where("recommendFlag").is(1);
+        if(type != null){
+            criteria.and("productType").is(type);
         }
-        return getRecommendResult(productItemPOs.stream().map(item -> item.getCode()).collect(Collectors.toList()), size);
+        Query query = new Query(criteria);
+        return mongoTemplate.find(query.limit(size), ProductPO.class);
     }
+
 
     @Override
     public ProductPO getImagesByCode(String code){
@@ -159,7 +142,8 @@ public class ProductDaoImpl implements ProductDao {
      * @param size
      * @return
      */
-    private List<ProductPO> getRecommendResult(List<String> itemCodes, int size){
+    @Override
+    public List<ProductPO> getLowPriceRecommendResult(List<String> itemCodes, int size){
         MatchOperation matchOperation = Aggregation.match(Criteria.where("mainItemCode").in(itemCodes));
         GroupOperation groupOperation = getGroupField();
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
@@ -172,23 +156,6 @@ public class ProductDaoImpl implements ProductDao {
                 Aggregation.limit(size));
         AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return outputType.getMappedResults();
-    }
-
-    /**
-     * 把product type转成productitem type
-     * @param productType
-     * @return
-     */
-    private int getItemType(int productType){
-        int itemType;
-        if(productType == ProductType.SCENIC_TICKET_PLUS.getCode() || productType == ProductType.SCENIC_TICKET.getCode()){
-            itemType = Constants.PRODUCT_ITEM_TYPE_TICKET;
-        } else if(productType == ProductType.RESTAURANT.getCode()){
-            itemType = Constants.PRODUCT_ITEM_TYPE_FOOD;
-        } else {
-            itemType = Constants.PRODUCT_ITEM_TYPE_HOTEL;
-        }
-        return itemType;
     }
 
     @Override

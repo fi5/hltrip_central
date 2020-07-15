@@ -52,22 +52,27 @@ public interface ProductDao {
     int getListTotal(String city, Integer type);
 
     /**
-     * 坐标推荐列表
-     * @param coordinate
-     * @param type
-     * @param size
+     * 按销量获取推荐列表
+     * @param productCodes
      * @return
      */
-    List<ProductPO> getCoordinateRecommendList(Coordinate coordinate, double radius, Integer type, int size);
+    List<ProductPO> getSalesRecommendList(List<String> productCodes);
 
     /**
-     * 目的地推荐列表
-     * @param city
+     * 按推荐标识获取推荐列表
      * @param type
      * @param size
      * @return
      */
-    List<ProductPO> getCityRecommendList(String city, Integer type, int size);
+    List<ProductPO> getFlagRecommendResult(Integer type, int size);
+
+    /**
+     * 获取低价推荐列表
+     * @param itemCodes
+     * @param size
+     * @return
+     */
+    List<ProductPO> getLowPriceRecommendResult(List<String> itemCodes, int size);
 
     /**
      * 获取图片列表
