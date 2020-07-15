@@ -10,5 +10,5 @@ import java.util.List;
  * @comment:
  **/
 public interface CityDao {
-	List<CityPO> queryCitys();
+	List<CityPO> queryCitys(String keyWord);
 }

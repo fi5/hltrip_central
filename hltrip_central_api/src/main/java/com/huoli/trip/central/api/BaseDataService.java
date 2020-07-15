@@ -1,6 +1,7 @@
 package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.entity.CityPO;
+import com.huoli.trip.common.vo.request.central.CityReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public interface BaseDataService {
 	 * 城市信息
 	 * @return
 	 */
-	 BaseResponse<List<CityPO>> queryCitys();
+	 BaseResponse<List<CityPO>> queryCitys(CityReq req);
 
 	 BaseResponse test();
 

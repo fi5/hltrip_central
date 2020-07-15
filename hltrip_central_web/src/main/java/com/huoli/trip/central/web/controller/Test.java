@@ -5,6 +5,7 @@ import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.CityReq;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
@@ -57,10 +58,10 @@ public class Test {
     }
 
     @RequestMapping(value = "test")
-    public Object test(String channel) {
+    public Object test(CityReq  req) {
 //        testService.test(channel);
-//        return channel;
-        return  baseDataService.queryCitys();
+//        return charennel;
+        return  baseDataService.queryCitys(req);
     }
     @RequestMapping(value = "testZ")
     public Object testZ(String orderId) {
