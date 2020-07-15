@@ -1,22 +1,19 @@
 package com.huoli.trip.central.web.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
+import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
-import com.huoli.trip.common.entity.PriceInfoPO;
-import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.entity.ProductItemPO;
-import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -29,10 +26,6 @@ import com.huoli.trip.common.vo.ProductItem;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
-import com.huoli.trip.common.vo.response.order.OrderDetailRep;
-import com.huoli.trip.supplier.api.YcfOrderService;
-import com.huoli.trip.supplier.api.YcfSyncService;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfGetPriceRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -60,9 +53,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductItemDao productItemDao;
-    @Autowired
-    OrderFactory orderFactory;
 
+    @Autowired
+    private PriceDao priceDao;
+
+    @Autowired
+    private OrderFactory orderFactory;
 
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request) {
@@ -112,7 +108,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
-        return productPOs.stream().map(po -> ProductConverter.convertToProduct(po, total)).collect(Collectors.toList());
+        return productPOs.stream().map(po -> {
+            Product product = ProductConverter.convertToProduct(po, total);
+            // 查最近的价格
+            PriceSinglePO priceSinglePO = priceDao.selectByProductCode(po.getCode());
+            // 设置产品价格信息
+            if(priceSinglePO != null && priceSinglePO.getPriceInfos() != null && priceSinglePO.getPriceInfos().getSalePrice() != null){
+                PriceInfo priceInfo = ProductConverter.convertToPriceInfo(priceSinglePO);
+                product.setPriceInfo(priceInfo);
+                // 产品销售价用价格日历的
+                product.setSalePrice(priceInfo.getSalePrice());
+            } else { // 没有价格就不返回该产品
+                return null;
+            }
+            return product;
+        }).filter(po -> po != null).collect(Collectors.toList());
     }
 
     @Override

@@ -1,10 +1,7 @@
 package com.huoli.trip.central.web.converter;
 
 import com.alibaba.fastjson.JSON;
-import com.huoli.trip.common.entity.ImageBasePO;
-import com.huoli.trip.common.entity.ProductItemPO;
-import com.huoli.trip.common.entity.ProductPO;
-import com.huoli.trip.common.entity.RoomInfoPO;
+import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
@@ -85,10 +82,32 @@ public class ProductConverter {
         return productItem;
     }
 
+    /**
+     * 转成 ImageBase vo
+     * @param imageBasePO
+     * @return
+     */
     public static ImageBase convertToImageBase(ImageBasePO imageBasePO){
         ImageBase imageBase = new ImageBase();
         imageBase.setDesc(imageBasePO.getDesc());
         imageBase.setUrl(imageBasePO.getUrl());
         return imageBase;
+    }
+
+    /**
+     * 转成PriceInfo vo
+     * @param priceSinglePO
+     * @return
+     */
+    public static PriceInfo convertToPriceInfo(PriceSinglePO priceSinglePO){
+        PriceInfo priceInfo = new PriceInfo();
+        priceInfo.setPriceType(priceSinglePO.getPriceInfos().getPriceType());
+        priceInfo.setProductCode(priceSinglePO.getProductCode());
+        priceInfo.setSaleDate(DateTimeUtil.formatDate(priceSinglePO.getPriceInfos().getSaleDate(), DateTimeUtil.YYYYMMDD));
+        priceInfo.setSalePrice(priceSinglePO.getPriceInfos().getSalePrice());
+        priceInfo.setSettlePrice(priceSinglePO.getPriceInfos().getSettlePrice());
+        priceInfo.setStock(priceSinglePO.getPriceInfos().getStock());
+        priceInfo.setSupplierPriceId(priceSinglePO.getSupplierProductId());
+        return priceInfo;
     }
 }

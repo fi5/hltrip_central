@@ -22,7 +22,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -104,7 +103,7 @@ public class ProductDaoImpl implements ProductDao {
         long rows = (page - 1) * size;
         Aggregation aggregation = Aggregation.newAggregation(
                 matchOperation,
-                groupOperation.min("salePrice").as("salePrice"),
+                groupOperation,
                 Aggregation.project(ProductPO.class).andExclude("_id"),
                 Aggregation.skip(rows),
                 Aggregation.limit(size));
@@ -166,8 +165,9 @@ public class ProductDaoImpl implements ProductDao {
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
         Aggregation aggregation = Aggregation.newAggregation(
                 matchOperation,
-                groupOperation.min("salePrice").as("salePrice"),
-                sortOperation,
+                sortOperation, // 分组前排序为了first获取到最低价信息，
+                groupOperation.min("salePrice").as("salePrice"),  // 最低价
+                sortOperation, // 分组后排序为了给最终结果排序
                 Aggregation.project(ProductPO.class).andExclude("_id"),
                 Aggregation.limit(size));
         AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);

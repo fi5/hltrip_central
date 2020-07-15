@@ -3,6 +3,7 @@ package com.huoli.trip.central.web;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
+import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.PriceInfoPO;
@@ -25,6 +26,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +42,9 @@ import java.util.stream.Collectors;
 public class Test0 {
     @Autowired
     private ProductDao productDao;
+
+    @Autowired
+    private PriceDao priceDao;
     @Autowired
     private MongoTemplate mongoTemplate;
     @Autowired
@@ -71,7 +76,7 @@ public class Test0 {
         log.info("================================={}", JSON.toJSONString(productService.getImages(request)));
     }
 
-    @Test
+//    @Test
     public void test2(){
         RecommendRequest request = new RecommendRequest();
         request.setPosition(1);
@@ -134,17 +139,19 @@ public class Test0 {
                 .first("salePrice").as("salePrice")
                 .first("mainItemId").as("mainItemCode")
                 .first("mainItem").as("mainItem")
+                .first("code").as("code")
                 .last("itype").as("itype");
         long rows = (page - 1) * size;
         Aggregation aggregation1 = Aggregation.newAggregation(Aggregation.match(criteria),
                 groupOperation.count().as("total"),
                 Aggregation.project(ProductPO.class).andExclude("_id"));
-        AggregationResults<ProductPO> outputType1 = mongoTemplate.aggregate(aggregation1, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
-        System.out.println("total============ " + outputType1.getMappedResults().size());
-        System.out.println(JSON.toJSONString(outputType1.getMappedResults()));
+//        AggregationResults<ProductPO> outputType1 = mongoTemplate.aggregate(aggregation1, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+//        System.out.println("total============ " + outputType1.getMappedResults().size());
+//        System.out.println(JSON.toJSONString(outputType1.getMappedResults()));
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(criteria),
+                sortOperation,
                 groupOperation.min("salePrice").as("salePrice"),
                 sortOperation,
                 Aggregation.project(ProductPO.class).andExclude("_id"),

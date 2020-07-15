@@ -3,13 +3,20 @@ package com.huoli.trip.central.web.dao.impl;
 import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.entity.PriceSinglePO;
+import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.util.ListUtils;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.Map;
 
 /**
  * 描述：<br/>
@@ -27,11 +34,23 @@ public class PriceDaoImpl implements PriceDao {
 
     @Override
     public void updateBySupplierProductId(PricePO pricePO){
-        Query query = new Query();
-        query.addCriteria(Criteria.where("code").is(pricePO.getCode()));
+        Query query = Query.query(Criteria.where("productCode").is(pricePO.getProductCode()));
         Document document = new Document();
         mongoTemplate.getConverter().write(pricePO, document);
         Update update = Update.fromDocument(document);
         mongoTemplate.upsert(query, update, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR);
+    }
+
+    @Override
+    public PriceSinglePO selectByProductCode(String productCode){
+        Aggregation aggregation = Aggregation.newAggregation(Aggregation.unwind("priceInfos"),
+                Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.stock").gt(0)),
+                Aggregation.sort(Sort.Direction.ASC, "salePrice"),
+                Aggregation.limit(1));
+        AggregationResults<PriceSinglePO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR, PriceSinglePO.class);
+        if(ListUtils.isNotEmpty(output.getMappedResults())){
+            return output.getMappedResults().get(0);
+        }
+        return null;
     }
 }

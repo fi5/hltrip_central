@@ -1,6 +1,10 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.entity.PriceSinglePO;
+import org.bson.Document;
+
+import java.util.Map;
 
 /**
  * 描述：<br/>
@@ -17,4 +21,11 @@ public interface PriceDao {
      * @param pricePO
      */
     void updateBySupplierProductId(PricePO pricePO);
+
+    /**
+     * 根据产品编码获取最近的价格
+     * @param productCode
+     * @return
+     */
+    PriceSinglePO selectByProductCode(String productCode);
 }
