@@ -27,6 +27,7 @@ import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,10 +155,26 @@ public class ProductServiceImpl implements ProductService {
             ProductPriceCalendarResult result = new ProductPriceCalendarResult();
 
             final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
+            if(null==pricePo || CollectionUtils.isEmpty(pricePo.getPriceInfos()))
+                return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             List<PriceInfo> priceInfos = Lists.newArrayList();
             for (PriceInfoPO entry : pricePo.getPriceInfos()) {
+                String saleDate = CommonUtils.curDate.format(entry.getSaleDate());
+                //过滤日期
+                if(StringUtils.isNotBlank(productPriceReq.getStartDate())){
+                    if(saleDate.compareTo(productPriceReq.getStartDate())<0)
+                        continue;
+
+                }
+                if(StringUtils.isNotBlank(productPriceReq.getEndDate())){
+                    if(saleDate.compareTo(productPriceReq.getEndDate())>0)
+                        continue;
+                }
                 PriceInfo target = new PriceInfo();
+                target.setSaleDate(saleDate);
+
                 BeanUtils.copyProperties(entry, target);
+
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }
@@ -165,7 +182,7 @@ public class ProductServiceImpl implements ProductService {
             result.setPriceInfos(priceInfos);
             result.setBuyMaxNight(productPo.getBuyMaxNight());//购买晚数限制
             result.setBuyMinNight(productPo.getBuyMinNight());
-            if (productPo.getRoom() != null) {
+            if (productPo.getRoom() != null&& CollectionUtils.isNotEmpty(productPo.getRoom().getRooms()))  {
                 //设置基准晚数
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
                 result.setBaseNum(baseNum);
@@ -198,6 +215,8 @@ public class ProductServiceImpl implements ProductService {
         try {
             //获取trip_product
             ProductPO productPo = productDao.getTripProductByCode(req.getProductCode());
+            if(null==productPo )
+                return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             final Product product = ProductConverter.convertToProduct(productPo, 0);
             ProductPriceDetialResult result = new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
@@ -207,7 +226,9 @@ public class ProductServiceImpl implements ProductService {
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             }
             orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
-
+            if (product.getMainItem() != null) {
+                result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+            }
             result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());
@@ -238,7 +259,16 @@ public class ProductServiceImpl implements ProductService {
             priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
             priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
             priceCal.setProductCode(req.getProductCode());
-            final BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = calcTotalPrice(priceCal);
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
+            try {
+                priceCalcResultBaseResponse= calcTotalPrice(priceCal);
+            } catch (HlCentralException he) {
+                return BaseResponse.fail(he.getCode(),he.getError(),he.getData());
+            } catch (Exception e) {
+            	log.info("",e);
+                return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+            }
+
             if(priceCalcResultBaseResponse.getCode()!=0){
                 //抛出价格计算异常,如库存不足
                 return BaseResponse.fail(priceCalcResultBaseResponse.getCode(),priceCalcResultBaseResponse.getMessage(),priceCalcResultBaseResponse.getData());
@@ -253,7 +283,7 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.success(result);
         } catch (Exception e) {
             log.info("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
-            return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
+            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
 
     }

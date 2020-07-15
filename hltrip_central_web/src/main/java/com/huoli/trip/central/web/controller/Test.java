@@ -8,6 +8,7 @@ import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
+import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -79,12 +80,17 @@ public class Test {
     }
 
     @RequestMapping(value = "testPrice")
-    public Object testPrice(String productCode) {
-        ProductPriceReq productPriceReq=new ProductPriceReq();
-        productPriceReq.setProductCode(productCode);
+    public Object testPrice(ProductPriceReq productPriceReq) {
         final BaseResponse<ProductPriceCalendarResult> listBaseResponse = productService.productPriceCalendar(productPriceReq);
         return listBaseResponse;
     }
+
+    @RequestMapping(value = "priceDetail")
+    public BaseResponse<ProductPriceDetialResult> priceDetail(ProductPriceReq req) {
+        final BaseResponse<ProductPriceDetialResult> priceDetail = productService.getPriceDetail(req);
+        return priceDetail;
+    }
+
 
     @RequestMapping(value = "createOrder",method = {RequestMethod.POST, RequestMethod.GET})
     public Object createOrder(@RequestBody CreateOrderReq request) {
