@@ -32,11 +32,11 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
             return null;
         }
         YcfCreateOrderReq ycfCreateOrderReq = new YcfCreateOrderReq();
-        ycfCreateOrderReq.setCName(req.getCName());
+        ycfCreateOrderReq.setCName(req.getCname());
         ycfCreateOrderReq.setCredential(req.getCredential());
         ycfCreateOrderReq.setCredentialType(req.getCredentialType());
         ycfCreateOrderReq.setEmail(req.getEmail());
-        ycfCreateOrderReq.setEName(req.getEName());
+        ycfCreateOrderReq.setEName(req.getEname());
         ycfCreateOrderReq.setGuests(converterGuestList(req.getGuests()));
         ycfCreateOrderReq.setMobile(req.getMobile());
         ycfCreateOrderReq.setPartnerOrderId(req.getPartnerOrderId());
