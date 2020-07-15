@@ -6,6 +6,7 @@ import com.huoli.trip.central.web.dao.CityDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.entity.CityPO;
 import com.huoli.trip.common.exception.HlCentralException;
+import com.huoli.trip.common.vo.request.central.CityReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +26,9 @@ public class BaseDataServiceImpl implements BaseDataService {
 	CityDao cityDao;
 
 	@Override
-	public BaseResponse<List<CityPO>> queryCitys() {
+	public BaseResponse<List<CityPO>> queryCitys(CityReq req) {
 		try {
-			List<CityPO> citys = cityDao.queryCitys();
+			List<CityPO> citys = cityDao.queryCitys(req.getKeyword());
 			//目前只有code与城市名
 			return BaseResponse.success(citys);
 		} catch (Exception e) {

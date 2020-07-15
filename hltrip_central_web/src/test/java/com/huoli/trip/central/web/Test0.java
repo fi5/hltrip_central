@@ -58,14 +58,14 @@ public class Test0 {
 //        List<ProductPO> list = getGroup();
 //        List<ProductPO> list = getPageList("", 1, 1, 60);
 //        List<ProductPO> list = productDao.getProductListByItemId("yaochufa_29439");
-        CategoryDetailRequest request = new CategoryDetailRequest();
-        request.setProductItemId("yaochufa_29439");
-        request.setSaleDate(DateTimeUtil.trancateToDate(new Date()));
+//        CategoryDetailRequest request = new CategoryDetailRequest();
+//        request.setProductItemId("yaochufa_29439");
+//        request.setSaleDate(DateTimeUtil.trancateToDate(new Date()));
 //        ProductPageRequest request1 = new ProductPageRequest();
 //        request1.setCity("北京市");
 //        request1.setType(0);
 //        log.info("结果 = {}", JSON.toJSONString(productService.pageList(request1)));
-        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
+//        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
 //        log.info("结果 = {}", JSON.toJSONString(list));
     }
 
