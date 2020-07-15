@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.BaseDataService;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.api.ProductService;
@@ -11,6 +12,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 创建日期：2020/6/24<br>
  */
 @RestController
+@Slf4j
 public class Test {
 
     @Autowired
@@ -137,5 +140,17 @@ public class Test {
         return payCheck;
     }
 
-
+    @RequestMapping(value = "testOrderStatuskafka")
+    public String testOrderStatuskafka() {
+        PushOrderStatusReq req = new PushOrderStatusReq();
+        req.setPartnerOrderId("1234");
+        req.setRemark("订单状态改变了");
+        req.setOrderStatus(0);
+        try {
+            orderService.orderStatusNotice(req);
+        }catch (Exception e){
+            log.error("testOrderStatuskafka 异常了"+ JSONObject.toJSONString(req),e);
+        }
+        return "ok";
+    }
 }

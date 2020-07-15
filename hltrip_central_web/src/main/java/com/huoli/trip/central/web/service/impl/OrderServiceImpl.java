@@ -174,7 +174,7 @@ public class OrderServiceImpl implements OrderService {
                         log.info("订单状态推送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
         } catch (Exception e) {
-            log.info("",e);
+            log.error("订单状态推送kafka失败"+JSONObject.toJSONString(req),e);
         }
     }
 
