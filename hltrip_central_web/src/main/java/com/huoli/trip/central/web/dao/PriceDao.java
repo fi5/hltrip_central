@@ -4,6 +4,7 @@ import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.PriceSinglePO;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 描述：<br/>
@@ -31,8 +32,16 @@ public interface PriceDao {
     /**
      * 根据产品编码和日期查价格
      * @param productCode
-     * @param saleDate
+     * @param date
      * @return
      */
-    PriceSinglePO selectByDate(String productCode, Date saleDate);
+    PriceSinglePO selectByDate(String productCode, Date date);
+
+    /**
+     * 从多个产品获取最低价
+     * @param productCodes
+     * @param date
+     * @return
+     */
+    PriceSinglePO selectByProductCodes(List<String> productCodes, Date date);
 }

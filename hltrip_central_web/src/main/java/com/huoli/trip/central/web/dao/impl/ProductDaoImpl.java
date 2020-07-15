@@ -144,7 +144,8 @@ public class ProductDaoImpl implements ProductDao {
      */
     @Override
     public List<ProductPO> getLowPriceRecommendResult(List<String> itemCodes, int size){
-        MatchOperation matchOperation = Aggregation.match(Criteria.where("mainItemCode").in(itemCodes));
+        Criteria criteria = Criteria.where("mainItemCode").in(itemCodes);
+        MatchOperation matchOperation = Aggregation.match(criteria);
         GroupOperation groupOperation = getGroupField();
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
         Aggregation aggregation = Aggregation.newAggregation(
@@ -156,6 +157,12 @@ public class ProductDaoImpl implements ProductDao {
                 Aggregation.limit(size));
         AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return outputType.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getByCityAndType(String city, int type){
+        Criteria criteria = Criteria.where("city").in(city).and("productType").is(type);
+        return mongoTemplate.find(new Query(criteria), ProductPO.class);
     }
 
     @Override

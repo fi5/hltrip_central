@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.converter;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.*;
@@ -8,6 +9,7 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +21,15 @@ import java.util.stream.Collectors;
  * 创建日期：2020/7/7<br>
  */
 public class ProductConverter {
+
+    /**
+     * 转成product vo
+     * @param po
+     * @return
+     */
+    public static Product convertToProduct(ProductPO po){
+        return convertToProduct(po, 0);
+    }
 
     /**
      * 转成product vo
@@ -111,6 +122,24 @@ public class ProductConverter {
         priceInfo.setStock(priceSinglePO.getPriceInfos().getStock());
         priceInfo.setSupplierPriceId(priceSinglePO.getSupplierProductId());
         return priceInfo;
+    }
+
+    /**
+     * 根据前台类型转换对应数据库类型
+     * @param type
+     * @return
+     */
+    public static List<Integer> getTypes(int type) {
+        List<Integer> types;
+        // 不限需要查所有类型
+        if (type == ProductType.UN_LIMIT.getCode()) {
+            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
+        } else if (type == ProductType.SCENIC_TICKET_PLUS.getCode()) {  // 门票加需要查门票和门票+
+            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
+        } else {  // 其它类型就按传进来的查
+            types = Lists.newArrayList(type);
+        }
+        return types;
     }
 
     /**

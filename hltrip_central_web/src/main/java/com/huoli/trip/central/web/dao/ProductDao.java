@@ -95,4 +95,12 @@ public interface ProductDao {
      */
     ProductPO getTripProductByCode(String productCode);
 
+    /**
+     * 根据城市和类型获取产品
+     * @param city
+     * @param type
+     * @return
+     */
+    List<ProductPO> getByCityAndType(String city, int type);
+
 }

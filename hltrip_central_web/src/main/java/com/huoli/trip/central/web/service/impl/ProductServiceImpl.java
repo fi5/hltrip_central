@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
+import com.huoli.trip.central.web.dao.CityDao;
 import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
@@ -32,7 +33,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.lang.ref.ReferenceQueue;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -65,14 +65,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
-        List<Integer> types = getTypes(request.getType());
+        List<Integer> types = ProductConverter.getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
             int total = productDao.getListTotal(request.getCity(), t);
             List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
             if (ListUtils.isNotEmpty(productPOs)) {
-                products.addAll(convertToProducts(productPOs, total));
+                products.addAll(convertToProducts(productPOs, null, total));
             }
         }
         if(ListUtils.isEmpty(products)){
@@ -87,12 +87,17 @@ public class ProductServiceImpl implements ProductService {
      * @param total
      * @return
      */
-    private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
+    private List<Product> convertToProducts(List<ProductPO> productPOs, Date date, int total) {
         return productPOs.stream().map(po -> {
             try {
                 Product product = ProductConverter.convertToProduct(po, total);
+                PriceSinglePO priceSinglePO;
                 // 查最近的价格
-                PriceSinglePO priceSinglePO = priceDao.selectByProductCode(product.getCode());
+                if(date == null){
+                    priceSinglePO = priceDao.selectByProductCode(product.getCode());
+                } else { // 查确定日期的价格
+                    priceSinglePO = priceDao.selectByDate(product.getCode(), date);
+                }
                 return setPriceInfo(product, priceSinglePO);
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
@@ -157,7 +162,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<RecommendResult> recommendList(RecommendRequest request) {
         RecommendResult result = new RecommendResult();
-        List<Integer> types = getTypes(request.getType());
+        List<Integer> types = ProductConverter.getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
@@ -184,17 +189,24 @@ public class ProductServiceImpl implements ProductService {
                 } else { // 按推荐标记推荐
                     productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
                 }
-            } else {  // 其它根据城市推荐
-                if(StringUtils.isNotBlank(request.getCity())){
-                    List<ProductItemPO> productItemPOs = productItemDao.getByCity(t, request.getCity());
-                    if(ListUtils.isNotEmpty(productItemPOs)){
-                        productPOs = productDao.getLowPriceRecommendResult(productItemPOs.stream().map(item ->
-                                item.getCode()).collect(Collectors.toList()), request.getPageSize());
+            } else {  // 其它根据城市和日期推荐  todo 这里应该可以连表查，待优化
+                if(StringUtils.isNotBlank(request.getCity()) && request.getSaleDate() != null){
+                    // 先查目的地指定类型的产品
+                    List<ProductPO> tempProductPOs = productDao.getByCityAndType(request.getCity(), t);
+                    if(ListUtils.isNotEmpty(tempProductPOs)){
+                        // 从所有产品中找到最低价产品
+                        PriceSinglePO priceSinglePO = priceDao.selectByProductCodes(tempProductPOs.stream().map(temp ->
+                                temp.getCode()).collect(Collectors.toList()), request.getSaleDate());
+                        if(priceSinglePO != null){
+                            ProductPO productPO = tempProductPOs.stream().filter(temp ->
+                                    StringUtils.equals(temp.getCode(), priceSinglePO.getProductCode())).findFirst().orElse(new ProductPO());
+                            productPOs = Lists.newArrayList(productPO);
+                        }
                     }
                 }
             }
             if (ListUtils.isNotEmpty(productPOs)) {
-                products.addAll(convertToProducts(productPOs, 0));
+                products.addAll(convertToProducts(productPOs, request.getSaleDate(), 0));
             }
         }
         if(ListUtils.isEmpty(products)){
@@ -247,24 +259,6 @@ public class ProductServiceImpl implements ProductService {
             log.info("productPriceCalendar价格日历报错:"+JSONObject.toJSONString(productPriceReq), e);
         }
         return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
-    }
-
-    /**
-     * 根据前台类型转换对应数据库类型
-     * @param type
-     * @return
-     */
-    private List<Integer> getTypes(int type) {
-        List<Integer> types;
-        // 不限需要查所有类型
-        if (type == ProductType.UN_LIMIT.getCode()) {
-            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
-        } else if (type == ProductType.SCENIC_TICKET_PLUS.getCode()) {  // 门票加需要查门票和门票+
-            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
-        } else {  // 其它类型就按传进来的查
-            types = Lists.newArrayList(type);
-        }
-        return types;
     }
 
     @Override

@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 描述：<br/>
@@ -55,9 +56,22 @@ public class PriceDaoImpl implements PriceDao {
     }
 
     @Override
-    public PriceSinglePO selectByDate(String productCode, Date saleDate){
+    public PriceSinglePO selectByDate(String productCode, Date date){
         Aggregation aggregation = Aggregation.newAggregation(Aggregation.unwind("priceInfos"),
-                Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))),
+                Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(date))),
+                Aggregation.limit(1));
+        AggregationResults<PriceSinglePO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR, PriceSinglePO.class);
+        if(ListUtils.isNotEmpty(output.getMappedResults())){
+            return output.getMappedResults().get(0);
+        }
+        return null;
+    }
+
+    @Override
+    public PriceSinglePO selectByProductCodes(List<String> productCodes, Date date){
+        Aggregation aggregation = Aggregation.newAggregation(Aggregation.unwind("priceInfos"),
+                Aggregation.match(Criteria.where("productCode").in(productCodes).and("priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(date))),
+                Aggregation.sort(Sort.Direction.ASC, "salePrice"),
                 Aggregation.limit(1));
         AggregationResults<PriceSinglePO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR, PriceSinglePO.class);
         if(ListUtils.isNotEmpty(output.getMappedResults())){
