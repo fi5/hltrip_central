@@ -155,21 +155,22 @@ public class YcfOrderManger extends OrderManager {
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getCount());
-        BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
+        PriceCalcResult priceCalcResult = null;
         try{
-            priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
-        }catch (Exception e){
-            log.error("大兄弟额  你的价格计算服务 又挂了=.=  :{}",e);
-            if(priceCalcResultBaseResponse!=null){
-                log.error("大兄弟额  你的价格计算服务 又挂了=.=  :{}",priceCalcResultBaseResponse.getMessage());
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            priceCalcResult = priceCalcResultBaseResponse.getData();
+            //没有价格直接抛异常
+            if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
+                throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
             }
+        }catch (HlCentralException e){
+            log.error("大兄弟额  你的价格计算服务 又挂了=.=  :{}",e);
+            throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
-        if(priceCalcResultBaseResponse!=null&&priceCalcResultBaseResponse.getData()!=null){
-            //设置结算总价
-            bookCheck.setSettlePrice(priceCalcResultBaseResponse.getData().getSettlesTotal());
-            //销售总价
-            bookCheck.setSalePrice(priceCalcResultBaseResponse.getData().getSalesTotal());
-        }
+        //设置结算总价
+        bookCheck.setSettlePrice(priceCalcResult.getSettlesTotal());
+        //销售总价
+        bookCheck.setSalePrice(priceCalcResult.getSalesTotal());
         //设置库存
         if(stockList.size()>0){
             bookCheck.setStock(stockList.get(0));
@@ -297,19 +298,20 @@ public class YcfOrderManger extends OrderManager {
         calcRequest.setEndDate(DateTimeUtil.parseDate(req.getEndDate()));
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getQunatity());
-        BaseResponse<PriceCalcResult>  priceCalcResultBaseResponse = null;
+        PriceCalcResult priceCalcResult = null;
         try{
-            priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
-        }catch (Exception e){
-            log.error("大兄弟额  你的价格计算服务 又挂了=.=  :{}",e);
-            if(priceCalcResultBaseResponse!=null){
-                log.info("大兄弟额  你的价格计算服务 又挂了=.=  :{}",priceCalcResultBaseResponse.getMessage());
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            priceCalcResult = priceCalcResultBaseResponse.getData();
+            //没有价格直接抛异常
+            if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
+                throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
             }
+        }catch (HlCentralException e){
+            log.error("大兄弟额  你的价格计算服务 又挂了=.=  :{}",e);
+            throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
-        if(priceCalcResultBaseResponse!=null && priceCalcResultBaseResponse.getData()!=null){
-            //总的结算价
-            ycfCreateOrderReq.setAmount(priceCalcResultBaseResponse.getData().getSettlesTotal());
-        }
+        //总的结算价
+        ycfCreateOrderReq.setAmount(priceCalcResult.getSettlesTotal());
         //总结算价不能小于0
         int amountFlag = ycfCreateOrderReq.getAmount().compareTo(BigDecimal.ZERO);
         if(amountFlag ==-1||amountFlag == 0){
