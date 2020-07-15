@@ -84,7 +84,7 @@ public interface OrderService {
      * 版本：1.0<br>
      * 创建日期：2020/7/7<br>
      */
-    void orderStatusNotice(PushOrderStatusReq req) ;
+    Boolean orderStatusNotice(PushOrderStatusReq req) ;
 
     /**
      * 描述: <br> 支付前校验
