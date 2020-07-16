@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 描述：desc<br>
@@ -246,13 +247,17 @@ public class YcfOrderManger extends OrderManager {
         //价格集合
         List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
         if(pricePos!=null){
-            pricePos.getPriceInfos().forEach(price->{
-                //价格对象
-                YcfPriceItem ycfPriceItem = new YcfPriceItem();
-                ycfPriceItem.setDate(price.getSaleDate());
-                ycfPriceItem.setPrice(price.getSettlePrice());
-                ycfPriceItemList.add(ycfPriceItem);
-            });
+            //取时间范围内的价格集合
+            List<PriceInfoPO> priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> !priceInfoPO.getSaleDate().after(DateTimeUtil.parseDate(req.getEndDate())) && !priceInfoPO.getSaleDate().before(DateTimeUtil.parseDate(req.getBeginDate()))).collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(priceInfoPOS)){
+                priceInfoPOS.forEach(price->{
+                    //价格对象
+                    YcfPriceItem ycfPriceItem = new YcfPriceItem();
+                    ycfPriceItem.setDate(price.getSaleDate());
+                    ycfPriceItem.setPrice(price.getSettlePrice());
+                    ycfPriceItemList.add(ycfPriceItem);
+                });
+            }
         }
         //本地餐饮
         FoodPO food = productPO.getFood();
@@ -423,9 +428,24 @@ public class YcfOrderManger extends OrderManager {
     }
 
     public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
-        //todo 支付前校验逻辑 暂时没有逻辑啊
+        //支付前校验逻辑 判断订单状态是否是待支付
         CenterPayCheckRes result = new CenterPayCheckRes();
-        result.setResult(true);
+        OrderOperReq operReq = new OrderOperReq();
+        operReq.setOrderId(req.getChannelOrderId());
+        operReq.setChannelCode(req.getChannelCode());
+        try {
+            BaseResponse<OrderDetailRep> orderDetail = this.getOrderDetail(operReq);
+            if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()==0){
+                result.setResult(true);
+            }else {
+                log.error("支付前校验没有通过 订单详情返回json:{}",JSONObject.toJSONString(orderDetail));
+                result.setResult(false);
+            }
+        }catch (HlCentralException e){
+            log.error("支付前校验失败 ：{}",e);
+            result.setResult(false);
+            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+        }
         return BaseResponse.success(result);
     }
 

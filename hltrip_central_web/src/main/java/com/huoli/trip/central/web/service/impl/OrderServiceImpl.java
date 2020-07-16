@@ -185,7 +185,6 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        //todo 支付前校验逻辑
         BaseResponse<CenterPayCheckRes> result = orderManager.payCheck(req);
         return result;
     }
