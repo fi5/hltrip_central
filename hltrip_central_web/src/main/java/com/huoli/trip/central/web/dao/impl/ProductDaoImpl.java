@@ -1,18 +1,28 @@
 package com.huoli.trip.central.web.dao.impl;
 
+import com.google.common.collect.Lists;
+import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.util.MongoDateUtils;
+import com.huoli.trip.common.vo.Coordinate;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.geo.Sphere;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -29,8 +39,139 @@ public class ProductDaoImpl implements ProductDao {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    private GroupOperation getGroupField(){
-        return Aggregation.group("mainItemCode")
+    @Override
+    public List<ProductPO> getProductListByItemId(String itemId, Date saleDate){
+        // 连价格日历表
+        LookupOperation priceLookup = LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR)
+                .localField("code")
+                .foreignField("productCode")
+                .as("priceCalendar");
+        // 拆价格日历
+        UnwindOperation unwindOperation = Aggregation.unwind("priceCalendar");
+        UnwindOperation unwindOperation1 = Aggregation.unwind("priceCalendar.priceInfos");
+        // 按价格正序
+        SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
+        // 查询条件
+        Criteria criteria = Criteria.where("mainItemCode").is(itemId)
+                .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))
+                .and("priceCalendar.priceInfos.stock").gt(0);
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        // 指定字段
+        ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
+        // 分组后排序
+        List<AggregationOperation> aggregations = Lists.newArrayList(priceLookup,
+                unwindOperation,
+                unwindOperation1,
+                matchOperation,
+                priceSort,
+                projectionOperation);
+        Aggregation aggregation = Aggregation.newAggregation(aggregations);
+        AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return output.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size){
+        List<AggregationOperation> aggregations = pageListAggregation(city, type, keyWord);
+        long rows = (page - 1) * size;
+        aggregations.add(Aggregation.skip(rows));
+        aggregations.add(Aggregation.limit(size));
+        Aggregation aggregation = Aggregation.newAggregation(aggregations);
+        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return outputType.getMappedResults();
+    }
+
+    @Override
+    public int getPageListTotal(String city, Integer type, String keyWord){
+        List<AggregationOperation> aggregations = pageListAggregation(city, type, keyWord);
+        CountOperation countOperation = Aggregation.count().as("count");
+        aggregations.add(countOperation);
+        Aggregation aggregation = Aggregation.newAggregation(aggregations);
+        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        if(ListUtils.isEmpty(outputType.getMappedResults())|| outputType.getMappedResults().get(0) == null){
+            return 0;
+        }
+        return outputType.getMappedResults().get(0).getCount();
+    }
+
+    @Override
+    public List<ProductPO> getSalesRecommendList(List<String> productCodes){
+        // 查询条件
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("code").in(productCodes);
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation));
+        AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return output.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getFlagRecommendResult(Integer type, int size){
+        // 查询条件
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("recommendFlag").is(1);
+        if(type != null){
+            criteria.and("productType").is(type);
+        }
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation));
+        AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return output.getMappedResults();
+    }
+
+
+    @Override
+    public ProductPO getImagesByCode(String code){
+        Query query = new Query(Criteria.where("code").is(code));
+        query.fields().include("images");
+        return mongoTemplate.findOne(query, ProductPO.class);
+    }
+
+    @Override
+    public List<ProductPO> getNearRecommendResult(int productType, Coordinate coordinate, double radius, int size){
+        // 获取item类型
+        int itemType = ProductConverter.getItemType(productType);
+        // 附近
+        Point point = new Point(coordinate.getLongitude(), coordinate.getLatitude());
+        Sphere sphere = new Sphere(point, new Distance(radius, Metrics.KILOMETERS));
+        // 查询条件
+        Criteria criteria = Criteria.where("mainItem.itemType").is(itemType)
+                .and("mainItem.itemCoordinate").within(sphere)
+                .and("priceCalendar.priceInfos.stock").gt(0);
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        // 连item表
+        List<AggregationOperation> operations = Lists.newArrayList(LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRODUCT_ITEM)
+                .localField("mainItemCode")
+                .foreignField("code")
+                .as("mainItem"));
+        operations.addAll(recommendListAggregation(matchOperation));
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return output.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getByCityAndType(String city, int type){
+        // 查询条件
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("city").in(city).and("productType").is(type);
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation));
+        AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        return output.getMappedResults();
+    }
+
+    @Override
+    public PricePO getPricePos(String productCode) {
+        Query query = new Query(Criteria.where("productCode").is(productCode));
+        return mongoTemplate.findOne(query, PricePO.class);
+    }
+
+    @Override
+    public ProductPO getTripProductByCode(String productCode) {
+        Query query = new Query(Criteria.where("code").is(productCode));
+        return mongoTemplate.findOne(query, ProductPO.class);
+    }
+
+    private GroupOperation getGroupField(String... fields){
+        return Aggregation.group(fields)
                 .first("mainItemCode").as("mainItemCode")
                 .first("code").as("code")
                 .first("supplierProductId").as("supplierProductId")
@@ -68,112 +209,68 @@ public class ProductDaoImpl implements ProductDao {
                 .first("ticket").as("ticket")
                 .first("food").as("food")
                 .first("city").as("city")
-                .first("count").as("count");
+                .first("count").as("count")
+                .first("priceCalendar").as("priceCalendar");
     }
 
-    @Override
-    public List<ProductPO> getProductListByItemIds(List<String> itemIds){
-        Query query = new Query(Criteria.where("mainItemCode").in(itemIds));
-        return mongoTemplate.find(query, ProductPO.class);
-    }
-    @Override
-    public List<ProductPO> getProductListByItemId(String itemId){
-        Query query = new Query(Criteria.where("mainItemCode").is(itemId));
-        return mongoTemplate.find(query, ProductPO.class);
-    }
-
-    @Override
-    public List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size){
-        Criteria criteria = Criteria.where("productType").is(type).and("city").is(city);
+    private List<AggregationOperation> pageListAggregation(String city, Integer type, String keyWord){
+        // 连价格日历表
+        LookupOperation priceLookup = LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR)
+                .localField("code")
+                .foreignField("productCode")
+                .as("priceCalendar");
+        // 拆价格日历
+        UnwindOperation unwindOperation = Aggregation.unwind("priceCalendar");
+        UnwindOperation unwindOperation1 = Aggregation.unwind("priceCalendar.priceInfos");
+        // 按价格正序
+        SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
+        // 查询条件
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("productType").is(type).and("city").is(city);
         if(StringUtils.isNotBlank(keyWord)){
             criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
-        GroupOperation groupOperation = getGroupField();
-//        Sort sort = Sort.by(Sort.Direction.ASC, "salePrice");
-        long rows = (page - 1) * size;
-        Aggregation aggregation = Aggregation.newAggregation(
-                matchOperation,
-                groupOperation,
-                Aggregation.project(ProductPO.class).andExclude("_id"),
-                Aggregation.skip(rows),
-                Aggregation.limit(size));
-        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
-        return outputType.getMappedResults();
-    }
-
-    @Override
-    public int getListTotal(String city, Integer type){
-        MatchOperation matchOperation = Aggregation.match(Criteria.where("productType").is(type).and("city").is(city));
-        GroupOperation groupOperation = getGroupField();
-        Aggregation aggregationCount = Aggregation.newAggregation(matchOperation,
-                groupOperation.count().as("count"),
-                Aggregation.project(ProductPO.class).andExclude("_id"));
-        AggregationResults<ProductPO> resultsCount = mongoTemplate.aggregate(aggregationCount, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
-        return resultsCount.getMappedResults().size();
-    }
-
-    @Override
-    public List<ProductPO> getSalesRecommendList(List<String> productCodes){
-        return mongoTemplate.find(new Query(Criteria.where("code").in(productCodes)), ProductPO.class);
-    }
-
-    @Override
-    public List<ProductPO> getFlagRecommendResult(Integer type, int size){
-        Criteria criteria = Criteria.where("recommendFlag").is(1);
-        if(type != null){
-            criteria.and("productType").is(type);
-        }
-        Query query = new Query(criteria);
-        return mongoTemplate.find(query.limit(size), ProductPO.class);
-    }
-
-
-    @Override
-    public ProductPO getImagesByCode(String code){
-        Query query = new Query(Criteria.where("code").is(code));
-        query.fields().include("images");
-        return mongoTemplate.findOne(query, ProductPO.class);
-    }
-
-    /**
-     * 查推荐结果
-     * @param itemCodes
-     * @param size
-     * @return
-     */
-    @Override
-    public List<ProductPO> getLowPriceRecommendResult(List<String> itemCodes, int size){
-        Criteria criteria = Criteria.where("mainItemCode").in(itemCodes);
-        MatchOperation matchOperation = Aggregation.match(criteria);
-        GroupOperation groupOperation = getGroupField();
+        // 分组
+        GroupOperation groupOperation = getGroupField("mainItemCode");
+        // 指定字段
+        ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
+        // 分组后排序
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
-        Aggregation aggregation = Aggregation.newAggregation(
+        List<AggregationOperation> aggregations = Lists.newArrayList(priceLookup,
+                unwindOperation,
+                unwindOperation1,
                 matchOperation,
-                sortOperation, // 分组前排序为了first获取到最低价信息，
-                groupOperation.min("salePrice").as("salePrice"),  // 最低价
-                sortOperation, // 分组后排序为了给最终结果排序
-                Aggregation.project(ProductPO.class).andExclude("_id"),
-                Aggregation.limit(size));
-        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
-        return outputType.getMappedResults();
+                priceSort,
+                groupOperation.min("priceCalendar.priceInfos.salePrice").as("salePrice"),
+                sortOperation,
+                projectionOperation);
+        return aggregations;
     }
 
-    @Override
-    public List<ProductPO> getByCityAndType(String city, int type){
-        Criteria criteria = Criteria.where("city").in(city).and("productType").is(type);
-        return mongoTemplate.find(new Query(criteria), ProductPO.class);
-    }
-
-    @Override
-    public PricePO getPricePos(String productCode) {
-        Query query = new Query(Criteria.where("productCode").is(productCode));
-        return mongoTemplate.findOne(query, PricePO.class);
-    }
-
-    @Override
-    public ProductPO getTripProductByCode(String productCode) {
-        Query query = new Query(Criteria.where("code").is(productCode));
-        return mongoTemplate.findOne(query, ProductPO.class);
+    private  List<AggregationOperation> recommendListAggregation(MatchOperation matchOperation){
+        // 连价格日历表
+        LookupOperation priceLookup = LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR)
+                .localField("code")
+                .foreignField("productCode")
+                .as("priceCalendar");
+        // 拆价格日历
+        UnwindOperation unwindOperation = Aggregation.unwind("priceCalendar");
+        UnwindOperation unwindOperation1 = Aggregation.unwind("priceCalendar.priceInfos");
+        // 按价格正序
+        SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
+        // 分组
+        GroupOperation groupOperation = getGroupField("code");
+        // 指定字段
+        ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
+        // 分组后排序
+        SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
+        return Lists.newArrayList(priceLookup,
+                unwindOperation,
+                unwindOperation1,
+                matchOperation,
+                priceSort,
+                groupOperation.min("priceCalendar.priceInfos.salePrice").as("salePrice"),
+                sortOperation,
+                projectionOperation);
     }
 }

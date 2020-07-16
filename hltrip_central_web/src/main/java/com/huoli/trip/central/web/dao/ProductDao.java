@@ -1,7 +1,6 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.vo.Coordinate;
 
@@ -19,18 +18,11 @@ import java.util.List;
 public interface ProductDao {
 
     /**
-     * 根据多个item查产品
-     * @param itemIds
-     * @return
-     */
-    List<ProductPO> getProductListByItemIds(List<String> itemIds);
-
-    /**
      * 根据单个item查询
      * @param itemId
      * @return
      */
-    List<ProductPO> getProductListByItemId(String itemId);
+    List<ProductPO> getProductListByItemId(String itemId, Date saleDate);
 
     /**
      * 列表页
@@ -44,12 +36,13 @@ public interface ProductDao {
     List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size);
 
     /**
-     * 总数
+     * 获取列表总数
      * @param city
      * @param type
+     * @param keyWord
      * @return
      */
-    int getListTotal(String city, Integer type);
+    int getPageListTotal(String city, Integer type, String keyWord);
 
     /**
      * 按销量获取推荐列表
@@ -68,11 +61,13 @@ public interface ProductDao {
 
     /**
      * 获取低价推荐列表
-     * @param itemCodes
-     * @param size
+     * @param productType
+     * @param coordinate
+     * @param radius
+     * @param siz
      * @return
      */
-    List<ProductPO> getLowPriceRecommendResult(List<String> itemCodes, int size);
+    List<ProductPO> getNearRecommendResult(int productType, Coordinate coordinate, double radius, int siz);
 
     /**
      * 获取图片列表

@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
-import com.huoli.trip.central.web.dao.CityDao;
 import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
@@ -69,10 +68,10 @@ public class ProductServiceImpl implements ProductService {
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
-            int total = productDao.getListTotal(request.getCity(), t);
+            int total = productDao.getPageListTotal(request.getCity(), t, request.getKeyWord());
             List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
             if (ListUtils.isNotEmpty(productPOs)) {
-                products.addAll(convertToProducts(productPOs, null, total));
+                products.addAll(convertToProducts(productPOs, total));
             }
         }
         if(ListUtils.isEmpty(products)){
@@ -81,82 +80,12 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
-    /**
-     * 构建商品列表
-     * @param productPOs
-     * @param total
-     * @return
-     */
-    private List<Product> convertToProducts(List<ProductPO> productPOs, Date date, int total) {
-        return productPOs.stream().map(po -> {
-            try {
-                Product product = ProductConverter.convertToProduct(po, total);
-                PriceSinglePO priceSinglePO;
-                // 查最近的价格
-                if(date == null){
-                    priceSinglePO = priceDao.selectByProductCode(product.getCode());
-                } else { // 查确定日期的价格
-                    priceSinglePO = priceDao.selectByDate(product.getCode(), date);
-                }
-                return setPriceInfo(product, priceSinglePO);
-            } catch (Exception e) {
-                log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
-                return null;
-            }
-        }).filter(po -> po != null).collect(Collectors.toList());
-    }
-
     @Override
     public BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request) {
         CategoryDetailResult result = new CategoryDetailResult();
-        List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId());
+        List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId(), request.getSaleDate());
         convertToCategoryDetailResult(productPOs, request.getSaleDate(), result);
         return BaseResponse.success(result);
-    }
-
-    /**
-     * 构建商品详情结果
-     * @param productPOs
-     * @param result
-     */
-    private void convertToCategoryDetailResult(List<ProductPO> productPOs, Date saleDate, CategoryDetailResult result) {
-        if (ListUtils.isEmpty(productPOs)) {
-            log.info("没有查到商品详情");
-            throw new HlCentralException(CentralError.NO_RESULT_DETAIL_LIST_ERROR);
-        }
-        result.setProducts(productPOs.stream().map(po -> {
-            try {
-                Product product = ProductConverter.convertToProduct(po, 0);
-                // 设置主item，放在最外层，product里的去掉
-                if (result.getMainItem() == null) {
-                    result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
-                }
-                product.setMainItem(null);
-                PriceSinglePO priceSinglePO = priceDao.selectByDate(product.getCode(), saleDate);
-                return setPriceInfo(product, priceSinglePO);
-            } catch (Exception e) {
-                log.error("转换商品详情结果异常，po = {}", JSON.toJSONString(po), e);
-                return null;
-            }
-        }).filter(po -> po != null).collect(Collectors.toList()));
-    }
-
-    /**
-     * 构建产品价格信息
-     * @param product
-     * @return
-     */
-    private Product setPriceInfo(Product product, PriceSinglePO priceSinglePO){
-        // 设置产品价格信息
-        if(priceSinglePO != null && priceSinglePO.getPriceInfos() != null && priceSinglePO.getPriceInfos().getSalePrice() != null){
-            PriceInfo priceInfo = ProductConverter.convertToPriceInfo(priceSinglePO);
-            product.setPriceInfo(priceInfo);
-            // 产品销售价用价格日历的
-            product.setSalePrice(priceInfo.getSalePrice());
-        } else { // 没有价格就不返回该产品
-            return null;
-        }
-        return product;
     }
 
     @Override
@@ -171,12 +100,7 @@ public class ProductServiceImpl implements ProductService {
             if (request.getPosition() == Constants.RECOMMEND_POSITION_MAIN ) {
                 // 优先定位推荐，按坐标查低价
                 if(request.getCoordinate() != null) {
-                    List<ProductItemPO> productItemPOs = productItemDao.getByCoordinate(t, request.getCoordinate(), request.getRadius());
-                    if(ListUtils.isEmpty(productItemPOs)){
-                        return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
-                    }
-                    productPOs = productDao.getLowPriceRecommendResult(productItemPOs.stream().map(item ->
-                            item.getCode()).collect(Collectors.toList()), request.getPageSize());
+                    productPOs = productDao.getNearRecommendResult(t, request.getCoordinate(), request.getRadius(), request.getPageSize());
                 } else if(ListUtils.isNotEmpty(request.getProductCodes())){ // 按销量推荐
                     productPOs = productDao.getSalesRecommendList(request.getProductCodes());
                 } else { // 最后用推荐标记查询
@@ -206,7 +130,7 @@ public class ProductServiceImpl implements ProductService {
                 }
             }
             if (ListUtils.isNotEmpty(productPOs)) {
-                products.addAll(convertToProducts(productPOs, request.getSaleDate(), 0));
+                products.addAll(convertToProducts(productPOs, 0));
             }
         }
         if(ListUtils.isEmpty(products)){
@@ -402,6 +326,56 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
+    /**
+     * 构建商品详情结果
+     * @param productPOs
+     * @param result
+     */
+    private void convertToCategoryDetailResult(List<ProductPO> productPOs, Date saleDate, CategoryDetailResult result) {
+        if (ListUtils.isEmpty(productPOs)) {
+            log.info("没有查到商品详情");
+            throw new HlCentralException(CentralError.NO_RESULT_DETAIL_LIST_ERROR);
+        }
+        result.setProducts(productPOs.stream().map(po -> {
+            try {
+                Product product = ProductConverter.convertToProduct(po, 0);
+                // 设置主item，放在最外层，product里的去掉
+                if (result.getMainItem() == null) {
+                    result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+                }
+                product.setMainItem(null);
+                return product;
+            } catch (Exception e) {
+                log.error("转换商品详情结果异常，po = {}", JSON.toJSONString(po), e);
+                return null;
+            }
+        }).filter(po -> po != null).collect(Collectors.toList()));
+    }
+
+    /**
+     * 构建商品列表
+     * @param productPOs
+     * @param total
+     * @return
+     */
+    private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
+        return productPOs.stream().map(po -> {
+            try {
+                return ProductConverter.convertToProduct(po, total);
+            } catch (Exception e) {
+                log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
+                return null;
+            }
+        }).filter(po -> po != null).collect(Collectors.toList());
+    }
+
+    /**
+     * 检查价格
+     * @param priceInfoPOs
+     * @param startDate
+     * @param quantityTotal
+     * @param result
+     */
     private void checkPrice(List<PriceInfoPO> priceInfoPOs, Date startDate, int quantityTotal, PriceCalcResult result){
         // 拿到当前日期价格信息
         PriceInfoPO priceInfoPO = priceInfoPOs.stream().filter(price -> price.getSaleDate().getTime() == startDate.getTime()).findFirst().orElse(null);
@@ -426,6 +400,12 @@ public class ProductServiceImpl implements ProductService {
         result.setSettlesTotal(settlesTotal);
     }
 
+    /**
+     * 计算价格
+     * @param price
+     * @param quantity
+     * @return
+     */
     private BigDecimal calcPrice(BigDecimal price, int quantity) {
         BigDecimal total = new BigDecimal(BigDecimalUtil.mul(price.doubleValue(), quantity));
         return total;

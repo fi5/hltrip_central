@@ -50,10 +50,10 @@ public class Test0 {
     @Autowired
     private ProductService productService;
 
-    @Test
+//    @Test
     public void test(){
-//        List<String> ids = Lists.newArrayList("11", "22","33","44","55","66","77");
-//        List<ProductPO> list = getProductListByItemIdsPage(ids, 1, 10);
+        List<String> ids = Lists.newArrayList("11", "22","33","44","55","66","77");
+        List<ProductPO> list = getProductListByItemIdsPage(ids, 1, 10);
 //        List<ProductPO> list = getProductList();
 //        List<ProductPO> list = getGroup();
 //        List<ProductPO> list = getPageList("", 1, 1, 60);
@@ -66,7 +66,7 @@ public class Test0 {
 //        request1.setType(0);
 //        log.info("结果 = {}", JSON.toJSONString(productService.pageList(request1)));
 //        log.info("结果 = {}", JSON.toJSONString(productService.categoryDetail(request)));
-//        log.info("结果 = {}", JSON.toJSONString(list));
+        log.info("结果 = {}", JSON.toJSONString(list));
     }
 
 //    @Test
@@ -141,6 +141,7 @@ public class Test0 {
                 .first("mainItemId").as("mainItemCode")
                 .first("mainItem").as("mainItem")
                 .first("code").as("code")
+                .first("count").as("count")
                 .last("itype").as("itype");
         long rows = (page - 1) * size;
         Aggregation aggregation1 = Aggregation.newAggregation(Aggregation.match(criteria),
@@ -150,12 +151,14 @@ public class Test0 {
 //        System.out.println("total============ " + outputType1.getMappedResults().size());
 //        System.out.println(JSON.toJSONString(outputType1.getMappedResults()));
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
+        CountOperation countOperation = Aggregation.count().as("count");
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(criteria),
                 sortOperation,
                 groupOperation.min("salePrice").as("salePrice"),
                 sortOperation,
                 Aggregation.project(ProductPO.class).andExclude("_id"),
+                countOperation,
                 Aggregation.skip(rows),
                 Aggregation.limit(size));
         AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);

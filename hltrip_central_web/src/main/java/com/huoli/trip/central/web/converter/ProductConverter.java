@@ -62,6 +62,10 @@ public class ProductConverter {
         }
         product.setMainItem(convertToProductItem(po.getMainItem()));
         product.setTotal(total);
+        product.setPriceInfo(convertToPriceInfo(po.getPriceCalendar()));
+        if(product.getPriceInfo() != null){
+            product.setSalePrice(product.getPriceInfo().getSalePrice());
+        }
         return product;
     }
 
