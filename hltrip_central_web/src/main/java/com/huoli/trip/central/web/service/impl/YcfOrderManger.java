@@ -221,18 +221,18 @@ public class YcfOrderManger extends OrderManager {
     public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
         //中台封装返回
         CenterCreateOrderRes createOrderRes = null;
-        //先校验是否可以预定
-        BookCheckReq bookCheckReq = new BookCheckReq();
-        bookCheckReq.setProductId(req.getProductId());
-        bookCheckReq.setBeginDate(req.getBeginDate());
-        bookCheckReq.setEndDate(req.getEndDate());
-        bookCheckReq.setCount(req.getQunatity());
-        //校验可查询预订
-        BaseResponse<CenterBookCheck> centerCheckInfos = this.getCenterCheckInfos(bookCheckReq);
-        if(centerCheckInfos.getCode() != 0){
-            log.error("创建订单失败，预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
-            return BaseResponse.fail(CentralError.ERROR_BOOKBEFORE_ORDER);
-        }
+//        //先校验是否可以预定
+//        BookCheckReq bookCheckReq = new BookCheckReq();
+//        bookCheckReq.setProductId(req.getProductId());
+//        bookCheckReq.setBeginDate(req.getBeginDate());
+//        bookCheckReq.setEndDate(req.getEndDate());
+//        bookCheckReq.setCount(req.getQunatity());
+//        //校验可查询预订
+//        BaseResponse<CenterBookCheck> centerCheckInfos = this.getCenterCheckInfos(bookCheckReq);
+//        if(centerCheckInfos.getCode() != 0){
+//            log.error("创建订单失败，预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
+//            return BaseResponse.fail(CentralError.ERROR_BOOKBEFORE_ORDER);
+//        }
         //转换客户端传来的参数
         YcfCreateOrderReq ycfCreateOrderReq = createOrderConverter.convertRequestToSupplierRequest(req);
         //订单的份数小于或等于0
@@ -248,7 +248,8 @@ public class YcfOrderManger extends OrderManager {
         List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
         if(pricePos!=null){
             //取时间范围内的价格集合
-            List<PriceInfoPO> priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> !priceInfoPO.getSaleDate().after(DateTimeUtil.parseDate(req.getEndDate())) && !priceInfoPO.getSaleDate().before(DateTimeUtil.parseDate(req.getBeginDate()))).collect(Collectors.toList());
+            List<PriceInfoPO> priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> priceInfoPO.getSaleDate().getTime()>=DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()
+                    && priceInfoPO.getSaleDate().getTime()<=DateTimeUtil.parseDate(req.getEndDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
             if(!CollectionUtils.isEmpty(priceInfoPOS)){
                 priceInfoPOS.forEach(price->{
                     //价格对象
