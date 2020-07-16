@@ -336,7 +336,8 @@ public class YcfOrderManger extends OrderManager {
                 ycfCreateOrderRes = ycfOrder.getData();
             }
         }catch (Exception e){
-            log.error("ycfOrderService --> getNBCreateOrder rpc服务异常 :{}",e);
+            log.error("ycfOrderService --> getCenterCreateOrder rpc服务异常 :{}",e);
+            log.error("ycfOrderService --> getCenterCreateOrder 供应商业务异常：{}",ycfOrder.getMessage());
             return SupplierErrorMsgTransfer.buildMsg(ycfOrder.getMessage());//异常消息以供应商返回的
         }
         if(ycfCreateOrderRes == null){
@@ -367,6 +368,7 @@ public class YcfOrderManger extends OrderManager {
             }
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
+            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 :{}",ycfPayOrder.getMessage());
             return SupplierErrorMsgTransfer.buildMsg(ycfPayOrder.getMessage());//异常消息以供应商返回的
         }
         if(ycfPayOrderRes == null){
@@ -394,7 +396,7 @@ public class YcfOrderManger extends OrderManager {
         YcfCancelOrderReq ycfCancelOrderReq = cancelOrderConverter.convertRequestToSupplierRequest(req);
         //供应商输出
         YcfBaseResult<YcfCancelOrderRes> ycfBaseResult=null;
-        YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
+        YcfCancelOrderRes ycfCancelOrderRes = null;
         try {
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
             if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
@@ -402,6 +404,7 @@ public class YcfOrderManger extends OrderManager {
             }
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 ：{}",e);
+            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 ：{}",ycfBaseResult.getMessage());
             return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
         }
         if(ycfCancelOrderRes == null){
@@ -440,6 +443,7 @@ public class YcfOrderManger extends OrderManager {
             }
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 ：{}",e);
+            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 ：{}",ycfBaseResult.getMessage());
             return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
         }
         if(ycfCancelOrderRes == null){
