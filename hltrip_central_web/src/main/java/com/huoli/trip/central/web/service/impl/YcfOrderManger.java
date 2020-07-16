@@ -249,7 +249,7 @@ public class YcfOrderManger extends OrderManager {
             pricePos.getPriceInfos().forEach(price->{
                 //价格对象
                 YcfPriceItem ycfPriceItem = new YcfPriceItem();
-                ycfPriceItem.setDate(DateTimeUtil.parseDate(req.getBeginDate(), DateTimeUtil.YYYYMMDD));
+                ycfPriceItem.setDate(price.getSaleDate());
                 ycfPriceItem.setPrice(price.getSettlePrice());
                 ycfPriceItemList.add(ycfPriceItem);
             });
