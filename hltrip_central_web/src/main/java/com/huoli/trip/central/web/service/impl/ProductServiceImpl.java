@@ -113,7 +113,7 @@ public class ProductServiceImpl implements ProductService {
                 } else { // 按推荐标记推荐
                     productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
                 }
-            } else {  // 其它根据城市和日期推荐  todo 这里应该可以连表查，待优化
+            } else {  // 其它根据城市和日期推荐
                 if(StringUtils.isNotBlank(request.getCity()) && request.getSaleDate() != null){
                     // 先查目的地指定类型的产品
                     List<ProductPO> tempProductPOs = productDao.getByCityAndType(request.getCity(), t);
