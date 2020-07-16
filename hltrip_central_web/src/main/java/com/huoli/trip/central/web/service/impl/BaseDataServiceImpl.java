@@ -34,7 +34,7 @@ public class BaseDataServiceImpl implements BaseDataService {
 		} catch (Exception e) {
 			log.info("",e);
 		}
-		return BaseResponse.fail(CentralError.DATA_NULL_ERROR);
+		return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
 
 	}
 
