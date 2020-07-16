@@ -99,7 +99,7 @@ public class ProductDaoImpl implements ProductDao {
         // 查询条件
         Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("code").in(productCodes);
         MatchOperation matchOperation = Aggregation.match(criteria);
-        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation));
+        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation, 0));
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return output.getMappedResults();
     }
@@ -112,17 +112,9 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("productType").is(type);
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
-        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation));
+        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation, size));
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return output.getMappedResults();
-    }
-
-
-    @Override
-    public ProductPO getImagesByCode(String code){
-        Query query = new Query(Criteria.where("code").is(code));
-        query.fields().include("images");
-        return mongoTemplate.findOne(query, ProductPO.class);
     }
 
     @Override
@@ -142,20 +134,29 @@ public class ProductDaoImpl implements ProductDao {
                 .localField("mainItemCode")
                 .foreignField("code")
                 .as("mainItem"));
-        operations.addAll(recommendListAggregation(matchOperation));
+        operations.addAll(recommendListAggregation(matchOperation, size));
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return output.getMappedResults();
     }
 
     @Override
-    public List<ProductPO> getByCityAndType(String city, int type){
+    public List<ProductPO> getByCityAndType(String city, Date date, int type, int size){
         // 查询条件
-        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("city").in(city).and("productType").is(type);
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0)
+                .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(date))
+                .and("city").in(city).and("productType").is(type);
         MatchOperation matchOperation = Aggregation.match(criteria);
-        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation));
+        Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation, size));
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return output.getMappedResults();
+    }
+
+    @Override
+    public ProductPO getImagesByCode(String code){
+        Query query = new Query(Criteria.where("code").is(code));
+        query.fields().include("images");
+        return mongoTemplate.findOne(query, ProductPO.class);
     }
 
     @Override
@@ -170,6 +171,11 @@ public class ProductDaoImpl implements ProductDao {
         return mongoTemplate.findOne(query, ProductPO.class);
     }
 
+    /**
+     * 构建分组条件
+     * @param fields
+     * @return
+     */
     private GroupOperation getGroupField(String... fields){
         return Aggregation.group(fields)
                 .first("mainItemCode").as("mainItemCode")
@@ -213,17 +219,14 @@ public class ProductDaoImpl implements ProductDao {
                 .first("priceCalendar").as("priceCalendar");
     }
 
+    /**
+     * 构建列表页条件
+     * @param city
+     * @param type
+     * @param keyWord
+     * @return
+     */
     private List<AggregationOperation> pageListAggregation(String city, Integer type, String keyWord){
-        // 连价格日历表
-        LookupOperation priceLookup = LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR)
-                .localField("code")
-                .foreignField("productCode")
-                .as("priceCalendar");
-        // 拆价格日历
-        UnwindOperation unwindOperation = Aggregation.unwind("priceCalendar");
-        UnwindOperation unwindOperation1 = Aggregation.unwind("priceCalendar.priceInfos");
-        // 按价格正序
-        SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
         // 查询条件
         Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("productType").is(type).and("city").is(city);
         if(StringUtils.isNotBlank(keyWord)){
@@ -232,22 +235,32 @@ public class ProductDaoImpl implements ProductDao {
         MatchOperation matchOperation = Aggregation.match(criteria);
         // 分组
         GroupOperation groupOperation = getGroupField("mainItemCode");
-        // 指定字段
-        ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
-        // 分组后排序
-        SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
-        List<AggregationOperation> aggregations = Lists.newArrayList(priceLookup,
-                unwindOperation,
-                unwindOperation1,
-                matchOperation,
-                priceSort,
-                groupOperation.min("priceCalendar.priceInfos.salePrice").as("salePrice"),
-                sortOperation,
-                projectionOperation);
-        return aggregations;
+        return ListAggregation(matchOperation, groupOperation);
     }
 
-    private  List<AggregationOperation> recommendListAggregation(MatchOperation matchOperation){
+    /**
+     * 构建推荐列表条件
+     * @param matchOperation
+     * @param size
+     * @return
+     */
+    private  List<AggregationOperation> recommendListAggregation(MatchOperation matchOperation, int size){
+        // 分组
+        GroupOperation groupOperation = getGroupField("code");
+        List<AggregationOperation> operations = ListAggregation(matchOperation, groupOperation);
+        if(size > 0){
+            operations.add(Aggregation.limit(size));
+        }
+        return operations;
+    }
+
+    /**
+     * 构建通用条件
+     * @param matchOperation
+     * @param groupOperation
+     * @return
+     */
+    private List<AggregationOperation> ListAggregation(MatchOperation matchOperation, GroupOperation groupOperation){
         // 连价格日历表
         LookupOperation priceLookup = LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR)
                 .localField("code")
@@ -258,8 +271,6 @@ public class ProductDaoImpl implements ProductDao {
         UnwindOperation unwindOperation1 = Aggregation.unwind("priceCalendar.priceInfos");
         // 按价格正序
         SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
-        // 分组
-        GroupOperation groupOperation = getGroupField("code");
         // 指定字段
         ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
         // 分组后排序

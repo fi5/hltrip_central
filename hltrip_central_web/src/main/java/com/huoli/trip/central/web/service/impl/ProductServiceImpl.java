@@ -115,18 +115,7 @@ public class ProductServiceImpl implements ProductService {
                 }
             } else {  // 其它根据城市和日期推荐
                 if(StringUtils.isNotBlank(request.getCity()) && request.getSaleDate() != null){
-                    // 先查目的地指定类型的产品
-                    List<ProductPO> tempProductPOs = productDao.getByCityAndType(request.getCity(), t);
-                    if(ListUtils.isNotEmpty(tempProductPOs)){
-                        // 从所有产品中找到最低价产品
-                        PriceSinglePO priceSinglePO = priceDao.selectByProductCodes(tempProductPOs.stream().map(temp ->
-                                temp.getCode()).collect(Collectors.toList()), request.getSaleDate());
-                        if(priceSinglePO != null){
-                            ProductPO productPO = tempProductPOs.stream().filter(temp ->
-                                    StringUtils.equals(temp.getCode(), priceSinglePO.getProductCode())).findFirst().orElse(new ProductPO());
-                            productPOs = Lists.newArrayList(productPO);
-                        }
-                    }
+                    productPOs = productDao.getByCityAndType(request.getCity(), request.getSaleDate(), t, request.getPageSize());
                 }
             }
             if (ListUtils.isNotEmpty(productPOs)) {
