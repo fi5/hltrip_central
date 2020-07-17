@@ -240,26 +240,9 @@ public class YcfOrderManger extends OrderManager {
             throw new HlCentralException(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR);
         }
         //以下 查产品数据库组装供应商需要的请求
-        //获取中台价格日历
-        PricePO pricePos = productDao.getPricePos(req.getProductId());
         //获取中台产品信息
         ProductPO productPO = productDao.getTripProductByCode(req.getProductId());
-        //价格集合
-        List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
-        if(pricePos!=null){
-            //取时间范围内的价格集合
-            List<PriceInfoPO> priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> priceInfoPO.getSaleDate().getTime()>=DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()
-                    && priceInfoPO.getSaleDate().getTime()<=DateTimeUtil.parseDate(req.getEndDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
-            if(!CollectionUtils.isEmpty(priceInfoPOS)){
-                priceInfoPOS.forEach(price->{
-                    //价格对象
-                    YcfPriceItem ycfPriceItem = new YcfPriceItem();
-                    ycfPriceItem.setDate(price.getSaleDate());
-                    ycfPriceItem.setPrice(price.getSettlePrice());
-                    ycfPriceItemList.add(ycfPriceItem);
-                });
-            }
-        }
+
         //本地餐饮
         FoodPO food = productPO.getFood();
         //本地房资源
@@ -272,7 +255,7 @@ public class YcfOrderManger extends OrderManager {
         if(food!=null && !CollectionUtils.isEmpty(foods)){
             foods.forEach(f ->{
                 YcfBookFood ycfBookFood = new YcfBookFood();
-                ycfBookFood.setFoodId(f.getSupplierItemId());
+                ycfBookFood.setFoodId(f.getSupplierResourceId());
                 ycfBookFood.setCheckInDate(req.getBeginDate());
                 ycfBookFoods.add(ycfBookFood);
             });
@@ -285,6 +268,7 @@ public class YcfOrderManger extends OrderManager {
                 YcfBookRoom ycfBookRoom = new YcfBookRoom();
                 ycfBookRoom.setCheckInDate(req.getBeginDate());
                 ycfBookRoom.setCheckOutDate(req.getEndDate());
+                ycfBookRoom.setRoomId(roomInfoPO.getSupplierResourceId());
                 ycfBookRooms.add(ycfBookRoom);
             });
         }
@@ -295,9 +279,32 @@ public class YcfOrderManger extends OrderManager {
             tickets.forEach(ticketInfoPO ->{
                 YcfBookTicket ycfBookTicket = new YcfBookTicket();
                 ycfBookTicket.setCheckInDate(req.getBeginDate());
-                ycfBookTicket.setTicketId(ticketInfoPO.getSupplierItemId());
+                ycfBookTicket.setTicketId(ticketInfoPO.getSupplierResourceId());
                 ycfBookTickets.add(ycfBookTicket);
             });
+        }
+        //价格集合
+        List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
+        //获取中台价格日历
+        PricePO pricePos = productDao.getPricePos(req.getProductId());
+        if(pricePos!=null){
+            //取时间范围内的价格集合
+            List<PriceInfoPO> priceInfoPOS = null;
+            if(!CollectionUtils.isEmpty(ycfBookRooms)&&ycfBookRooms.size()>0){
+                 priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> priceInfoPO.getSaleDate().getTime()>=DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()
+                        && priceInfoPO.getSaleDate().getTime()<=DateTimeUtil.parseDate(req.getEndDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
+            }else{
+                priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()==DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
+            }
+            if(!CollectionUtils.isEmpty(priceInfoPOS)){
+                priceInfoPOS.forEach(price->{
+                    //价格对象
+                    YcfPriceItem ycfPriceItem = new YcfPriceItem();
+                    ycfPriceItem.setDate(price.getSaleDate());
+                    ycfPriceItem.setPrice(price.getSettlePrice());
+                    ycfPriceItemList.add(ycfPriceItem);
+                });
+            }
         }
         //组装价格计算服务的请求
         PriceCalcRequest calcRequest = new PriceCalcRequest();
