@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
-import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;

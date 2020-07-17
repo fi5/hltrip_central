@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.config;
 
+import brave.Span;
 import brave.Tracer;
 import com.google.common.collect.Maps;
 import com.huoli.eagle.BraveTrace;
@@ -7,10 +8,13 @@ import com.huoli.eagle.eye.core.HuoliAtrace;
 import com.huoli.eagle.eye.core.HuoliTrace;
 import com.huoli.eagle.eye.core.statistical.trace.TraceInfo;
 import com.huoli.eagle.report.SleuthSpanESReporter;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import zipkin2.internal.HexCodec;
 
 import java.util.Map;
 
@@ -26,8 +30,6 @@ public class TraceConfig {
     @Value("${appName}")
     private String appName;
 
-
-
     @Bean
     public HuoliAtrace huoliAtrace(HuoliTrace huoliTrace) {
         HuoliAtrace huoliAtrace = new HuoliAtrace.Builder()
@@ -38,7 +40,6 @@ public class TraceConfig {
                 .build();
         return huoliAtrace;
     }
-
 
     @Bean
     public BraveTrace huoliTrace(Tracer tracer) {
@@ -61,18 +62,7 @@ public class TraceConfig {
         return newSpan;
     }
 
-    public static Map<String, String> traceHeaders(HuoliTrace huoliTrace, String url) {
-        Map<String, String> headers = Maps.newHashMap();
-        TraceInfo traceInfo = huoliTrace.getTraceInfo();
-        if (traceInfo != null) {
-            headers.put("X-B3-TraceId", traceInfo.getTraceId());
-            headers.put("X-B3-SpanId", traceInfo.getSpanId());
-            if (traceInfo.getParentSpanId() != null) {
-                headers.put("X-B3-ParentSpanId", traceInfo.getParentSpanId());
-            }
-            huoliTrace.setUrl4Name(url);
-            return headers;
-        }
-        return null;
+    public static void createNewSpan(String traceId, Span parent) {
+        parent.context().toBuilder().traceId(HexCodec.lowerHexToUnsignedLong(traceId)).build();
     }
 }
