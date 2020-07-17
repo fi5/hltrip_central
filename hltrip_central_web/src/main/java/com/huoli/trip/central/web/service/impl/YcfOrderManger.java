@@ -118,11 +118,6 @@ public class YcfOrderManger extends OrderManager {
             log.error("预订前校验  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),checkInfos.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
         }
-//            //测试数据 start
-//            String jsonString = "{\"data\":{\"productId\":\"16\",\"saleInfos\":[{\"date\":\"2016-06-14\",\"price\":99,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-15\",\"price\":98,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-16\",\"price\":97,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":10},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-17\",\"price\":96,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":0},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-18\",\"price\":95,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]}]},\"partnerId\":\"zx1000020160229\",\"success\":true,\"message\":null,\"statusCode\":200}";
-//            YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//            ycfBookCheckRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfBookCheckRes.class);
-//            //测试数据  end
         //供应商返回输入中台
         List<YcfBookSaleInfo> saleInfos = ycfBookCheckRes.getSaleInfos();
         //没有库存
@@ -138,15 +133,11 @@ public class YcfOrderManger extends OrderManager {
             if(stockList.size()>1){
                 Collections.sort(stockList);
             }
-//                if(!CollectionUtils.isEmpty(stockList)&&stockList.size()>1){
-//                    int min = stockList.stream().filter(stock -> stock>0).min(Comparator.naturalOrder()).orElse(null);
-//                }
             //证明传的产品份数大于供应商库存最小剩余
             if(req.getCount()>stockList.get(0)){
                 bookCheck.setStock(stockList.get(0));
                 log.info("传的产品份数大于库存剩余 产品编号：{}",req.getProductId());
                 return BaseResponse.withFail(CentralError.NOTENOUGH_STOCK_ERROR,bookCheck);
-//                return new BaseResponse(1,false,CentralError.NOTENOUGH_STOCK_ERROR.getError(),bookCheck);
             }
         }
         //组装价格计算服务的请求
@@ -360,11 +351,6 @@ public class YcfOrderManger extends OrderManager {
             log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),ycfOrder.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_NO_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":0,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfCreateOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCreateOrderRes.class);
-//        //测试数据  end
         createOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
         return BaseResponse.success(createOrderRes);
     }
@@ -391,11 +377,6 @@ public class YcfOrderManger extends OrderManager {
             log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{}",req.getPartnerOrderId(),ycfPayOrder.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_PAY_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":10,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfPayOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfPayOrderRes.class);
-//        //测试数据  end
         //封装中台返回结果
         payOrderRes = payOrderConverter.convertSupplierResponseToResponse(ycfPayOrderRes);
         //组装本地订单号参数
@@ -427,11 +408,6 @@ public class YcfOrderManger extends OrderManager {
             log.error("取消订单  供应商返回空对象 传的订单号：{} 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":null,\"orderId\":\"45775553335\",\"async\":1},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfCancelOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCancelOrderRes.class);
-//        //测试数据  end
         //组装中台返回结果
         cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
         return BaseResponse.success(cancelOrderRes);
@@ -482,16 +458,10 @@ public class YcfOrderManger extends OrderManager {
             log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":null,\"orderId\":\"45775553335\",\"async\":1},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfCancelOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCancelOrderRes.class);
-//        //测试数据  end
         //组装中台返回结果
         applyRefundRes = applyRefundConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
         return BaseResponse.success(applyRefundRes);
     }
-
 
     public void refreshStockPrice(ProductPriceReq req){
 
