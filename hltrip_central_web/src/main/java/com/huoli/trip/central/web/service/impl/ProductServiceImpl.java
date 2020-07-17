@@ -56,9 +56,6 @@ public class ProductServiceImpl implements ProductService {
     private ProductItemDao productItemDao;
 
     @Autowired
-    private PriceDao priceDao;
-
-    @Autowired
     private OrderFactory orderFactory;
 
     @Override
