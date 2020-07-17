@@ -197,7 +197,7 @@ public class OrderServiceImpl implements OrderService {
     public Object checkManger(OrderManager manager){
         if(manager==null){
             log.info("供应商OrderManager爆了");
-            return null;
+            return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
         }
         return manager;
     }

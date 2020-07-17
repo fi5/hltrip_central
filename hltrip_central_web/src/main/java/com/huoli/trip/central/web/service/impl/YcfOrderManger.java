@@ -118,11 +118,6 @@ public class YcfOrderManger extends OrderManager {
             log.error("预订前校验  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),checkInfos.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
         }
-//            //测试数据 start
-//            String jsonString = "{\"data\":{\"productId\":\"16\",\"saleInfos\":[{\"date\":\"2016-06-14\",\"price\":99,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-15\",\"price\":98,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-16\",\"price\":97,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":10},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-17\",\"price\":96,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":0},{\"itemId\":\"321\",\"stock\":99}]},{\"date\":\"2016-06-18\",\"price\":95,\"priceType\":0,\"totalStock\":2,\"stockList\":[{\"itemId\":\"123\",\"stock\":2},{\"itemId\":\"321\",\"stock\":99}]}]},\"partnerId\":\"zx1000020160229\",\"success\":true,\"message\":null,\"statusCode\":200}";
-//            YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//            ycfBookCheckRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfBookCheckRes.class);
-//            //测试数据  end
         //供应商返回输入中台
         List<YcfBookSaleInfo> saleInfos = ycfBookCheckRes.getSaleInfos();
         //没有库存
@@ -135,19 +130,14 @@ public class YcfOrderManger extends OrderManager {
         });
         //库存数排序从小到大，顾架说如果有多个库存量就取个最小的库存数返回去就得了呗
         if(stockList.size()>0){
-            //超过一个长度的集合我再排序操作，如果只有一个元素还排序个毛线
             if(stockList.size()>1){
                 Collections.sort(stockList);
             }
-//                if(!CollectionUtils.isEmpty(stockList)&&stockList.size()>1){
-//                    int min = stockList.stream().filter(stock -> stock>0).min(Comparator.naturalOrder()).orElse(null);
-//                }
             //证明传的产品份数大于供应商库存最小剩余
             if(req.getCount()>stockList.get(0)){
                 bookCheck.setStock(stockList.get(0));
                 log.info("传的产品份数大于库存剩余 产品编号：{}",req.getProductId());
-                throw new HlCentralException(CentralError.NOTENOUGH_STOCK_ERROR);
-//                return new BaseResponse(1,false,CentralError.NOTENOUGH_STOCK_ERROR.getError(),bookCheck);
+                return BaseResponse.withFail(CentralError.NOTENOUGH_STOCK_ERROR,bookCheck);
             }
         }
         //组装价格计算服务的请求
@@ -162,11 +152,11 @@ public class YcfOrderManger extends OrderManager {
             priceCalcResult = priceCalcResultBaseResponse.getData();
             //没有价格直接抛异常
             if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
-                throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+                return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
             }
         }catch (HlCentralException e){
             log.error("大兄弟额  你的价格计算服务 又挂了=.=  :{}",e);
-            throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+            return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
         //设置结算总价
         bookCheck.setSettlePrice(priceCalcResult.getSettlesTotal());
@@ -233,25 +223,32 @@ public class YcfOrderManger extends OrderManager {
             log.error("创建订单失败，预订前校验失败！产品编号：{}，不能创建订单",req.getProductId());
             return BaseResponse.fail(CentralError.ERROR_BOOKBEFORE_ORDER);
         }
+        //订单的份数小于或等于0
+        if(req.getQunatity()<=0){
+            return BaseResponse.fail(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR);
+        }
+        //*********************************************组装供应商请求开始**********************************************
         //转换客户端传来的参数
         YcfCreateOrderReq ycfCreateOrderReq = createOrderConverter.convertRequestToSupplierRequest(req);
-        //订单的份数小于或等于0
-        if(ycfCreateOrderReq.getQunatity()<=0){
-            throw new HlCentralException(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR);
-        }
-        //以下 查产品数据库组装供应商需要的请求
         //获取中台产品信息
         ProductPO productPO = productDao.getTripProductByCode(req.getProductId());
-
         //本地餐饮
         FoodPO food = productPO.getFood();
+        List<FoodInfoPO> foods = food.getFoods();
         //本地房资源
         RoomPO room = productPO.getRoom();
+        List<RoomInfoPO> rooms = room.getRooms();
         //本地票资源
         TicketPO ticket = productPO.getTicket();
-        //**餐饮**
+        List<TicketInfoPO> tickets = ticket.getTickets();
+        //传入参数没有包含任何资源(房，票，餐)
+        if(CollectionUtils.isEmpty(foods)
+                && CollectionUtils.isEmpty(rooms)
+                && CollectionUtils.isEmpty(tickets)){
+            return BaseResponse.fail(CentralError.ERROR_RESOURCE_ORDER);
+        }
+        //**供应商餐饮**
         List<YcfBookFood> ycfBookFoods = new ArrayList<>();
-        List<FoodInfoPO> foods = food.getFoods();
         if(food!=null && !CollectionUtils.isEmpty(foods)){
             foods.forEach(f ->{
                 YcfBookFood ycfBookFood = new YcfBookFood();
@@ -260,9 +257,8 @@ public class YcfOrderManger extends OrderManager {
                 ycfBookFoods.add(ycfBookFood);
             });
         }
-        //**房资源组**
+        //**供应商房资源组**
         List<YcfBookRoom> ycfBookRooms = new ArrayList<>();
-        List<RoomInfoPO> rooms = room.getRooms();
         if(room!=null && !CollectionUtils.isEmpty(rooms)){
             rooms.forEach(roomInfoPO ->{
                 YcfBookRoom ycfBookRoom = new YcfBookRoom();
@@ -272,9 +268,8 @@ public class YcfOrderManger extends OrderManager {
                 ycfBookRooms.add(ycfBookRoom);
             });
         }
-        //**门票资源组**
+        //**供应商门票资源组**
         List<YcfBookTicket> ycfBookTickets = new ArrayList<>();
-        List<TicketInfoPO> tickets = ticket.getTickets();
         if(ticket!=null && !CollectionUtils.isEmpty(tickets)){
             tickets.forEach(ticketInfoPO ->{
                 YcfBookTicket ycfBookTicket = new YcfBookTicket();
@@ -283,16 +278,16 @@ public class YcfOrderManger extends OrderManager {
                 ycfBookTickets.add(ycfBookTicket);
             });
         }
-        //价格集合
-        List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
         //获取中台价格日历
         PricePO pricePos = productDao.getPricePos(req.getProductId());
-        if(pricePos!=null){
-            //取时间范围内的价格集合
+        //供应商价格集合
+        List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
+        if(pricePos!=null&&!CollectionUtils.isEmpty(pricePos.getPriceInfos())){
+            //取时间范围内的价格集合,以酒店入住范围为基准，如果没有酒店  日期就取小产品单元的使用时间
             List<PriceInfoPO> priceInfoPOS = null;
             if(!CollectionUtils.isEmpty(ycfBookRooms)&&ycfBookRooms.size()>0){
-                 priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> priceInfoPO.getSaleDate().getTime()>=DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()
-                        && priceInfoPO.getSaleDate().getTime()<=DateTimeUtil.parseDate(req.getEndDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
+                 priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()>=DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()
+                        && DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()<=DateTimeUtil.parseDate(req.getEndDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
             }else{
                 priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()==DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
             }
@@ -300,11 +295,14 @@ public class YcfOrderManger extends OrderManager {
                 priceInfoPOS.forEach(price->{
                     //价格对象
                     YcfPriceItem ycfPriceItem = new YcfPriceItem();
-                    ycfPriceItem.setDate(price.getSaleDate());
+                    //YYYYMMDD
+                    ycfPriceItem.setDate(DateTimeUtil.trancateToDate(price.getSaleDate()));
                     ycfPriceItem.setPrice(price.getSettlePrice());
                     ycfPriceItemList.add(ycfPriceItem);
                 });
             }
+        }else{
+            log.error("创建订单 产品数据库价格日历返回数据空 产品code: {}",req.getProductId());
         }
         //组装价格计算服务的请求
         PriceCalcRequest calcRequest = new PriceCalcRequest();
@@ -318,29 +316,24 @@ public class YcfOrderManger extends OrderManager {
             priceCalcResult = priceCalcResultBaseResponse.getData();
             //没有价格直接抛异常
             if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
-                throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+                return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
             }
         }catch (HlCentralException e){
             log.error("大兄弟额  你的价格计算服务 又挂了=.=  :{}",e);
-            throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+            return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+        }
+        //总结算价不能小于0
+        int amountFlag = priceCalcResult.getSettlesTotal().compareTo(BigDecimal.ZERO);
+        if(amountFlag ==-1||amountFlag == 0){
+            return BaseResponse.fail(CentralError.ERROR_AMOUNT_ORDER);
         }
         //总的结算价
         ycfCreateOrderReq.setAmount(priceCalcResult.getSettlesTotal());
-        //总结算价不能小于0
-        int amountFlag = ycfCreateOrderReq.getAmount().compareTo(BigDecimal.ZERO);
-        if(amountFlag ==-1||amountFlag == 0){
-            throw new HlCentralException(CentralError.ERROR_AMOUNT_ORDER);
-        }
         ycfCreateOrderReq.setFoodDetail(ycfBookFoods);
         ycfCreateOrderReq.setPriceDetail(ycfPriceItemList);
         ycfCreateOrderReq.setRoomDetail(ycfBookRooms);
         ycfCreateOrderReq.setTicketDetail(ycfBookTickets);
-        //传入参数没有包含任何资源(房，票，餐)
-        if(CollectionUtils.isEmpty(ycfCreateOrderReq.getFoodDetail())
-                && CollectionUtils.isEmpty(ycfCreateOrderReq.getRoomDetail())
-                && CollectionUtils.isEmpty(ycfCreateOrderReq.getTicketDetail())){
-            throw new HlCentralException(CentralError.ERROR_RESOURCE_ORDER);
-        }
+        //*********************************************组装供应商请求结束**********************************************
         //供应商对象包装业务实体类
         YcfBaseResult<YcfCreateOrderRes> ycfOrder =null;
         YcfCreateOrderRes ycfCreateOrderRes = null;
@@ -356,13 +349,8 @@ public class YcfOrderManger extends OrderManager {
         }
         if(ycfCreateOrderRes == null){
             log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),ycfOrder.getMessage());
-            throw new HlCentralException(CentralError.ERROR_SUPPLIER_NO_ORDER);
+            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_NO_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":0,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfCreateOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCreateOrderRes.class);
-//        //测试数据  end
         createOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
         return BaseResponse.success(createOrderRes);
     }
@@ -387,13 +375,8 @@ public class YcfOrderManger extends OrderManager {
         }
         if(ycfPayOrderRes == null){
             log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{}",req.getPartnerOrderId(),ycfPayOrder.getMessage());
-            throw new HlCentralException(CentralError.ERROR_SUPPLIER_PAY_ORDER);
+            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_PAY_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":10,\"orderId\":\"1234567890\"},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfPayOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfPayOrderRes.class);
-//        //测试数据  end
         //封装中台返回结果
         payOrderRes = payOrderConverter.convertSupplierResponseToResponse(ycfPayOrderRes);
         //组装本地订单号参数
@@ -423,13 +406,8 @@ public class YcfOrderManger extends OrderManager {
         }
         if(ycfCancelOrderRes == null){
             log.error("取消订单  供应商返回空对象 传的订单号：{} 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
-            throw new HlCentralException(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
+            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":null,\"orderId\":\"45775553335\",\"async\":1},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfCancelOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCancelOrderRes.class);
-//        //测试数据  end
         //组装中台返回结果
         cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
         return BaseResponse.success(cancelOrderRes);
@@ -448,6 +426,7 @@ public class YcfOrderManger extends OrderManager {
             }else {
                 log.error("支付前校验没有通过 订单详情返回json:{}",JSONObject.toJSONString(orderDetail));
                 result.setResult(false);
+                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
             }
         }catch (HlCentralException e){
             log.error("支付前校验失败 ：{}",e);
@@ -477,18 +456,12 @@ public class YcfOrderManger extends OrderManager {
         }
         if(ycfCancelOrderRes == null){
             log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
-            throw new HlCentralException(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
+            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
         }
-//        //测试数据 start
-//        String jsonString = "{\"data\":{\"orderStatus\":null,\"orderId\":\"45775553335\",\"async\":1},\"success\":true,\"message\":null,\"partnerId\":\"zx1000020160229\",\"statusCode\":200}";
-//        YcfBaseResult ycfBaseResult = JSONObject.parseObject(jsonString,YcfBaseResult.class);
-//        ycfCancelOrderRes = JSONObject.parseObject(JSONObject.toJSONString(ycfBaseResult.getData()), YcfCancelOrderRes.class);
-//        //测试数据  end
         //组装中台返回结果
         applyRefundRes = applyRefundConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
         return BaseResponse.success(applyRefundRes);
     }
-
 
     public void refreshStockPrice(ProductPriceReq req){
 

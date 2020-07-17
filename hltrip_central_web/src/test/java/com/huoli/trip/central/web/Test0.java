@@ -10,6 +10,7 @@ import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
+import com.huoli.trip.common.util.MongoDateUtils;
 import com.huoli.trip.common.vo.Coordinate;
 import com.huoli.trip.common.vo.request.central.ImageRequest;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
@@ -196,5 +197,12 @@ public class Test0 {
 //        List<PriceInfoPO> comments = Optional.of(pricePO).orElseThrow(Exception::new).getPriceInfos();
 //        System.out.println(comments);
     }
+
+//    @Test
+//    public void testHandleTimeZoneOutput() {
+//        String date = "2020-07-17 00:00:00.000";
+//        Date saleDate = MongoDateUtils.handleTimezoneOutput((DateTimeUtil.parseDate(date,DateTimeUtil.YYYYMMDD)));
+//        System.out.println("时区转换后的时间"+saleDate);
+//    }
 
 }
