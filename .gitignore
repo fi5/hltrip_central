@@ -33,3 +33,7 @@ build/
 /hltrip_central_web/logs/
 /disconf/download/
 /hltrip_central_web/disconf/download/
+/libs/
+/hltrip_central_api/libs/
+/hltrip_central_web/libs/
+/hltrip_central_web/libs.tar
