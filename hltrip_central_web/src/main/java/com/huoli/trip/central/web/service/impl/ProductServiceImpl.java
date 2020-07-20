@@ -80,7 +80,7 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request) {
         CategoryDetailResult result = new CategoryDetailResult();
         List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId(), request.getSaleDate());
-        convertToCategoryDetailResult(productPOs, request.getSaleDate(), result);
+        convertToCategoryDetailResult(productPOs, result);
         return BaseResponse.success(result);
     }
 
@@ -316,7 +316,7 @@ public class ProductServiceImpl implements ProductService {
      * @param productPOs
      * @param result
      */
-    private void convertToCategoryDetailResult(List<ProductPO> productPOs, Date saleDate, CategoryDetailResult result) {
+    private void convertToCategoryDetailResult(List<ProductPO> productPOs, CategoryDetailResult result) {
         if (ListUtils.isEmpty(productPOs)) {
             log.info("没有查到商品详情");
             throw new HlCentralException(CentralError.NO_RESULT_DETAIL_LIST_ERROR);
