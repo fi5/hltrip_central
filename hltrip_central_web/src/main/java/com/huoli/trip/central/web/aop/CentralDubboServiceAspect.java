@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.aop;
 
 import brave.Span;
+import com.alibaba.dubbo.remoting.RemotingException;
 import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -102,7 +103,7 @@ public class CentralDubboServiceAspect {
                 eventBuilder.withStatus(EventStatusEnum.FAIL);
             }catch (Exception exception){
                 // 是Dubbo本身的异常，直接抛出
-                if (exception instanceof RpcException) {
+                if (exception instanceof RpcException||exception instanceof RemotingException) {
                     log.error("[{}] duboo服务不可用: ", function, exception);
                     result = BaseResponse.withFail(CentralError.DUBOO_RPC_ERROR);
                     eventBuilder.withData("code", CentralError.DUBOO_RPC_ERROR.getCode());
