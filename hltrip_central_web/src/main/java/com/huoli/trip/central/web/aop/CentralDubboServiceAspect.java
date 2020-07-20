@@ -70,8 +70,8 @@ public class CentralDubboServiceAspect {
             String params;
             if(ArrayUtils.isNotEmpty(args) && args[0] != null){
                 try {
-                    params = JSON.toJSONString(args);
-                    JSONObject param = JSONObject.parseObject(JSON.toJSONString(args[0]));
+                    params = JSON.toJSONString(args[0]);
+                    JSONObject param = JSONObject.parseObject(params);
                     if(StringUtils.isBlank(param.getString("traceId"))){
                         log.error("方法 {} 参数不包含traceId", function);
                     } else {
