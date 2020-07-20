@@ -105,6 +105,8 @@ public class CentralDubboServiceAspect {
                 if (exception instanceof RpcException) {
                     log.error("[{}] duboo服务不可用: ", function, exception);
                     result = BaseResponse.withFail(CentralError.DUBOO_RPC_ERROR);
+                    eventBuilder.withData("code", CentralError.DUBOO_RPC_ERROR.getCode());
+                    eventBuilder.withStatus(EventStatusEnum.FAIL);
                 }else if(exception instanceof NullPointerException){
                     log.error("[{}] 数据不完整异常: ", function, exception);
                     result = BaseResponse.withFail(CentralError.DATA_NULL_ERROR);
