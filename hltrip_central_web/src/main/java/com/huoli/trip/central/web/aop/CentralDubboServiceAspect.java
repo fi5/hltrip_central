@@ -5,8 +5,8 @@ import com.alibaba.dubbo.remoting.RemotingException;
 import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.huoli.eagle.BraveTrace;
 import com.huoli.eagle.eye.core.HuoliAtrace;
-import com.huoli.eagle.eye.core.HuoliTrace;
 import com.huoli.eagle.eye.core.statistical.Event;
 import com.huoli.eagle.eye.core.statistical.EventStatusEnum;
 import com.huoli.trip.central.web.config.TraceConfig;
@@ -45,7 +45,7 @@ public class CentralDubboServiceAspect {
      * 日志跟踪类
      */
     @Autowired
-    private HuoliTrace huoliTrace;
+    private BraveTrace huoliTrace;
     /**
      * 事件上报处理类
      */
