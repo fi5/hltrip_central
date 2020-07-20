@@ -179,6 +179,8 @@ public class ProductServiceImpl implements ProductService {
             if(null==productPo )
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             final Product product = ProductConverter.convertToProduct(productPo, 0);
+            if(null==product )
+                return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
             ProductPriceDetialResult result = new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
 
