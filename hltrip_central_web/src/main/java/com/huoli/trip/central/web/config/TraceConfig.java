@@ -2,21 +2,15 @@ package com.huoli.trip.central.web.config;
 
 import brave.Span;
 import brave.Tracer;
-import com.google.common.collect.Maps;
 import com.huoli.eagle.BraveTrace;
 import com.huoli.eagle.eye.core.HuoliAtrace;
 import com.huoli.eagle.eye.core.HuoliTrace;
-import com.huoli.eagle.eye.core.statistical.trace.TraceInfo;
 import com.huoli.eagle.report.SleuthSpanESReporter;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import zipkin2.internal.HexCodec;
-
-import java.util.Map;
 
 
 @Configuration
