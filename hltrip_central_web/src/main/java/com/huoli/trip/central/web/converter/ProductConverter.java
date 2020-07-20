@@ -117,13 +117,17 @@ public class ProductConverter {
      * @return
      */
     public static PriceInfo convertToPriceInfo(PriceSinglePO priceSinglePO){
+        if(priceSinglePO.getPriceInfos() == null){
+            return null;
+        }
         PriceInfo priceInfo = new PriceInfo();
-        priceInfo.setPriceType(priceSinglePO.getPriceInfos().getPriceType());
+        PriceInfoPO priceInfoPO = priceSinglePO.getPriceInfos();
+        priceInfo.setPriceType(priceInfoPO.getPriceType());
         priceInfo.setProductCode(priceSinglePO.getProductCode());
-        priceInfo.setSaleDate(DateTimeUtil.formatDate(priceSinglePO.getPriceInfos().getSaleDate(), DateTimeUtil.YYYYMMDD));
-        priceInfo.setSalePrice(priceSinglePO.getPriceInfos().getSalePrice());
-        priceInfo.setSettlePrice(priceSinglePO.getPriceInfos().getSettlePrice());
-        priceInfo.setStock(priceSinglePO.getPriceInfos().getStock());
+        priceInfo.setSaleDate(DateTimeUtil.formatDate(priceInfoPO.getSaleDate(), DateTimeUtil.YYYYMMDD));
+        priceInfo.setSalePrice(priceInfoPO.getSalePrice());
+        priceInfo.setSettlePrice(priceInfoPO.getSettlePrice());
+        priceInfo.setStock(priceInfoPO.getStock());
         priceInfo.setSupplierPriceId(priceSinglePO.getSupplierProductId());
         return priceInfo;
     }
