@@ -178,7 +178,12 @@ public class ProductServiceImpl implements ProductService {
             ProductPO productPo = productDao.getTripProductByCode(req.getProductCode());
             if(null==productPo )
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
-            final Product product = ProductConverter.convertToProduct(productPo, 0);
+            Product product = null;
+            try {
+                product=ProductConverter.convertToProduct(productPo, 0);
+            } catch (Exception e) {
+            	log.info("",e);
+            }
             if(null==product )
                 return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
             ProductPriceDetialResult result = new ProductPriceDetialResult();

@@ -117,7 +117,7 @@ public class ProductConverter {
      * @return
      */
     public static PriceInfo convertToPriceInfo(PriceSinglePO priceSinglePO){
-        if(priceSinglePO.getPriceInfos() == null){
+        if(priceSinglePO ==null || priceSinglePO.getPriceInfos() == null){
             return null;
         }
         PriceInfo priceInfo = new PriceInfo();
