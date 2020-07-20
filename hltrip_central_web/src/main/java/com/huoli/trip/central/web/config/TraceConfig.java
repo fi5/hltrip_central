@@ -6,6 +6,7 @@ import com.huoli.eagle.BraveTrace;
 import com.huoli.eagle.eye.core.HuoliAtrace;
 import com.huoli.eagle.eye.core.HuoliTrace;
 import com.huoli.eagle.report.SleuthSpanESReporter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,7 @@ import zipkin2.internal.HexCodec;
 
 @Configuration
 @PropertySource("classpath:atrace.properties")
+@Slf4j
 public class TraceConfig {
 
     @Value("${dptCode}")
@@ -57,6 +59,7 @@ public class TraceConfig {
     }
 
     public static void createNewSpan(String traceId, Span parent) {
+        log.info("{}",HexCodec.lowerHexToUnsignedLong(traceId));
         parent.context().toBuilder().traceId(HexCodec.lowerHexToUnsignedLong(traceId)).build();
     }
 }

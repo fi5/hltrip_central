@@ -77,6 +77,7 @@ public class CentralDubboServiceAspect {
                         log.error("方法 {} 参数不包含traceId", function);
                     } else {
                         // 设置traceId
+                        log.info("请求进来的traceid 为:{}",param.getString("traceId"));
                         TraceConfig.createNewSpan(param.getString("traceId"), span);
                     }
                 } catch (Exception e) {
