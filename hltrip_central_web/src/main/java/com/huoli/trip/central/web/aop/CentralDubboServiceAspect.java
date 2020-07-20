@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.aop;
 
 import brave.Span;
+import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.eagle.eye.core.HuoliAtrace;
@@ -65,7 +66,7 @@ public class CentralDubboServiceAspect {
         stopWatch.start();
         try {
             Object args[] = joinPoint.getArgs();
-            Object result;
+            Object result = null;
             String params;
             if(ArrayUtils.isNotEmpty(args) && args[0] != null){
                 try {
@@ -99,11 +100,17 @@ public class CentralDubboServiceAspect {
                 result = BaseResponse.withFail(CentralError.ERROR_BAD_REQUEST);
                 eventBuilder.withData("code", CentralError.ERROR_BAD_REQUEST.getCode());
                 eventBuilder.withStatus(EventStatusEnum.FAIL);
-            } catch (NullPointerException e) {
-                log.error("[{}] 数据不完整异常: ", function, e);
-                result = BaseResponse.withFail(CentralError.DATA_NULL_ERROR);
-                eventBuilder.withData("code", CentralError.DATA_NULL_ERROR.getCode());
-                eventBuilder.withStatus(EventStatusEnum.FAIL);
+            }catch (Exception exception){
+                // 是Dubbo本身的异常，直接抛出
+                if (exception instanceof RpcException) {
+                    log.error("[{}] duboo服务不可用: ", function, exception);
+                    result = BaseResponse.withFail(CentralError.DUBOO_RPC_ERROR);
+                }else if(exception instanceof NullPointerException){
+                    log.error("[{}] 数据不完整异常: ", function, exception);
+                    result = BaseResponse.withFail(CentralError.DATA_NULL_ERROR);
+                    eventBuilder.withData("code", CentralError.DATA_NULL_ERROR.getCode());
+                    eventBuilder.withStatus(EventStatusEnum.FAIL);
+                }
             } catch  (Throwable e) {
                 log.error("[{}] 服务器内部错误异常: ", function, e);
                 result = BaseResponse.withFail(CentralError.ERROR_SERVER_ERROR);
