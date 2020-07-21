@@ -45,18 +45,14 @@ public class TraceConfig {
     }
 
     @SuppressWarnings("unchecked")
-    public static Object createSpan(String name, HuoliTrace huoliTrace) {
+    public static Object createSpan(String name, BraveTrace huoliTrace, String traceId) {
         Object newSpan;
-        Object currentSpan = huoliTrace.currentSpan();
+        Span currentSpan = huoliTrace.currentSpan();
         if (currentSpan != null) {
             newSpan = huoliTrace.createSpan(name, currentSpan);
         } else {
-            newSpan = huoliTrace.createSpan(name);
+            newSpan = huoliTrace.createSpan(name, HexCodec.lowerHexToUnsignedLong(traceId), HexCodec.lowerHexToUnsignedLong(traceId));
         }
         return newSpan;
-    }
-
-    public static void createNewSpan(String traceId, Span parent) {
-         parent.context().toBuilder().traceId(HexCodec.lowerHexToUnsignedLong(traceId)).spanId(HexCodec.lowerHexToUnsignedLong(traceId)).build();
     }
 }
