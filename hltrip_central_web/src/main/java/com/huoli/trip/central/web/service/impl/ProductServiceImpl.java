@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
@@ -28,9 +27,12 @@ import com.huoli.trip.common.vo.response.central.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -45,7 +47,7 @@ import java.util.stream.Collectors;
  * 创建日期：2020/7/1<br>
  */
 @Slf4j
-@Service(timeout = 10000, group = "hltrip")
+@Service(timeout = 10000, group = "hltrip1")
 public class ProductServiceImpl implements ProductService {
 
     @Autowired
@@ -149,7 +151,6 @@ public class ProductServiceImpl implements ProductService {
                 target.setSaleDate(saleDate);
 
                 BeanUtils.copyProperties(entry, target);
-
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }

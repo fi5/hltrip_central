@@ -1,6 +1,6 @@
 package com.huoli.trip.central.web;
 
-import com.alibaba.dubbo.config.spring.context.annotation.DubboComponentScan;
+import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
@@ -16,7 +16,7 @@ import org.springframework.context.annotation.ImportResource;
         DataSourceAutoConfiguration.class, DataSourceTransactionManagerAutoConfiguration.class,
         MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ImportResource({"classpath:disconf-config.xml"})
-@DubboComponentScan(value = "com.huoli.trip.central.web")
+@EnableDubbo(scanBasePackages = "com.huoli.trip.central.web")
 @ComponentScan({"com.huoli.trip"})
 public class HltripCentralApplication {
 
