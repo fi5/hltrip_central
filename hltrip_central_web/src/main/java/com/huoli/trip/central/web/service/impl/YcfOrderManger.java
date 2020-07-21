@@ -45,10 +45,10 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class YcfOrderManger extends OrderManager {
-    @Reference(group = "hltrip")
+    @Reference(timeout = 10000,group = "hltrip")
     private YcfOrderService ycfOrderService;
 
-    @Reference(group = "hltrip")
+    @Reference(timeout = 10000,group = "hltrip")
     private YcfSyncService ycfSynService;
 
     @Autowired
