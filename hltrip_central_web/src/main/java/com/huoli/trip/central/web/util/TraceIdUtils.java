@@ -23,7 +23,7 @@ public class TraceIdUtils {
     }
 
     public static String getTraceId() {
-        String traceId = null;
+        String traceId = "test";
         try {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             traceId = request.getHeader("X-B3-TraceId");
