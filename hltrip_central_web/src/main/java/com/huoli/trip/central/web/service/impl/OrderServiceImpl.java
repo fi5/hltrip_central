@@ -35,7 +35,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 @Service(timeout = 10000,group = "hltrip")
 public class OrderServiceImpl implements OrderService {
 
-    @Reference(group = "hltrip")
+    @Reference(timeout = 10000,group = "hltrip")
     private YcfOrderService ycfOrderService;
     @Autowired
     KafkaTemplate kafkaTemplate;
