@@ -77,7 +77,7 @@ public class OrderServiceImpl implements OrderService {
                 kafkaInfo.setResponseTime(CommonUtils.dateFormat.format(req.getResponseTime()));
             ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(kafkaInfo));
             listenableFuture.addCallback(
-                    result -> log.info("订单发送kafka成功, params : {}", JSONObject.toJSONString(req)),
+                    result -> log.info("订单发送kafka成功, params : {}", JSONObject.toJSONString(kafkaInfo)),
                     ex -> {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
