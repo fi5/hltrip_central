@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  * 创建日期：2020/7/1<br>
  */
 @Slf4j
-@Service(timeout = 10000, group = "hltrip1")
+@Service(timeout = 10000, group = "hltrip")
 public class ProductServiceImpl implements ProductService {
 
     @Autowired
