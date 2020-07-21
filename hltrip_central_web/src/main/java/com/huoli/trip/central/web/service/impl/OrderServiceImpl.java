@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
+import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.util.CommonUtils;
@@ -69,6 +70,7 @@ public class OrderServiceImpl implements OrderService {
             kafkaInfo.setExpense(req.getRefundCharge());
             kafkaInfo.setHandleRemark(req.getHandleRemark());
             kafkaInfo.setRefundReason(req.getRefundReason());
+            kafkaInfo.setTraceId(TraceIdUtils.getTraceId());
             if(null!=req.getRefundTime())
             kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
             if(null!=req.getResponseTime())
@@ -154,6 +156,7 @@ public class OrderServiceImpl implements OrderService {
             String topic = "hltrip_order_orderstatus";
             OrderStatusKafka orderStatusKafka = new OrderStatusKafka();
             BeanUtils.copyProperties(req,orderStatusKafka);
+            orderStatusKafka.setTraceId(TraceIdUtils.getTraceId());
             if(orderStatusKafka!=null){
                 switch (orderStatusKafka.getOrderStatus()){
                     case 0:orderStatusKafka.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());break;
