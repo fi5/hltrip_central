@@ -96,14 +96,14 @@ public class YcfOrderManger extends OrderManager {
          */
         if(ycfBookCheckReq.getBeginDate().after(ycfBookCheckReq.getEndDate())){
             log.error("预订前校验 开始日期大于结束日期 错误 产品编号：{}",req.getProductId());
-            return BaseResponse.fail(CentralError.ERROR_DATE_ORDER);
+            return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_1);
         }
         /**
          * 时间跨度大于90天
          */
         if(this.isOutTime(ycfBookCheckReq.getBeginDate(),ycfBookCheckReq.getEndDate())){
             log.error("预订前校验 时间跨度大于90天 错误 产品编号：{}",req.getProductId());
-            return BaseResponse.fail(CentralError.ERROR_DATE_ORDER);
+            return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_2);
         }
         try {
             checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
@@ -245,7 +245,8 @@ public class YcfOrderManger extends OrderManager {
         if(CollectionUtils.isEmpty(foods)
                 && CollectionUtils.isEmpty(rooms)
                 && CollectionUtils.isEmpty(tickets)){
-            return BaseResponse.fail(CentralError.ERROR_RESOURCE_ORDER);
+            log.error("下单传参至供应商错误,传入参数没有包含任何资源(房，票，餐) 产品编号：{}",req.getProductId());
+            return BaseResponse.fail(CentralError.ERROR_ORDER);
         }
         //**供应商餐饮**
         List<YcfBookFood> ycfBookFoods = new ArrayList<>();
@@ -345,7 +346,7 @@ public class YcfOrderManger extends OrderManager {
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterCreateOrder rpc服务异常 :{}",e);
             log.error("ycfOrderService --> getCenterCreateOrder 供应商业务异常：{}",ycfOrder.getMessage());
-            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_NO_ORDER);//异常消息以供应商返回的
+            return BaseResponse.fail(CentralError.ERROR_ORDER);//异常消息以供应商返回的
         }
         if(ycfCreateOrderRes == null){
             log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),ycfOrder.getMessage());
@@ -371,10 +372,15 @@ public class YcfOrderManger extends OrderManager {
         }catch (Exception e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
             log.error("ycfOrderService --> getCenterPayOrder 供应商异常 :{}",ycfPayOrder.getMessage());
-            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_PAY_ORDER);
+            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
         }
         if(ycfPayOrderRes == null){
             log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{}",req.getPartnerOrderId(),ycfPayOrder.getMessage());
+            switch (ycfPayOrder.getMessage()){
+                case "支付失败，对应支付流水号已存在" :
+                    //todo 如果支付流水号是已存在的  通过查询订单详情校验一下再返回该异常
+                    break;
+            }
             return SupplierErrorMsgTransfer.buildMsg(ycfPayOrder.getMessage());//异常消息以供应商返回的
         }
         //封装中台返回结果
