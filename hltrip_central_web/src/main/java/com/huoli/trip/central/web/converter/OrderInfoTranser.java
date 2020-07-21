@@ -29,7 +29,7 @@ public class OrderInfoTranser {
 					rtnStatus=10;
 					break;
 				case 11:
-					rtnStatus = 10;
+					rtnStatus = OrderStatus.APPLYING_FOR_REFUND.getCode();//21
 					break;
 				case 12:
 					rtnStatus=11;

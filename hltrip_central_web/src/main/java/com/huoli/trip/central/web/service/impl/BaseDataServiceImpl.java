@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import com.huoli.trip.central.api.BaseDataService;
 import com.huoli.trip.central.web.dao.CityDao;
 import com.huoli.trip.common.constant.CentralError;
@@ -9,6 +8,7 @@ import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.vo.request.central.CityReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;

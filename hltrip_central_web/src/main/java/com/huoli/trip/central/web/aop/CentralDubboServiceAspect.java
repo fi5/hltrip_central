@@ -1,8 +1,6 @@
 package com.huoli.trip.central.web.aop;
 
 import brave.Span;
-import com.alibaba.dubbo.remoting.RemotingException;
-import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.eagle.BraveTrace;
@@ -16,6 +14,8 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.remoting.RemotingException;
+import org.apache.dubbo.rpc.RpcException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -24,9 +24,10 @@ import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.validation.ValidationException;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * 描述：desc<br>
@@ -52,7 +53,7 @@ public class CentralDubboServiceAspect {
     @Autowired
     private HuoliAtrace huoliAtrace;
 
-    @Pointcut("@within(com.alibaba.dubbo.config.annotation.Service)")
+    @Pointcut("@within(org.apache.dubbo.config.annotation.Service)")
     public void apiPointCut() {
     }
 
@@ -62,12 +63,13 @@ public class CentralDubboServiceAspect {
         Event.EventBuilder eventBuilder = new Event.EventBuilder();
         eventBuilder.withData("method", function);
         eventBuilder.withIndex(huoliAtrace.getAppname(), "service");
-        Span span = (Span) TraceConfig.createSpan(function, this.huoliTrace);
+
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         try {
             Object args[] = joinPoint.getArgs();
-            Object result = null;
+            this.paramValidate(args);
+            Object result;
             String params;
             if(ArrayUtils.isNotEmpty(args) && args[0] != null){
                 try {
@@ -77,8 +79,7 @@ public class CentralDubboServiceAspect {
                         log.error("方法 {} 参数不包含traceId", function);
                     } else {
                         // 设置traceId
-                        log.info("请求进来的traceid 为:{}",param.getString("traceId"));
-                        TraceConfig.createNewSpan(param.getString("traceId"), span);
+                        TraceConfig.createSpan(function, this.huoliTrace, param.getString("traceId"));
                     }
                 } catch (Exception e) {
                     log.error("反序列化方法 {} 的请求参数异常，这是为了获取traceId，不影响主流程。", e);
@@ -97,24 +98,17 @@ public class CentralDubboServiceAspect {
                 result = BaseResponse.withFail(e.getCode(), e.getMessage(), e.getData());
                 eventBuilder.withData("code", e.getCode());
                 eventBuilder.withStatus(EventStatusEnum.FAIL);
-            } catch (ValidationException | TypeMismatchException | MethodArgumentNotValidException e){
-                log.error("[{}] 请求参数异常: ", function, e);
-                result = BaseResponse.withFail(CentralError.ERROR_BAD_REQUEST);
-                eventBuilder.withData("code", CentralError.ERROR_BAD_REQUEST.getCode());
-                eventBuilder.withStatus(EventStatusEnum.FAIL);
-            }catch (Exception exception){
+            } catch (RpcException | RemotingException e){
                 // 是Dubbo本身的异常，直接抛出
-                if (exception instanceof RpcException||exception instanceof RemotingException) {
-                    log.error("[{}] duboo服务不可用: ", function, exception);
-                    result = BaseResponse.withFail(CentralError.DUBOO_RPC_ERROR);
-                    eventBuilder.withData("code", CentralError.DUBOO_RPC_ERROR.getCode());
-                    eventBuilder.withStatus(EventStatusEnum.FAIL);
-                }else if(exception instanceof NullPointerException){
-                    log.error("[{}] 数据不完整异常: ", function, exception);
-                    result = BaseResponse.withFail(CentralError.DATA_NULL_ERROR);
-                    eventBuilder.withData("code", CentralError.DATA_NULL_ERROR.getCode());
-                    eventBuilder.withStatus(EventStatusEnum.FAIL);
-                }
+                log.error("[{}] duboo服务不可用: ", function, e);
+                result = BaseResponse.withFail(CentralError.DUBOO_RPC_ERROR);
+                eventBuilder.withData("code", CentralError.DUBOO_RPC_ERROR.getCode());
+                eventBuilder.withStatus(EventStatusEnum.FAIL);
+            } catch (NullPointerException e){
+                log.error("[{}] 数据不完整异常: ", function, e);
+                result = BaseResponse.withFail(CentralError.DATA_NULL_ERROR);
+                eventBuilder.withData("code", CentralError.DATA_NULL_ERROR.getCode());
+                eventBuilder.withStatus(EventStatusEnum.FAIL);
             } catch  (Throwable e) {
                 log.error("[{}] 服务器内部错误异常: ", function, e);
                 result = BaseResponse.withFail(CentralError.ERROR_SERVER_ERROR);
@@ -132,6 +126,12 @@ public class CentralDubboServiceAspect {
             log.info("[{}], response: {}, cost: {},", function, JSON.toJSONString(result),
                     stopWatch.getTotalTimeMillis());
             return result;
+        } catch (ValidationException | TypeMismatchException e){
+            log.error("[{}] 请求参数异常: ", function, e);
+            eventBuilder.withData("code", CentralError.ERROR_BAD_REQUEST.getCode());
+            eventBuilder.withStatus(EventStatusEnum.FAIL);
+            String result = String.format("%s : %s", CentralError.ERROR_BAD_REQUEST.getError(), e.getMessage());
+            return BaseResponse.withFail(CentralError.ERROR_BAD_REQUEST.getCode(), result);
         } catch (Throwable e) {
             eventBuilder.withData("code", CentralError.ERROR_UNKNOWN.getCode());
             eventBuilder.withStatus(e);
@@ -141,5 +141,21 @@ public class CentralDubboServiceAspect {
             Event event = eventBuilder.build();
             huoliAtrace.reportEvent(event);
         }
+    }
+
+    /**
+     * 参数校验
+     * @param params
+     */
+    private void paramValidate(Object[] params) {
+        if (ArrayUtils.isEmpty(params)) {
+            return;
+        }
+        Stream.of(params).forEach(param -> {
+            if (Objects.isNull(param)) {
+                throw new ValidationException("传入参数为空！");
+            }
+            ValidatorUtil.validate(param);
+        });
     }
 }
