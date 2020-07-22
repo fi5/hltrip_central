@@ -49,7 +49,7 @@ public class SupplierErrorMsgTransfer {
             case "创建订单失败，购买数超出最多购买数" :
             case "创建订单失败，入住晚数少于最小入住晚数" :
             case "创建订单失败，入住晚数超出最大入住晚数" :
-                return BaseResponse.fail(CentralError.ERROR_ORDER_CREATE_SUPPLIER);
+                return BaseResponse.fail(CentralError.ERROR_ORDER);
             case "支付失败，该订单号不存在":
                 return BaseResponse.fail(CentralError.ERROR_PAY_NO_ORDER);
             case "支付失败，对应支付流水号已存在":
