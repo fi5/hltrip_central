@@ -57,17 +57,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         }
         CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
         createOrderRes.setOrderId(supplierResponse.getOrderId());
-        switch (supplierResponse.getOrderStatus()){
-            case 0:createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());break;
-            case 10:createOrderRes.setOrderStatus(OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode());break;
-            case 11:createOrderRes.setOrderStatus(OrderStatus.TO_BE_CONFIRMED.getCode());break;
-            case 12:createOrderRes.setOrderStatus(OrderStatus.WAITING_APPOINTMENT.getCode());break;
-            case 13:createOrderRes.setOrderStatus(OrderStatus.TO_PAID_TWICE.getCode());break;
-            case 20:createOrderRes.setOrderStatus(OrderStatus.WAITING_TO_TRAVEL.getCode());break;
-            case 30:createOrderRes.setOrderStatus(OrderStatus.CONSUMED.getCode());break;
-            case 40:createOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());break;
-            default : log.info("创建订单服务 订单状态返回异类 ：{}",supplierResponse.getOrderStatus()); break;
-        }
+        createOrderRes.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(supplierResponse.getOrderStatus(),1));
         return createOrderRes;
     }
 

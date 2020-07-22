@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.converter;
 
-import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.vo.request.CancelOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCancelOrderRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCancelOrderReq;
@@ -46,10 +45,7 @@ public class ApplyRefundConverter implements Converter<CancelOrderReq, YcfCancel
             return null;
         }
         CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
-        switch (supplierResponse.getOrderStatus()){
-            case 40:cancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());break;
-            default : cancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode()); break;
-        }
+        cancelOrderRes.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(supplierResponse.getOrderStatus(),1));
         return cancelOrderRes;
     }
 }
