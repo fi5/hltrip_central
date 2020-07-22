@@ -2,6 +2,8 @@ package com.huoli.trip.central.web.service;
 
 import com.google.common.collect.Maps;
 import com.huoli.trip.central.web.service.impl.OrderManager;
+import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.exception.HlCentralException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -49,6 +51,9 @@ public class OrderFactory {
      * @return
      */
     public  OrderManager getOrderManager(String channel){
+        if(channel==null){
+            throw new HlCentralException(CentralError.ERROR_CHANNEL);
+        }
         return orderManagerMap.get(channel);
     }
 

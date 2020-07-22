@@ -174,6 +174,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) {
+        log.info("传来的渠道码是 ：{}",req.getChannelCode());
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
