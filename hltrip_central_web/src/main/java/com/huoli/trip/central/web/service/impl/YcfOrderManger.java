@@ -432,12 +432,12 @@ public class YcfOrderManger extends OrderManager {
             }else {
                 log.error("支付前校验没有通过 订单详情返回json:{}",JSONObject.toJSONString(orderDetail));
                 result.setResult(false);
-                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
             }
         }catch (HlCentralException e){
             log.error("支付前校验失败 ：{}",e);
             result.setResult(false);
-            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
         }
         return BaseResponse.success(result);
     }
