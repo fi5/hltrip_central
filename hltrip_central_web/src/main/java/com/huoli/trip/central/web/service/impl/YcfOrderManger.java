@@ -365,16 +365,23 @@ public class YcfOrderManger extends OrderManager {
         //供应商输出
         YcfBaseResult<YcfPayOrderRes> ycfPayOrder = null;
         YcfPayOrderRes ycfPayOrderRes = null;
-        try {
-            ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
-            if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
-                ycfPayOrderRes = ycfPayOrder.getData();
-            }
-        }catch (Exception e){
-            log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
-            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 :{}",ycfPayOrder.getMessage());
-            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
-        }
+        //todo 屏蔽支付调用
+//        try {
+//            ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
+//            if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
+//                ycfPayOrderRes = ycfPayOrder.getData();
+//            }
+//        }catch (Exception e){
+//            log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
+//            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 :{}",ycfPayOrder.getMessage());
+//            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+//        }
+        //测试数据
+        ycfPayOrder = new YcfBaseResult<>();
+        ycfPayOrderRes = new YcfPayOrderRes();
+        ycfPayOrderRes.setOrderId("ceshi123");
+        ycfPayOrderRes.setOrderStatus(1);
+        ycfPayOrder.setData(ycfPayOrderRes);
         if(ycfPayOrderRes == null){
             log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{}",req.getPartnerOrderId(),ycfPayOrder.getMessage());
             switch (ycfPayOrder.getMessage()){
