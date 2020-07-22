@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.aop;
 
-import brave.Span;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.eagle.BraveTrace;
@@ -90,9 +89,9 @@ public class CentralDubboServiceAspect {
             }
             try {
                 log.info("[{}] request: {}", function, params);
+                result = joinPoint.proceed(args);
                 eventBuilder.withData("code", 0);
                 eventBuilder.withStatus(EventStatusEnum.SUCCESS);
-                result = joinPoint.proceed(args);
             } catch (HlCentralException e) {
                 log.error("[{}] 业务异常: ", function, e);
                 result = BaseResponse.withFail(e.getCode(), e.getMessage(), e.getData());
