@@ -194,6 +194,7 @@ public class YcfOrderManger extends OrderManager {
 
         final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
         try {
+            log.info("拿到的数据:"+JSONObject.toJSONString(vochers));
             final YcfVouchersResult data = vochers.getData();
             if(!vochers.getStatusCode().equals("200"))
                 return BaseResponse.fail(OrderInfoTranser.findCentralError(vochers.getMessage()));//异常消息以供应商返回的

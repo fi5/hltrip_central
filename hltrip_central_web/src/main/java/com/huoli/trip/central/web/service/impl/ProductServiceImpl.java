@@ -190,7 +190,7 @@ public class ProductServiceImpl implements ProductService {
             ProductPriceDetialResult result = new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
             log.info("拿到的productInfo:"+JSONObject.toJSONString(product));
-            log.info("信息:"+JSONObject.toJSONString(orderFactory));
+            log.info("信息:"+JSONObject.toJSONString(OrderFactory.orderManagerMap));
 
             OrderManager orderManager = orderFactory.getOrderManager(productPo.getSupplierId());
             if (orderManager == null) {
