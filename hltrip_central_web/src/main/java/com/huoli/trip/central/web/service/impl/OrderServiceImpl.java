@@ -1,13 +1,12 @@
 package com.huoli.trip.central.web.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
+import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
-import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
@@ -16,6 +15,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 @Service(timeout = 10000,group = "hltrip")
 public class OrderServiceImpl implements OrderService {
 
-    @Reference(group = "hltrip")
+    @Reference(timeout = 10000,group = "hltrip")
     private YcfOrderService ycfOrderService;
     @Autowired
     KafkaTemplate kafkaTemplate;
@@ -157,19 +157,8 @@ public class OrderServiceImpl implements OrderService {
             OrderStatusKafka orderStatusKafka = new OrderStatusKafka();
             BeanUtils.copyProperties(req,orderStatusKafka);
             orderStatusKafka.setTraceId(TraceIdUtils.getTraceId());
-            if(orderStatusKafka!=null){
-                switch (orderStatusKafka.getOrderStatus()){
-                    case 0:orderStatusKafka.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());break;
-                    case 10:orderStatusKafka.setOrderStatus(OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode());break;
-                    case 11:orderStatusKafka.setOrderStatus(OrderStatus.TO_BE_CONFIRMED.getCode());break;
-                    case 12:orderStatusKafka.setOrderStatus(OrderStatus.WAITING_APPOINTMENT.getCode());break;
-                    case 13:orderStatusKafka.setOrderStatus(OrderStatus.TO_PAID_TWICE.getCode());break;
-                    case 20:orderStatusKafka.setOrderStatus(OrderStatus.WAITING_TO_TRAVEL.getCode());break;
-                    case 30:orderStatusKafka.setOrderStatus(OrderStatus.CONSUMED.getCode());break;
-                    case 40:orderStatusKafka.setOrderStatus(OrderStatus.CANCELLED.getCode());break;
-                    default : log.error("订单状态错误  推送的状态是 ：{}",orderStatusKafka.getOrderStatus()); break;
-                }
-            }
+            //订单状态转换下推送
+            orderStatusKafka.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(req.getOrderStatus(),1));
             ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(orderStatusKafka));
             listenableFuture.addCallback(
                     result -> log.info("订单状态推送kafka成功, params : {}", JSONObject.toJSONString(orderStatusKafka)),

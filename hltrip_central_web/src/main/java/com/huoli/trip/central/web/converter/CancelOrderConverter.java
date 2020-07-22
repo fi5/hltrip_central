@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.converter;
 
-import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.vo.request.CancelOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCancelOrderRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCancelOrderReq;
@@ -46,17 +45,7 @@ public class CancelOrderConverter implements Converter<CancelOrderReq, YcfCancel
             return null;
         }
         CenterCancelOrderRes cancelOrderRes = new CenterCancelOrderRes();
-        switch (supplierResponse.getOrderStatus()){
-            case 0:cancelOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());break;
-            case 10:cancelOrderRes.setOrderStatus(OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode());break;
-            case 11:cancelOrderRes.setOrderStatus(OrderStatus.TO_BE_CONFIRMED.getCode());break;
-            case 12:cancelOrderRes.setOrderStatus(OrderStatus.WAITING_APPOINTMENT.getCode());break;
-            case 13:cancelOrderRes.setOrderStatus(OrderStatus.TO_PAID_TWICE.getCode());break;
-            case 20:cancelOrderRes.setOrderStatus(OrderStatus.WAITING_TO_TRAVEL.getCode());break;
-            case 30:cancelOrderRes.setOrderStatus(OrderStatus.CONSUMED.getCode());break;
-            case 40:cancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());break;
-            default : log.info("取消订单服务 订单状态返回异类 ：{}",supplierResponse.getOrderStatus()); break;
-        }
+        cancelOrderRes.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(supplierResponse.getOrderStatus(),1));
         return cancelOrderRes;
     }
 }

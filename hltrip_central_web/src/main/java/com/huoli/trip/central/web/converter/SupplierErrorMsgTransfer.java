@@ -22,11 +22,12 @@ public class SupplierErrorMsgTransfer {
             case "订单缺失身份证信息，至少需要一个身份证" :
             case "订单缺失身份证信息，至少需N个身份证" :
                 return BaseResponse.fail(CentralError.ERROR_ORDER_CONNECT_SUPPLIER);
-            case "门票使用日期不在入住范围内" :
-            case "餐券使用日期不在入住范围内" :
-            case "餐券使用日期不在票范围内" :
-            case "同一类型资源产品使用时间必须相同" :
-                return BaseResponse.fail(CentralError.ERROR_DATE_ORDER);
+                //不会出现这种情况
+//            case "门票使用日期不在入住范围内" :
+//            case "餐券使用日期不在入住范围内" :
+//            case "餐券使用日期不在票范围内" :
+//            case "同一类型资源产品使用时间必须相同" :
+//                return BaseResponse.fail(CentralError.ERROR_DATE_ORDER);
             case "该产品不存在" :
             case "产品Id错误" :
                 return BaseResponse.fail(CentralError.ERROR_NO_PRODUCT_SUPPLIER);
@@ -36,17 +37,19 @@ public class SupplierErrorMsgTransfer {
                 return BaseResponse.fail(CentralError.ERROR_ORDER_ISEXIST_SUPPLIER);
             case "价格不存在" :
             case "无价格信息" :
-            case "产品价格不得低于最低售价" :
             case "价格不存在或者售罄" :
+                return BaseResponse.fail(CentralError.ERROR_ORDER_NO_PRICE);
+            case "产品价格不得低于最低售价" :
+                return BaseResponse.fail(CentralError.ERROR_ORDER_PRICE_COMPARE);
             case "订单总价错误" :
-                return BaseResponse.fail(CentralError.ERROR_ORDER_PRICE_SUPPLIER);
+                return BaseResponse.fail(CentralError.ERROR_ORDER_TOTAL_PRICE);
             case "库存不足" :
-                return BaseResponse.fail(CentralError.ERROR_ORDER_STOCK_SUPPLIER);
+                return BaseResponse.fail(CentralError.NO_STOCK_ERROR);
             case "创建订单失败，购买数少于最小购买数" :
             case "创建订单失败，购买数超出最多购买数" :
             case "创建订单失败，入住晚数少于最小入住晚数" :
             case "创建订单失败，入住晚数超出最大入住晚数" :
-                return BaseResponse.fail(CentralError.ERROR_ORDER_CREATE_SUPPLIER);
+                return BaseResponse.fail(CentralError.ERROR_ORDER);
             case "支付失败，该订单号不存在":
                 return BaseResponse.fail(CentralError.ERROR_PAY_NO_ORDER);
             case "支付失败，对应支付流水号已存在":

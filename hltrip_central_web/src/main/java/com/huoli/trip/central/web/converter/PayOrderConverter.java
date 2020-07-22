@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.converter;
 
-import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.vo.request.PayOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfPayOrderReq;
@@ -39,17 +38,7 @@ public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq,
         }
         CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
         payOrderRes.setChannelOrderId(supplierResponse.getOrderId());
-        switch (supplierResponse.getOrderStatus()){
-            case 0:payOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());break;
-            case 10:payOrderRes.setOrderStatus(OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode());break;
-            case 11:payOrderRes.setOrderStatus(OrderStatus.TO_BE_CONFIRMED.getCode());break;
-            case 12:payOrderRes.setOrderStatus(OrderStatus.WAITING_APPOINTMENT.getCode());break;
-            case 13:payOrderRes.setOrderStatus(OrderStatus.TO_PAID_TWICE.getCode());break;
-            case 20:payOrderRes.setOrderStatus(OrderStatus.WAITING_TO_TRAVEL.getCode());break;
-            case 30:payOrderRes.setOrderStatus(OrderStatus.CONSUMED.getCode());break;
-            case 40:payOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());break;
-            default : log.info("支付订单服务 订单状态返回异类 ：{}",supplierResponse.getOrderStatus()); break;
-        }
+        payOrderRes.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(supplierResponse.getOrderStatus(),1));
         return payOrderRes;
     }
 }
