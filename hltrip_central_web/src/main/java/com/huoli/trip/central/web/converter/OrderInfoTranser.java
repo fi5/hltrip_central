@@ -55,6 +55,8 @@ public class OrderInfoTranser {
 
 	public static CentralError findCentralError(String msg){
 		CentralError rtnError=null;
+		if(msg.equals("重发凭证失败，该订单号不存在"))
+			return CentralError.ERROR_NO_ORDER;
 		for (CentralError entry : CentralError.values()){
 			if(entry.getError().equals(msg)){
 				rtnError=entry;

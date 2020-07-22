@@ -96,6 +96,13 @@ public class Test {
     }
 
 
+    @RequestMapping(value = "getVoucher")
+    public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req)  {
+        final BaseResponse<OrderDetailRep> vochers = orderService.getVochers(req);
+        return vochers;
+    }
+
+
     @RequestMapping(value = "createOrder",method = {RequestMethod.POST, RequestMethod.GET})
     public Object createOrder(@RequestBody CreateOrderReq request) {
         Object createOrderRes = null;

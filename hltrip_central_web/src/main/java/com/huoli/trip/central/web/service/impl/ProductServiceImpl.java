@@ -189,6 +189,8 @@ public class ProductServiceImpl implements ProductService {
                 return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
             ProductPriceDetialResult result = new ProductPriceDetialResult();
             req.setSupplierProductId(product.getSupplierProductId());
+            log.info("拿到的productInfo:"+JSONObject.toJSONString(product));
+            log.info("信息:"+JSONObject.toJSONString(OrderFactory.orderManagerMap));
 
             OrderManager orderManager = orderFactory.getOrderManager(productPo.getSupplierId());
             if (orderManager == null) {
@@ -225,8 +227,10 @@ public class ProductServiceImpl implements ProductService {
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
             priceCal.setQuantity(req.getCount());
-            priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
-            priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
+            if(StringUtils.isNotBlank(req.getStartDate()))
+                priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
+            if(StringUtils.isNotBlank(req.getEndDate()))
+                priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
             priceCal.setProductCode(req.getProductCode());
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
             try {
