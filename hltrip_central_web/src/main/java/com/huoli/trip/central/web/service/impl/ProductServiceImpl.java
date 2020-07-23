@@ -223,6 +223,7 @@ public class ProductServiceImpl implements ProductService {
             result.setRoom(product.getRoom());
             result.setTicket(product.getTicket());
             result.setFood(product.getFood());
+            result.setSupplierName(product.getSupplierName());
 //  调用统一的价格计算并设值
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
