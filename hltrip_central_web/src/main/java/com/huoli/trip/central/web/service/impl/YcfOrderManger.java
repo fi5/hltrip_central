@@ -173,6 +173,7 @@ public class YcfOrderManger extends OrderManager {
 
         final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
         try {
+            log.info("拿到的订单数据:"+JSONObject.toJSONString(order));
             final YcfOrderStatusResult data = order.getData();
             //如果数据为空,直接返回错
             if(!order.getStatusCode().equals("200") || !order.getSuccess())
