@@ -22,6 +22,10 @@ public interface OrderService {
      */
     BaseResponse<CenterBookCheck> getCheckInfos(BookCheckReq req);
 
+	/**
+     * 接收退款通知
+     * @param req
+     */
     void refundNotice(RefundNoticeReq req) ;
 
 	/**
