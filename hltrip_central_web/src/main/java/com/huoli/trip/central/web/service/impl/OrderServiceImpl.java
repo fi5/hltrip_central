@@ -116,7 +116,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterCreateOrderRes> createOrder(CreateOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);;
