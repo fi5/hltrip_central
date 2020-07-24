@@ -7,6 +7,7 @@ import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
@@ -49,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterBookCheck> getCheckInfos(BookCheckReq req) {
-        OrderManager orderManager =orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
+        OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
@@ -62,7 +63,7 @@ public class OrderServiceImpl implements OrderService {
 
         try {
             log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
-            String topic = "hltrip_order_refund";
+            String topic = Constants.REFUND_ORDER_TOPIC;
             RefundKafka kafkaInfo = new RefundKafka();
             kafkaInfo.setOrderId(req.getPartnerOrderId());
             kafkaInfo.setRefundStatus(req.getRefundStatus());
@@ -82,10 +83,11 @@ public class OrderServiceImpl implements OrderService {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
         } catch (Exception e) {
-        	log.info("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
+        	log.error("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
         }
 
     }
+
 
     @Override
     public BaseResponse<OrderDetailRep> getOrder(OrderOperReq req) {
@@ -115,7 +117,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterCreateOrderRes> createOrder(CreateOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductId()));
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);;
@@ -133,7 +135,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterCancelOrderRes> cancelOrder(CancelOrderReq req) {
-        OrderManager orderManager = orderFactory.getOrderManager(CentralUtils.getChannelCode(req.getProductCode()));
+        OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
         BaseResponse<CenterCancelOrderRes> result = orderManager.getCenterCancelOrder(req);
@@ -153,7 +155,7 @@ public class OrderServiceImpl implements OrderService {
     public Boolean orderStatusNotice(PushOrderStatusReq req) {
         try {
             log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
-            String topic = "hltrip_order_orderstatus";
+            String topic = Constants.HLTRIP_ORDER_ORDERSTATUS;
             OrderStatusKafka orderStatusKafka = new OrderStatusKafka();
             BeanUtils.copyProperties(req,orderStatusKafka);
             orderStatusKafka.setTraceId(TraceIdUtils.getTraceId());
@@ -166,7 +168,7 @@ public class OrderServiceImpl implements OrderService {
                         log.info("订单状态推送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
         } catch (Exception e) {
-            log.error("订单状态推送kafka失败"+JSONObject.toJSONString(req),e);
+            log.error("订单状态推送kafka失败 :{}",e);
             return false;
         }
         return true;
@@ -174,7 +176,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) {
-        log.info("传来的渠道码是 ：{}",req.getChannelCode());
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);

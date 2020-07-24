@@ -25,6 +25,11 @@ public class RecSupplierController {
 	@Autowired
 	private OrderService orderService;
 
+	/**
+	 * 接收退款通知
+	 * @param req
+	 * @return
+	 */
 	@RequestMapping(value = "/refundNotice", method = RequestMethod.POST)
 	public BaseResponse refundNotice(@RequestBody RefundNoticeReq req) {
 		orderService.refundNotice(req);

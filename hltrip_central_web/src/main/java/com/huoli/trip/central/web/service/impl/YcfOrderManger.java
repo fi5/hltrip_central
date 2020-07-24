@@ -5,9 +5,9 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.*;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
-import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
+import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
@@ -73,19 +73,12 @@ public class YcfOrderManger extends OrderManager {
         return "ycf";
     }
     public BaseResponse<CenterBookCheck> getCenterCheckInfos(BookCheckReq req){
-        //中台输出
-        CenterBookCheck  bookCheck = new CenterBookCheck();
-        //封装中台库存量
-        List<Integer> stockList = new ArrayList<>();
         String begin = req.getBeginDate();
         String end = req.getEndDate();
         //没传结束时间这样处理
-        if(StringUtils.isBlank(req.getEndDate())){
+        if(StringUtils.isBlank(end)){
             end = begin;
         }
-        //供应商输出
-        YcfBaseResult<YcfBookCheckRes> checkInfos = null;
-        YcfBookCheckRes ycfBookCheckRes = null;
         //开始组装供应商请求参数
         YcfBookCheckReq ycfBookCheckReq = new YcfBookCheckReq();
         //转供应商productId
@@ -106,21 +99,30 @@ public class YcfOrderManger extends OrderManager {
             log.error("预订前校验 时间跨度大于90天 错误 产品编号：{}",req.getProductId());
             return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_2);
         }
+        //供应商输出数据包
+        YcfBookCheckRes ycfBookCheckRes = null;
         try {
-            checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
+            //供应商输出
+            YcfBaseResult<YcfBookCheckRes> checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
             if(checkInfos!=null&&StringUtils.equals(checkInfos.getStatusCode(),"200")){
                 ycfBookCheckRes = checkInfos.getData();
+                if(ycfBookCheckRes == null){
+                    log.error("预订前校验  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),checkInfos.getMessage());
+                    return SupplierErrorMsgTransfer.buildMsg(checkInfos.getMessage());//异常消息以供应商返回的
+                }
+            }else{
+                return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
             }
-        }catch (Exception e){
+        }catch (HlCentralException e){
             log.error("ycfOrderService --> getNBCheckInfos rpc服务异常 ：{}",e);
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
         }
-        if(ycfBookCheckRes == null){
-            log.error("预订前校验  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),checkInfos.getMessage());
-            return SupplierErrorMsgTransfer.buildMsg(checkInfos.getMessage());//异常消息以供应商返回的
-        }
+        //中台输出
+        CenterBookCheck  bookCheck = new CenterBookCheck();
         //供应商返回输入中台
         List<YcfBookSaleInfo> saleInfos = ycfBookCheckRes.getSaleInfos();
+        //封装中台库存量
+        List<Integer> stockList = new ArrayList<>();
         //没有库存
         if(CollectionUtils.isEmpty(saleInfos)) {
             log.error("预订前校验  供应商返回空的saleInfos 产品id:{}  ",req.getProductId());
@@ -172,8 +174,10 @@ public class YcfOrderManger extends OrderManager {
 
    public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){
 
-        final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
-        try {
+       final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
+       if(order==null)
+           return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+       try {
             log.info("拿到的订单数据:"+JSONObject.toJSONString(order));
             final YcfOrderStatusResult data = order.getData();
             //如果数据为空,直接返回错
@@ -194,8 +198,10 @@ public class YcfOrderManger extends OrderManager {
 
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
 
-        final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
         try {
+            final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
+            if(null==vochers)
+                return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             log.info("拿到的数据:"+JSONObject.toJSONString(vochers));
             final YcfVouchersResult data = vochers.getData();
             if(!vochers.getStatusCode().equals("200") || !vochers.getSuccess())
@@ -345,15 +351,16 @@ public class YcfOrderManger extends OrderManager {
             ycfOrder = ycfOrderService.createOrder(ycfCreateOrderReq);
             if(ycfOrder!=null&&StringUtils.equals(ycfOrder.getStatusCode(),"200")){
                 ycfCreateOrderRes = ycfOrder.getData();
+                if(ycfCreateOrderRes == null){
+                    log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),ycfOrder.getMessage());
+                    return SupplierErrorMsgTransfer.buildMsg(ycfOrder.getMessage());//异常消息以供应商返回的
+                }
+            }else{
+                return BaseResponse.fail(CentralError.ERROR_ORDER);//异常消息以供应商返回的
             }
-        }catch (Exception e){
+        }catch (HlCentralException e){
             log.error("ycfOrderService --> getCenterCreateOrder rpc服务异常 :{}",e);
-            log.error("ycfOrderService --> getCenterCreateOrder 供应商业务异常：{}",ycfOrder.getMessage());
             return BaseResponse.fail(CentralError.ERROR_ORDER);//异常消息以供应商返回的
-        }
-        if(ycfCreateOrderRes == null){
-            log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{}",req.getProductId(),ycfOrder.getMessage());
-            return SupplierErrorMsgTransfer.buildMsg(ycfOrder.getMessage());//异常消息以供应商返回的
         }
         createOrderRes = createOrderConverter.convertSupplierResponseToResponse(ycfCreateOrderRes);
         return BaseResponse.success(createOrderRes);
@@ -372,10 +379,20 @@ public class YcfOrderManger extends OrderManager {
 //            ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
 //            if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
 //                ycfPayOrderRes = ycfPayOrder.getData();
+//                if(ycfPayOrderRes == null){
+//                    log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{}",req.getPartnerOrderId(),ycfPayOrder.getMessage());
+//                    switch (ycfPayOrder.getMessage()){
+//                        case "支付失败，对应支付流水号已存在" :
+//                            //todo 如果支付流水号是已存在的  通过查询订单详情校验一下再返回该异常
+//                            break;
+//                    }
+//                    return SupplierErrorMsgTransfer.buildMsg(ycfPayOrder.getMessage());//异常消息以供应商返回的
+//                }
+//            }else{
+//                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
 //            }
-//        }catch (Exception e){
+//        }catch (HlCentralException e){
 //            log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
-//            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 :{}",ycfPayOrder.getMessage());
 //            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
 //        }
         //测试数据
@@ -384,15 +401,7 @@ public class YcfOrderManger extends OrderManager {
         ycfPayOrderRes.setOrderId("ceshi123");
         ycfPayOrderRes.setOrderStatus(1);
         ycfPayOrder.setData(ycfPayOrderRes);
-        if(ycfPayOrderRes == null){
-            log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{}",req.getPartnerOrderId(),ycfPayOrder.getMessage());
-            switch (ycfPayOrder.getMessage()){
-                case "支付失败，对应支付流水号已存在" :
-                    //todo 如果支付流水号是已存在的  通过查询订单详情校验一下再返回该异常
-                    break;
-            }
-            return SupplierErrorMsgTransfer.buildMsg(ycfPayOrder.getMessage());//异常消息以供应商返回的
-        }
+
         //封装中台返回结果
         payOrderRes = payOrderConverter.convertSupplierResponseToResponse(ycfPayOrderRes);
         //组装本地订单号参数
@@ -414,15 +423,16 @@ public class YcfOrderManger extends OrderManager {
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
             if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
                 ycfCancelOrderRes = ycfBaseResult.getData();
+                if(ycfCancelOrderRes == null){
+                    log.error("取消订单  供应商返回空对象 传的订单号：{} 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
+                    return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
+                }
+            }else{
+                return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
             }
-        }catch (Exception e){
+        }catch (HlCentralException e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 ：{}",e);
-            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 ：{}",ycfBaseResult.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
-        }
-        if(ycfCancelOrderRes == null){
-            log.error("取消订单  供应商返回空对象 传的订单号：{} 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
-            return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
         }
         //组装中台返回结果
         cancelOrderRes = cancelOrderConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
@@ -438,20 +448,18 @@ public class YcfOrderManger extends OrderManager {
         operReq.setTraceId(req.getTraceId());
         try {
             BaseResponse<OrderDetailRep> orderDetail = this.getOrderDetail(operReq);
-            if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()==0){
+            if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()== OrderStatus.TO_BE_PAID.getCode()){
                 result.setResult(true);
+                return BaseResponse.success(result);
             }else {
                 log.error("支付前校验没有通过 订单详情请求json:{}",JSONObject.toJSONString(operReq));
                 log.error("支付前校验没有通过 订单详情返回json:{}",JSONObject.toJSONString(orderDetail));
-                result.setResult(false);
                 return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
             }
         }catch (HlCentralException e){
             log.error("支付前校验失败 ：{}",e);
-            result.setResult(false);
             return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
         }
-        return BaseResponse.success(result);
     }
 
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
@@ -461,20 +469,21 @@ public class YcfOrderManger extends OrderManager {
         YcfCancelOrderReq ycfCancelOrderReq = applyRefundConverter.convertRequestToSupplierRequest(req);
         //供应商输出
         YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = null;
-        YcfCancelOrderRes ycfCancelOrderRes = new YcfCancelOrderRes();
+        YcfCancelOrderRes ycfCancelOrderRes = null;
         try {
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
             if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
                 ycfCancelOrderRes = ycfBaseResult.getData();
+                if(ycfCancelOrderRes == null){
+                    log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
+                    return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
+                }
+            }else{
+                return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
             }
-        }catch (Exception e){
+        }catch (HlCentralException e){
             log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 ：{}",e);
-            log.error("ycfOrderService --> getCenterPayOrder 供应商异常 ：{}",ycfBaseResult.getMessage());
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
-        }
-        if(ycfCancelOrderRes == null){
-            log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage());
-            return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
         }
         //组装中台返回结果
         applyRefundRes = applyRefundConverter.convertSupplierResponseToResponse(ycfCancelOrderRes);
