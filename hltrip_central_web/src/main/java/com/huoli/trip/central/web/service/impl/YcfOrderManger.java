@@ -171,8 +171,10 @@ public class YcfOrderManger extends OrderManager {
 
    public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){
 
-        final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
-        try {
+       final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
+       if(order==null)
+           return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+       try {
             log.info("拿到的订单数据:"+JSONObject.toJSONString(order));
             final YcfOrderStatusResult data = order.getData();
             //如果数据为空,直接返回错
@@ -193,8 +195,10 @@ public class YcfOrderManger extends OrderManager {
 
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
 
-        final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
         try {
+            final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
+            if(null==vochers)
+                return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             log.info("拿到的数据:"+JSONObject.toJSONString(vochers));
             final YcfVouchersResult data = vochers.getData();
             if(!vochers.getStatusCode().equals("200") || !vochers.getSuccess())

@@ -7,6 +7,7 @@ import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
@@ -62,7 +63,7 @@ public class OrderServiceImpl implements OrderService {
 
         try {
             log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
-            String topic = "hltrip_order_refund";
+            String topic = Constants.REFUND_ORDER_TOPIC;
             RefundKafka kafkaInfo = new RefundKafka();
             kafkaInfo.setOrderId(req.getPartnerOrderId());
             kafkaInfo.setRefundStatus(req.getRefundStatus());
@@ -82,7 +83,7 @@ public class OrderServiceImpl implements OrderService {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
         } catch (Exception e) {
-        	log.info("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
+        	log.error("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
         }
 
     }
