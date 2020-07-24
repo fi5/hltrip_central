@@ -431,7 +431,7 @@ public class YcfOrderManger extends OrderManager {
         //支付前校验逻辑 判断订单状态是否是待支付
         CenterPayCheckRes result = new CenterPayCheckRes();
         OrderOperReq operReq = new OrderOperReq();
-        operReq.setOrderId(req.getChannelOrderId());
+        operReq.setOrderId(req.getPartnerOrderId());
         operReq.setChannelCode(req.getChannelCode());
         try {
             BaseResponse<OrderDetailRep> orderDetail = this.getOrderDetail(operReq);
