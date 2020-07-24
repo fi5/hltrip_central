@@ -102,6 +102,12 @@ public class Test {
         return vochers;
     }
 
+    @RequestMapping(value = "getOrder")
+    public BaseResponse<OrderDetailRep> getOrder(OrderOperReq req)  {
+        final BaseResponse<OrderDetailRep> order = orderService.getOrder(req);
+        return order;
+    }
+
 
     @RequestMapping(value = "createOrder",method = {RequestMethod.POST, RequestMethod.GET})
     public Object createOrder(@RequestBody CreateOrderReq request) {
