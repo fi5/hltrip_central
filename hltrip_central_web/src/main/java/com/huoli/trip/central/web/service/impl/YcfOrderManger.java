@@ -5,9 +5,9 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.*;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
-import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
+import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
@@ -442,20 +442,18 @@ public class YcfOrderManger extends OrderManager {
         operReq.setTraceId(req.getTraceId());
         try {
             BaseResponse<OrderDetailRep> orderDetail = this.getOrderDetail(operReq);
-            if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()==0){
+            if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()== OrderStatus.TO_BE_PAID.getCode()){
                 result.setResult(true);
+                return BaseResponse.success(result);
             }else {
                 log.error("支付前校验没有通过 订单详情请求json:{}",JSONObject.toJSONString(operReq));
                 log.error("支付前校验没有通过 订单详情返回json:{}",JSONObject.toJSONString(orderDetail));
-                result.setResult(false);
                 return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
             }
         }catch (HlCentralException e){
             log.error("支付前校验失败 ：{}",e);
-            result.setResult(false);
             return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
         }
-        return BaseResponse.success(result);
     }
 
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
