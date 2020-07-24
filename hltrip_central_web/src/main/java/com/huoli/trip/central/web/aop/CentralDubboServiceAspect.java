@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.aop;
 
+import brave.Span;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.eagle.BraveTrace;
@@ -65,6 +66,7 @@ public class CentralDubboServiceAspect {
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
+        Span span = null;
         try {
             Object args[] = joinPoint.getArgs();
             this.paramValidate(args);
@@ -78,7 +80,7 @@ public class CentralDubboServiceAspect {
                         log.error("方法 {} 参数不包含traceId", function);
                     } else {
                         // 设置traceId
-                        TraceConfig.createSpan(function, this.huoliTrace, param.getString("traceId"));
+                        span = (Span) TraceConfig.createSpan(function, this.huoliTrace, param.getString("traceId"));
                     }
                 } catch (Exception e) {
                     log.error("反序列化方法 {} 的请求参数异常，这是为了获取traceId，不影响主流程。", e);
@@ -139,6 +141,9 @@ public class CentralDubboServiceAspect {
         } finally {
             Event event = eventBuilder.build();
             huoliAtrace.reportEvent(event);
+            if(span != null){
+                this.huoliTrace.close(span);
+            }
         }
     }
 

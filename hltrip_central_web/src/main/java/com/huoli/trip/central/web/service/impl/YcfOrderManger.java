@@ -5,6 +5,7 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.*;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
+import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.entity.*;
@@ -436,13 +437,15 @@ public class YcfOrderManger extends OrderManager {
         //支付前校验逻辑 判断订单状态是否是待支付
         CenterPayCheckRes result = new CenterPayCheckRes();
         OrderOperReq operReq = new OrderOperReq();
-        operReq.setOrderId(req.getChannelOrderId());
+        operReq.setOrderId(req.getPartnerOrderId());
         operReq.setChannelCode(req.getChannelCode());
+        operReq.setTraceId(req.getTraceId());
         try {
             BaseResponse<OrderDetailRep> orderDetail = this.getOrderDetail(operReq);
             if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()==0){
                 result.setResult(true);
             }else {
+                log.error("支付前校验没有通过 订单详情请求json:{}",JSONObject.toJSONString(operReq));
                 log.error("支付前校验没有通过 订单详情返回json:{}",JSONObject.toJSONString(orderDetail));
                 result.setResult(false);
                 return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
