@@ -7,11 +7,14 @@ import com.huoli.eagle.BraveTrace;
 import com.huoli.eagle.eye.core.HuoliAtrace;
 import com.huoli.eagle.eye.core.HuoliTrace;
 import com.huoli.eagle.report.SleuthSpanESReporter;
+import com.huoli.mj.util.IPAddressUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+
+import javax.annotation.PostConstruct;
 
 
 @Configuration
@@ -25,6 +28,8 @@ public class TraceConfig {
     private String bizCode;
     @Value("${appName}")
     private String appName;
+    @Value("${server.port}")
+    private String port;
 
     @Bean
     public HuoliAtrace huoliAtrace(HuoliTrace huoliTrace) {
@@ -44,6 +49,11 @@ public class TraceConfig {
     @Bean
     public SleuthSpanESReporter sleuthSpanESReporter() {
         return new SleuthSpanESReporter();
+    }
+
+    @PostConstruct
+    public void setPort(){
+        IPAddressUtil.setPort(port);
     }
 
     @SuppressWarnings("unchecked")
