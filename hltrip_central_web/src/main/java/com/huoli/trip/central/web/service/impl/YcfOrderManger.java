@@ -435,7 +435,7 @@ public class YcfOrderManger extends OrderManager {
         OrderOperReq operReq = new OrderOperReq();
         operReq.setOrderId(req.getPartnerOrderId());
         operReq.setChannelCode(req.getChannelCode());
-        operReq.setTraceId(TraceIdUtils.getTraceId());
+        operReq.setTraceId(req.getTraceId());
         try {
             BaseResponse<OrderDetailRep> orderDetail = this.getOrderDetail(operReq);
             if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()==0){
