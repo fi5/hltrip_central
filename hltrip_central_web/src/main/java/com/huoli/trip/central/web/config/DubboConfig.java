@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.config;
 
 import org.apache.dubbo.config.ApplicationConfig;
 import org.apache.dubbo.config.ProtocolConfig;
+import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.config.RegistryConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,5 +53,12 @@ public class DubboConfig {
         protocolConfig.setName(dubboProperties.getProtocolName());
         protocolConfig.setPort(dubboProperties.getProtocolPort());
         return protocolConfig;
+    }
+
+    @Bean
+    public ReferenceConfig referenceConfig(){
+        ReferenceConfig referenceConfig = new ReferenceConfig();
+        referenceConfig.setCheck(false);
+        return referenceConfig;
     }
 }
