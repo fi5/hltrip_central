@@ -166,7 +166,7 @@ public class ProductServiceImpl implements ProductService {
 
             return BaseResponse.success(result);
         } catch (Exception e) {
-            log.info("productPriceCalendar价格日历报错:"+JSONObject.toJSONString(productPriceReq), e);
+            log.error("productPriceCalendar价格日历报错:"+JSONObject.toJSONString(productPriceReq), e);
         }
         return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
     }
@@ -256,7 +256,7 @@ public class ProductServiceImpl implements ProductService {
 
             return BaseResponse.success(result);
         } catch (Exception e) {
-            log.info("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
+            log.error("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
             return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
 
