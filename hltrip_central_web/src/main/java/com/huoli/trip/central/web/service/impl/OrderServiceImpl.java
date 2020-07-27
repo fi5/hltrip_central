@@ -155,7 +155,7 @@ public class OrderServiceImpl implements OrderService {
     public Boolean orderStatusNotice(PushOrderStatusReq req) {
         try {
             log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
-            String topic = "hltrip_order_orderstatus";
+            String topic = Constants.HLTRIP_ORDER_ORDERSTATUS;
             OrderStatusKafka orderStatusKafka = new OrderStatusKafka();
             BeanUtils.copyProperties(req,orderStatusKafka);
             orderStatusKafka.setTraceId(TraceIdUtils.getTraceId());
@@ -168,7 +168,7 @@ public class OrderServiceImpl implements OrderService {
                         log.info("订单状态推送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
         } catch (Exception e) {
-            log.error("订单状态推送kafka失败"+JSONObject.toJSONString(req),e);
+            log.error("订单状态推送kafka失败 :{}",e);
             return false;
         }
         return true;
@@ -176,7 +176,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) {
-        log.info("传来的渠道码是 ：{}",req.getChannelCode());
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
