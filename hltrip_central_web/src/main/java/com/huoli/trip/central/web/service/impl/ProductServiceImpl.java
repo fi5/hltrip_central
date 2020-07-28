@@ -331,8 +331,8 @@ public class ProductServiceImpl implements ProductService {
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
         // 含酒店
         if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
-            // 天比晚多1
-            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate()) - 1;
+            // 晚数
+            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate());
             int baseNight = productPO.getRoom().getRooms().get(0).getBaseNight();
             if (nightDiff % baseNight != 0) {
                 String msg = String.format("日期不符合购买标准，购买晚数应该为%s的整数倍，startDate=%s, endDate=%s",
