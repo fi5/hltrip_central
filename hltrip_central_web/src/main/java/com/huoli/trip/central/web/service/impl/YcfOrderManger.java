@@ -190,7 +190,7 @@ public class YcfOrderManger extends OrderManager {
 //            rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
             return BaseResponse.success(rep);
         } catch (Exception e) {
-            log.info("YCFgetOrderDetail报错:"+JSONObject.toJSONString(req),e);
+            log.error("YCFgetOrderDetail报错:"+JSONObject.toJSONString(req),e);
             return BaseResponse.fail(9999,order.getMessage(),null);
         }
 
@@ -211,7 +211,7 @@ public class YcfOrderManger extends OrderManager {
             rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
             return BaseResponse.success(rep);
         } catch (Exception e) {
-            log.info("YCFgetVochers报错:"+JSONObject.toJSONString(req),e);
+            log.error("YCFgetVochers报错:"+JSONObject.toJSONString(req),e);
             return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
 

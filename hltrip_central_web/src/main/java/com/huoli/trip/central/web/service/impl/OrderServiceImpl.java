@@ -62,7 +62,7 @@ public class OrderServiceImpl implements OrderService {
     public void refundNotice(RefundNoticeReq req) {
 
         try {
-            log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
+//            log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
             String topic = Constants.REFUND_ORDER_TOPIC;
             RefundKafka kafkaInfo = new RefundKafka();
             kafkaInfo.setOrderId(req.getPartnerOrderId());
@@ -99,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
             BaseResponse<OrderDetailRep> orderDetail = orderManager.getOrderDetail(req);
             return orderDetail;
         } catch (Exception e) {
-        	log.info("getOrder查询订单报错",e);
+        	log.error("getOrder查询订单报错",e);
             return  BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
         }
 

@@ -17,10 +17,7 @@ import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
-import com.huoli.trip.common.vo.ImageBase;
-import com.huoli.trip.common.vo.PriceInfo;
-import com.huoli.trip.common.vo.Product;
-import com.huoli.trip.common.vo.ProductItem;
+import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
@@ -164,7 +161,7 @@ public class ProductServiceImpl implements ProductService {
 
             return BaseResponse.success(result);
         } catch (Exception e) {
-            log.info("productPriceCalendar价格日历报错:"+JSONObject.toJSONString(productPriceReq), e);
+            log.error("productPriceCalendar价格日历报错:"+JSONObject.toJSONString(productPriceReq), e);
         }
         return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
     }
@@ -198,6 +195,9 @@ public class ProductServiceImpl implements ProductService {
             if (product.getMainItem() != null) {
                 result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
             }
+
+            //处理product子item
+            processProItem(product);
             result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());
@@ -222,6 +222,8 @@ public class ProductServiceImpl implements ProductService {
             result.setTicket(product.getTicket());
             result.setFood(product.getFood());
             result.setSupplierName(product.getSupplierName());
+
+
 //  调用统一的价格计算并设值
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
@@ -254,8 +256,46 @@ public class ProductServiceImpl implements ProductService {
 
             return BaseResponse.success(result);
         } catch (Exception e) {
-            log.info("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
+            log.error("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
             return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+        }
+
+    }
+
+	/**
+     * 查询room,ticket,food里的item
+     * @param product
+     */
+    private void processProItem(Product product) {
+
+        try {
+            if(product.getRoom()!=null && CollectionUtils.isNotEmpty(product.getRoom().getRooms())){
+
+                for(ResourceRoom room: product.getRoom().getRooms()){
+                    ProductItemPO itemPo = productItemDao.getByCode(room.getItemId());
+                    ProductItem productItem = ProductConverter.convertToProductItem(itemPo);
+                    room.setProductItem(productItem);
+                }
+            }
+            if(product.getFood()!=null && CollectionUtils.isNotEmpty(product.getFood().getFoods())){
+
+                for(ResourceFood food: product.getFood().getFoods()){
+                    ProductItemPO itemPo = productItemDao.getByCode(food.getItemId());
+                    ProductItem productItem = ProductConverter.convertToProductItem(itemPo);
+                    food.setProductItem(productItem);
+                }
+            }
+            if(product.getTicket()!=null && CollectionUtils.isNotEmpty(product.getTicket().getTickets())){
+
+                for(ResourceTicket ticket: product.getTicket().getTickets()){
+                    ProductItemPO itemPo = productItemDao.getByCode(ticket.getItemId());
+                    ProductItem productItem = ProductConverter.convertToProductItem(itemPo);
+                    ticket.setProductItem(productItem);
+                }
+            }
+
+        } catch (Exception e) {
+        	log.info("",e);
         }
 
     }

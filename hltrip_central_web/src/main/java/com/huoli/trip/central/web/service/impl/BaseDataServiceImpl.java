@@ -32,7 +32,7 @@ public class BaseDataServiceImpl implements BaseDataService {
 			//目前只有code与城市名
 			return BaseResponse.success(citys);
 		} catch (Exception e) {
-			log.info("",e);
+			log.error("",e);
 		}
 		return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
 
