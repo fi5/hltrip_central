@@ -428,9 +428,9 @@ public class ProductServiceImpl implements ProductService {
             result.setMinStock(priceInfoPO.getStock());
             throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg, result);
         }
-        BigDecimal salesTotal = new BigDecimal(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
+        BigDecimal salesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSalePrice(), quantityTotal).doubleValue()));
-        BigDecimal settlesTotal = new BigDecimal(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
+        BigDecimal settlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSettlePrice(), quantityTotal).doubleValue()));
         result.setSalesTotal(salesTotal);
         result.setSettlesTotal(settlesTotal);
@@ -443,7 +443,7 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     private BigDecimal calcPrice(BigDecimal price, int quantity) {
-        BigDecimal total = new BigDecimal(BigDecimalUtil.mul(price.doubleValue(), quantity));
+        BigDecimal total = BigDecimal.valueOf(BigDecimalUtil.mul(price.doubleValue(), quantity));
         return total;
     }
 }
