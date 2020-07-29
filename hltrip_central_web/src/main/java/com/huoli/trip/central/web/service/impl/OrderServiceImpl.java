@@ -152,9 +152,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Boolean orderStatusNotice(PushOrderStatusReq req) {
+    public void orderStatusNotice(PushOrderStatusReq req) {
         try {
-            log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
+//            log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
             String topic = Constants.HLTRIP_ORDER_ORDERSTATUS;
             OrderStatusKafka orderStatusKafka = new OrderStatusKafka();
             BeanUtils.copyProperties(req,orderStatusKafka);
@@ -165,13 +165,11 @@ public class OrderServiceImpl implements OrderService {
             listenableFuture.addCallback(
                     result -> log.info("订单状态推送kafka成功, params : {}", JSONObject.toJSONString(orderStatusKafka)),
                     ex -> {
-                        log.info("订单状态推送kafka失败, error message:{}", ex.getMessage(), ex);
+                        log.info("订单状态推送kafka失败, error message:{}", ex);
                     });
         } catch (Exception e) {
-            log.error("订单状态推送kafka失败 :{}",e);
-            return false;
+            log.error("订单状态推送kafka失败 发送的 json:{} 失败原因:{}",JSONObject.toJSONString(req),e);
         }
-        return true;
     }
 
     @Override
