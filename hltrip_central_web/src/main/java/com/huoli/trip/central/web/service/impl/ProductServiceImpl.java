@@ -331,8 +331,8 @@ public class ProductServiceImpl implements ProductService {
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
         // 含酒店
         if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
-            // 天比晚多1
-            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate()) - 1;
+            // 晚数
+            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate());
             int baseNight = productPO.getRoom().getRooms().get(0).getBaseNight();
             if (nightDiff % baseNight != 0) {
                 String msg = String.format("日期不符合购买标准，购买晚数应该为%s的整数倍，startDate=%s, endDate=%s",
@@ -428,9 +428,9 @@ public class ProductServiceImpl implements ProductService {
             result.setMinStock(priceInfoPO.getStock());
             throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg, result);
         }
-        BigDecimal salesTotal = new BigDecimal(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
+        BigDecimal salesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSalePrice(), quantityTotal).doubleValue()));
-        BigDecimal settlesTotal = new BigDecimal(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
+        BigDecimal settlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSettlePrice(), quantityTotal).doubleValue()));
         result.setSalesTotal(salesTotal);
         result.setSettlesTotal(settlesTotal);
@@ -443,7 +443,7 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     private BigDecimal calcPrice(BigDecimal price, int quantity) {
-        BigDecimal total = new BigDecimal(BigDecimalUtil.mul(price.doubleValue(), quantity));
+        BigDecimal total = BigDecimal.valueOf(BigDecimalUtil.mul(price.doubleValue(), quantity));
         return total;
     }
 }

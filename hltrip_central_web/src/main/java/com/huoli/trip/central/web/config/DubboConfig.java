@@ -51,7 +51,7 @@ public class DubboConfig {
     public ProtocolConfig protocolConfig() {
         ProtocolConfig protocolConfig = new ProtocolConfig();
         protocolConfig.setName(dubboProperties.getProtocolName());
-//        protocolConfig.setPort(dubboProperties.getProtocolPort());
+        protocolConfig.setPort(dubboProperties.getProtocolPort());
         return protocolConfig;
     }
 
