@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.*;
+import com.huoli.trip.central.web.dao.ChannelDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.CentralError;
@@ -476,7 +477,7 @@ public class YcfOrderManger extends OrderManager {
                 ycfCancelOrderRes = ycfBaseResult.getData();
                 if(ycfCancelOrderRes == null){
                     log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage(),JSONObject.toJSON(ycfCancelOrderReq));
-                    return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
+                    return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消YcfOrderManger息以供应商返回的
                 }
             }else{
                 return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
