@@ -221,11 +221,17 @@ public class YcfOrderManger extends OrderManager {
     public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
         //中台封装返回
         CenterCreateOrderRes createOrderRes = null;
+        String begin = req.getBeginDate();
+        String end = req.getEndDate();
+        //没传结束时间这样处理
+        if(StringUtils.isBlank(end)){
+            end = begin;
+        }
         //先校验是否可以预定
         BookCheckReq bookCheckReq = new BookCheckReq();
         bookCheckReq.setProductId(req.getProductId());
-        bookCheckReq.setBeginDate(req.getBeginDate());
-        bookCheckReq.setEndDate(req.getEndDate());
+        bookCheckReq.setBeginDate(begin);
+        bookCheckReq.setEndDate(end);
         bookCheckReq.setCount(req.getQunatity());
         //校验可查询预订
         BaseResponse<CenterBookCheck> centerCheckInfos = this.getCenterCheckInfos(bookCheckReq);
@@ -297,10 +303,11 @@ public class YcfOrderManger extends OrderManager {
             //取时间范围内的价格集合,以酒店入住范围为基准，如果没有酒店  日期就取小产品单元的使用时间
             List<PriceInfoPO> priceInfoPOS = null;
             if(!CollectionUtils.isEmpty(ycfBookRooms)&&ycfBookRooms.size()>0){
-                 priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()>=DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()
-                        && DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()<=DateTimeUtil.parseDate(req.getEndDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
+                String finalEnd = end;
+                priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()>=DateTimeUtil.parseDate(begin,DateTimeUtil.YYYYMMDD).getTime()
+                        && DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()<=DateTimeUtil.parseDate(finalEnd,DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
             }else{
-                priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()==DateTimeUtil.parseDate(req.getBeginDate(),DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
+                priceInfoPOS = pricePos.getPriceInfos().stream().filter(priceInfoPO -> DateTimeUtil.trancateToDate(priceInfoPO.getSaleDate()).getTime()==DateTimeUtil.parseDate(begin,DateTimeUtil.YYYYMMDD).getTime()).collect(Collectors.toList());
             }
             if(!CollectionUtils.isEmpty(priceInfoPOS)){
                 priceInfoPOS.forEach(price->{
@@ -317,8 +324,8 @@ public class YcfOrderManger extends OrderManager {
         }
         //组装价格计算服务的请求
         PriceCalcRequest calcRequest = new PriceCalcRequest();
-        calcRequest.setStartDate(DateTimeUtil.parseDate(req.getBeginDate()));
-        calcRequest.setEndDate(DateTimeUtil.parseDate(req.getEndDate()));
+        calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
+        calcRequest.setEndDate(DateTimeUtil.parseDate(end));
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getQunatity());
         PriceCalcResult priceCalcResult = null;
