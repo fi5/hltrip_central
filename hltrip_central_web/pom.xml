@@ -78,11 +78,6 @@
         <!-- zookeeper curator -->
         <dependency>
             <groupId>org.apache.curator</groupId>
-            <artifactId>curator-client</artifactId>
-            <version>2.11.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.curator</groupId>
             <artifactId>curator-framework</artifactId>
             <version>2.11.1</version>
         </dependency>
