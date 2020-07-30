@@ -328,7 +328,13 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<PriceCalcResult> calcTotalPrice(PriceCalcRequest request) {
         PriceCalcResult result = new PriceCalcResult();
         ProductPO productPO = productDao.getTripProductByCode(request.getProductCode());
+        if(productPO == null){
+            return BaseResponse.withFail(CentralError.PRICE_CALC_PRODUCT_NOT_FOUND_ERROR);
+        }
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
+        if(pricePO == null){
+            return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+        }
         // 含酒店
         if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
             // 晚数
