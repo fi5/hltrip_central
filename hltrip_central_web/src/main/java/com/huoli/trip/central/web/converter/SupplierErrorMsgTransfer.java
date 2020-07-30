@@ -18,10 +18,11 @@ public class SupplierErrorMsgTransfer {
         switch (msg){
             case "请填写联系人手机号码" :
             case "请填写联系人姓名" :
-            case "订单缺失出行人信息" :
             case "订单缺失身份证信息，至少需要一个身份证" :
             case "订单缺失身份证信息，至少需N个身份证" :
                 return BaseResponse.fail(CentralError.ERROR_ORDER_CONNECT_SUPPLIER);
+            case "订单缺失出行人信息" :
+                return BaseResponse.fail(CentralError.ERROR_ORDER_TRIP_MAN_SUPPLIER);
                 //不会出现这种情况
 //            case "门票使用日期不在入住范围内" :
 //            case "餐券使用日期不在入住范围内" :
