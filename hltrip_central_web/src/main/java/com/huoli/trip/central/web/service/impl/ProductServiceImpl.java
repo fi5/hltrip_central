@@ -351,7 +351,7 @@ public class ProductServiceImpl implements ProductService {
                 log.error(msg);
                 return BaseResponse.withFail(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR.getCode(), msg);
             }
-            for (int i = 0; i <= dayQuantity; i++) {
+            for (int i = 0; i < dayQuantity; i++) {
                 // 日期维度中每份产品的起始日期 = 第一份起始日期 + 第n份 * 基准晚数
                 Date startDate = DateTimeUtil.addDay(request.getStartDate(), i * baseNight);
                 checkPrice(pricePO.getPriceInfos(), startDate, quantityTotal, result);
