@@ -29,17 +29,22 @@ public class TraceIdUtils {
             traceId = request.getHeader("X-B3-TraceId");
             log.info("X-B3-TraceId is :{}",traceId);
         } catch (Exception e) {
-            log.info("获取traceID 失败");
+            log.error("获取traceID 失败");
         }
         if (StringUtils.isEmpty(traceId)) {
-            HuoliTrace huoliTrace = huoliAtrace.getHuoliTrace();
-            if (huoliTrace != null) {
-                TraceInfo traceInfo = huoliTrace.getTraceInfo();
-                if (traceInfo != null) {
-                    traceId = traceInfo.getTraceId();
-                    log.info("重新生成 traceId:{}",traceId);
+            try {
+                HuoliTrace huoliTrace = huoliAtrace.getHuoliTrace();
+                if (huoliTrace != null) {
+                    TraceInfo traceInfo = huoliTrace.getTraceInfo();
+                    if (traceInfo != null) {
+                        traceId = traceInfo.getTraceId();
+                        log.info("重新生成 traceId:{}",traceId);
+                    }
                 }
+            } catch (Exception e) {
+            	log.error("",e);
             }
+
         }
         return traceId;
     }
