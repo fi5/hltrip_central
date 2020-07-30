@@ -3,6 +3,7 @@ package com.huoli.trip.central.web;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
+import com.huoli.trip.central.web.dao.ChannelDao;
 import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
@@ -10,12 +11,10 @@ import com.huoli.trip.common.entity.PriceInfoPO;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
-import com.huoli.trip.common.util.MongoDateUtils;
 import com.huoli.trip.common.vo.Coordinate;
 import com.huoli.trip.common.vo.request.central.ImageRequest;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +26,6 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +48,8 @@ public class Test0 {
     private MongoTemplate mongoTemplate;
     @Autowired
     private ProductService productService;
+    @Autowired
+    private ChannelDao channelDao;
 
 //    @Test
     public void test(){
@@ -203,6 +203,13 @@ public class Test0 {
 //        String date = "2020-07-17 00:00:00.000";
 //        Date saleDate = MongoDateUtils.handleTimezoneOutput((DateTimeUtil.parseDate(date,DateTimeUtil.YYYYMMDD)));
 //        System.out.println("时区转换后的时间"+saleDate);
+//    }
+//    @Test
+//    public void testChannelList(){
+//        List<Channel> channels = channelDao.queryChannelList();
+//        for (Channel channel:channels){
+//            System.out.println("看看结果集"+channel.getName());
+//        }
 //    }
 
 }
