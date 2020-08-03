@@ -94,6 +94,12 @@
             <groupId>com.huoli</groupId>
             <artifactId>sleuth-2v-extend</artifactId>
             <version>1.9.6</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.kafka</groupId>
+                    <artifactId>spring-kafka</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- jvm信息采集展示（optional） -->
         <dependency>
