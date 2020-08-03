@@ -94,12 +94,6 @@
             <groupId>com.huoli</groupId>
             <artifactId>sleuth-2v-extend</artifactId>
             <version>1.9.6</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.zipkin.brave</groupId>
-                    <artifactId>brave-instrumentation-kafka-clients</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- jvm信息采集展示（optional） -->
         <dependency>
