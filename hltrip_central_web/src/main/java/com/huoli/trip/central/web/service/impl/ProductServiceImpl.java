@@ -146,7 +146,7 @@ public class ProductServiceImpl implements ProductService {
                 target.setSaleDate(saleDate);
 
                 BeanUtils.copyProperties(entry, target);
-                if(target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
+                if(target.getSalePrice()!=null && target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
                     continue;
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
