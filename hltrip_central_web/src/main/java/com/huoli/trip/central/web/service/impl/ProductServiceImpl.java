@@ -146,6 +146,8 @@ public class ProductServiceImpl implements ProductService {
                 target.setSaleDate(saleDate);
 
                 BeanUtils.copyProperties(entry, target);
+                if(target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
+                    continue;
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }
@@ -198,6 +200,7 @@ public class ProductServiceImpl implements ProductService {
 
             //处理product子item
             processProItem(product);
+            result.setCode(product.getCode());
             result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());
