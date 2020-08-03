@@ -382,32 +382,31 @@ public class YcfOrderManger extends OrderManager {
         //供应商输出
         YcfBaseResult<YcfPayOrderRes> ycfPayOrder = null;
         YcfPayOrderRes ycfPayOrderRes = null;
-        //todo 屏蔽支付调用
-//        try {
-//            ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
-//            if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
-//                ycfPayOrderRes = ycfPayOrder.getData();
-//                if(ycfPayOrderRes == null){
-//                    log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),ycfPayOrder.getMessage(),JSONObject.toJSON(ycfPayOrderReq));
-//                    switch (ycfPayOrder.getMessage()){
-//                        case "支付失败，对应支付流水号已存在" :
-//                            //todo 如果支付流水号是已存在的  通过查询订单详情校验一下再返回该异常
-//                            break;
-//                    }
-//                    return SupplierErrorMsgTransfer.buildMsg(ycfPayOrder.getMessage());//异常消息以供应商返回的
-//                }
-//            }else{
-//                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
-//            }
-//        }catch (HlCentralException e){
-//            log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
-//            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
-//        }
-        //测试数据
-        ycfPayOrder = new YcfBaseResult<>();
-        ycfPayOrderRes = new YcfPayOrderRes();
-        ycfPayOrderRes.setOrderId("ceshi123");
-        ycfPayOrderRes.setOrderStatus(1);
+        try {
+            ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
+            if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
+                ycfPayOrderRes = ycfPayOrder.getData();
+                if(ycfPayOrderRes == null){
+                    log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),ycfPayOrder.getMessage(),JSONObject.toJSON(ycfPayOrderReq));
+                    switch (ycfPayOrder.getMessage()){
+                        case "支付失败，对应支付流水号已存在" :
+                            //todo 如果支付流水号是已存在的  通过查询订单详情校验一下再返回该异常
+                            break;
+                    }
+                    return SupplierErrorMsgTransfer.buildMsg(ycfPayOrder.getMessage());//异常消息以供应商返回的
+                }
+            }else{
+                return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+            }
+        }catch (HlCentralException e){
+            log.error("ycfOrderService --> getCenterPayOrder rpc服务异常 :{}",e);
+            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+        }
+//        //测试数据
+//        ycfPayOrder = new YcfBaseResult<>();
+//        ycfPayOrderRes = new YcfPayOrderRes();
+//        ycfPayOrderRes.setOrderId("ceshi123");
+//        ycfPayOrderRes.setOrderStatus(1);
         ycfPayOrder.setData(ycfPayOrderRes);
 
         //封装中台返回结果
