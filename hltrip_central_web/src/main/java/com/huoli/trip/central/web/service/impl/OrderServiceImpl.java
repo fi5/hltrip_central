@@ -72,7 +72,7 @@ public class OrderServiceImpl implements OrderService {
             kafkaInfo.setHandleRemark(req.getHandleRemark());
             kafkaInfo.setRefundReason(req.getRefundReason());
             kafkaInfo.setTraceId(TraceIdUtils.getTraceId());
-            log.info("这里的kafkaInfo:"+JSONObject.toJSONString(kafkaInfo));
+//            log.info("这里的kafkaInfo:"+JSONObject.toJSONString(kafkaInfo));
             if(null!=req.getRefundTime())
             kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
             if(null!=req.getResponseTime())
