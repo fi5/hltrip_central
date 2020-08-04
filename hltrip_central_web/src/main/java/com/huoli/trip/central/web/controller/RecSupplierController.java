@@ -38,12 +38,7 @@ public class RecSupplierController {
 
 	@RequestMapping(value = "/orderStatusNotice", method = RequestMethod.POST)
 	public BaseResponse orderStatusNotice(@RequestBody PushOrderStatusReq req) {
-		try{
-			orderService.orderStatusNotice(req);
-		}catch(Exception e){
-			log.error("中台订单推送返回失败 ：{}",e);
-			return BaseResponse.fail(CentralError.ERROR_SERVER_ERROR);
-		}
+		orderService.orderStatusNotice(req);
 		return BaseResponse.success(null);
 	}
 }

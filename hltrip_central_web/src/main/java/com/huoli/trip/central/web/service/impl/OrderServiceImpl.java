@@ -59,7 +59,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void refundNotice(RefundNoticeReq req) {
+    public BaseResponse refundNotice(RefundNoticeReq req) {
 
         try {
 //            log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
@@ -72,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
             kafkaInfo.setHandleRemark(req.getHandleRemark());
             kafkaInfo.setRefundReason(req.getRefundReason());
             kafkaInfo.setTraceId(TraceIdUtils.getTraceId());
+            log.info("这里的kafkaInfo:"+JSONObject.toJSONString(kafkaInfo));
             if(null!=req.getRefundTime())
             kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
             if(null!=req.getResponseTime())
@@ -82,8 +83,10 @@ public class OrderServiceImpl implements OrderService {
                     ex -> {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
+            return BaseResponse.success(null);
         } catch (Exception e) {
         	log.error("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
+            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
 
     }
@@ -152,9 +155,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Boolean orderStatusNotice(PushOrderStatusReq req) {
+    public void orderStatusNotice(PushOrderStatusReq req) {
         try {
-            log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
+//            log.info("orderStatusNotice发送kafka"+ JSONObject.toJSONString(req));
             String topic = Constants.HLTRIP_ORDER_ORDERSTATUS;
             OrderStatusKafka orderStatusKafka = new OrderStatusKafka();
             BeanUtils.copyProperties(req,orderStatusKafka);
@@ -165,13 +168,11 @@ public class OrderServiceImpl implements OrderService {
             listenableFuture.addCallback(
                     result -> log.info("订单状态推送kafka成功, params : {}", JSONObject.toJSONString(orderStatusKafka)),
                     ex -> {
-                        log.info("订单状态推送kafka失败, error message:{}", ex.getMessage(), ex);
+                        log.info("订单状态推送kafka失败, error message:{}", ex);
                     });
         } catch (Exception e) {
-            log.error("订单状态推送kafka失败 :{}",e);
-            return false;
+            log.error("订单状态推送kafka失败 发送的 json:{} 失败原因:{}",JSONObject.toJSONString(req),e);
         }
-        return true;
     }
 
     @Override

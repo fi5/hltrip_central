@@ -146,6 +146,8 @@ public class ProductServiceImpl implements ProductService {
                 target.setSaleDate(saleDate);
 
                 BeanUtils.copyProperties(entry, target);
+                if(target.getSalePrice()!=null && target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
+                    continue;
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }
@@ -198,6 +200,7 @@ public class ProductServiceImpl implements ProductService {
 
             //处理product子item
             processProItem(product);
+            result.setCode(product.getCode());
             result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());
@@ -328,11 +331,17 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<PriceCalcResult> calcTotalPrice(PriceCalcRequest request) {
         PriceCalcResult result = new PriceCalcResult();
         ProductPO productPO = productDao.getTripProductByCode(request.getProductCode());
+        if(productPO == null){
+            return BaseResponse.withFail(CentralError.PRICE_CALC_PRODUCT_NOT_FOUND_ERROR);
+        }
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
+        if(pricePO == null){
+            return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+        }
         // 含酒店
         if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
-            // 天比晚多1
-            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate()) - 1;
+            // 晚数
+            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate());
             int baseNight = productPO.getRoom().getRooms().get(0).getBaseNight();
             if (nightDiff % baseNight != 0) {
                 String msg = String.format("日期不符合购买标准，购买晚数应该为%s的整数倍，startDate=%s, endDate=%s",
@@ -351,7 +360,7 @@ public class ProductServiceImpl implements ProductService {
                 log.error(msg);
                 return BaseResponse.withFail(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR.getCode(), msg);
             }
-            for (int i = 0; i <= dayQuantity; i++) {
+            for (int i = 0; i < dayQuantity; i++) {
                 // 日期维度中每份产品的起始日期 = 第一份起始日期 + 第n份 * 基准晚数
                 Date startDate = DateTimeUtil.addDay(request.getStartDate(), i * baseNight);
                 checkPrice(pricePO.getPriceInfos(), startDate, quantityTotal, result);

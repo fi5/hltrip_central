@@ -26,7 +26,7 @@ public interface OrderService {
      * 接收退款通知
      * @param req
      */
-    void refundNotice(RefundNoticeReq req) ;
+    BaseResponse refundNotice(RefundNoticeReq req) ;
 
 	/**
      * 查询供应商最新订单状态等
@@ -88,7 +88,7 @@ public interface OrderService {
      * 版本：1.0<br>
      * 创建日期：2020/7/7<br>
      */
-    Boolean orderStatusNotice(PushOrderStatusReq req) ;
+    void orderStatusNotice(PushOrderStatusReq req) ;
 
     /**
      * 描述: <br> 支付前校验
