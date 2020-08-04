@@ -59,7 +59,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void refundNotice(RefundNoticeReq req) {
+    public BaseResponse refundNotice(RefundNoticeReq req) {
 
         try {
 //            log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
@@ -83,8 +83,10 @@ public class OrderServiceImpl implements OrderService {
                     ex -> {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
+            return BaseResponse.success(null);
         } catch (Exception e) {
         	log.error("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
+            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
 
     }

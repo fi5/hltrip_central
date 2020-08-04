@@ -26,7 +26,7 @@ public interface OrderService {
      * 接收退款通知
      * @param req
      */
-    void refundNotice(RefundNoticeReq req) ;
+    BaseResponse refundNotice(RefundNoticeReq req) ;
 
 	/**
      * 查询供应商最新订单状态等
