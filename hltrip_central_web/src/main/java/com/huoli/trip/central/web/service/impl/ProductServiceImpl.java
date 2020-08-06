@@ -201,6 +201,7 @@ public class ProductServiceImpl implements ProductService {
             //处理product子item
             processProItem(product);
             result.setCode(product.getCode());
+            result.setMainItemCode(product.getMainItemCode());
             result.setSupplierId(product.getSupplierId());
             result.setSupplierProductId(product.getSupplierProductId());
             result.setBookAheadMin(product.getBookAheadMin());

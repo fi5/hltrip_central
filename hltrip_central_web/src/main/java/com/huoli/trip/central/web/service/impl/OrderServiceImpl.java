@@ -74,9 +74,8 @@ public class OrderServiceImpl implements OrderService {
             kafkaInfo.setTraceId(TraceIdUtils.getTraceId());
 //            log.info("这里的kafkaInfo:"+JSONObject.toJSONString(kafkaInfo));
             if(null!=req.getRefundTime())
-            kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
-            if(null!=req.getResponseTime())
-                kafkaInfo.setResponseTime(CommonUtils.dateFormat.format(req.getResponseTime()));
+            kafkaInfo.setRefundTime(req.getRefundTime());
+            kafkaInfo.setResponseTime(req.getResponseTime());
             ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(kafkaInfo));
             listenableFuture.addCallback(
                     result -> log.info("订单发送kafka成功, params : {}", JSONObject.toJSONString(kafkaInfo)),
