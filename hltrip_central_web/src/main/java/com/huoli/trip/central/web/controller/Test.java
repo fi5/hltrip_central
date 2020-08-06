@@ -76,11 +76,12 @@ public class Test {
     }
 
     @RequestMapping(value = "testkafka")
-    public String testkafka() {
+    public Object testkafka() {
         RefundNoticeReq req=new RefundNoticeReq();
         req.setPartnerOrderId("1234");
-         orderService.refundNotice(req);
-        return "ok";
+        final BaseResponse baseResponse = orderService.refundNotice(req);
+
+        return baseResponse;
     }
 
     @RequestMapping(value = "testPrice")

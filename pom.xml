@@ -83,17 +83,39 @@
             <artifactId>log4j-flume-ng</artifactId>
         </dependency>
 
+        <!-- kafka -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
         <!--日志依赖 -->
         <dependency>
             <groupId>com.huoli</groupId>
             <artifactId>eagle-eye-core</artifactId>
             <version>1.9.5</version>
         </dependency>
+        <dependency>
+            <groupId>io.zipkin.brave</groupId>
+            <artifactId>brave-instrumentation-kafka-clients</artifactId>
+            <version>5.6.5</version>
+        </dependency>
         <!-- 基于sleuth的调用链实现，适配spring boot 1.x版本（optional），springboot 2.x请使用sleuth-2v-extend -->
         <dependency>
             <groupId>com.huoli</groupId>
             <artifactId>sleuth-2v-extend</artifactId>
             <version>1.9.6</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.zipkin.brave</groupId>
+                    <artifactId>brave-instrumentation-kafka-clients</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- jvm信息采集展示（optional） -->
         <dependency>

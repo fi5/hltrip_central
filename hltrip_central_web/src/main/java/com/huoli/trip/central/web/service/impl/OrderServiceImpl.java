@@ -59,7 +59,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void refundNotice(RefundNoticeReq req) {
+    public BaseResponse refundNotice(RefundNoticeReq req) {
 
         try {
 //            log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
@@ -72,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
             kafkaInfo.setHandleRemark(req.getHandleRemark());
             kafkaInfo.setRefundReason(req.getRefundReason());
             kafkaInfo.setTraceId(TraceIdUtils.getTraceId());
+//            log.info("这里的kafkaInfo:"+JSONObject.toJSONString(kafkaInfo));
             if(null!=req.getRefundTime())
             kafkaInfo.setRefundTime(CommonUtils.dateFormat.format(req.getRefundTime()));
             if(null!=req.getResponseTime())
@@ -82,8 +83,10 @@ public class OrderServiceImpl implements OrderService {
                     ex -> {
                         log.info("订单发送kafka失败, error message:{}", ex.getMessage(), ex);
                     });
+            return BaseResponse.success(null);
         } catch (Exception e) {
         	log.error("refundNotice写kafka时报错:"+JSONObject.toJSONString(req),e);
+            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
         }
 
     }
