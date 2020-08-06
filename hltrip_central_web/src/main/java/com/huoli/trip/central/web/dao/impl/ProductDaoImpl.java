@@ -6,6 +6,7 @@ import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
 import com.huoli.trip.common.vo.Coordinate;
@@ -228,7 +229,10 @@ public class ProductDaoImpl implements ProductDao {
      */
     private List<AggregationOperation> pageListAggregation(String city, Integer type, String keyWord){
         // 查询条件
-        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("productType").is(type).and("city").is(city);
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0)
+                .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))
+                .and("productType").is(type)
+                .and("city").is(city);
         if(StringUtils.isNotBlank(keyWord)){
             criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
