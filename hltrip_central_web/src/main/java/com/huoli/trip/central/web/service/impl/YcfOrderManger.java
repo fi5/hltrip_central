@@ -108,7 +108,7 @@ public class YcfOrderManger extends OrderManager {
             if(checkInfos!=null&&StringUtils.equals(checkInfos.getStatusCode(),"200")){
                 ycfBookCheckRes = checkInfos.getData();
                 if(ycfBookCheckRes == null){
-                    log.error("预订前校验  供应商返回空对象 产品id:{}  供应商异常描述 ：{},【请求供应商json】 :{}",req.getProductId(),checkInfos.getMessage(), JSONObject.toJSON(ycfBookCheckReq));
+                    log.error("预订前校验  供应商返回空对象 产品id:{}  供应商异常描述 ：{},【请求供应商json】 :{}",req.getProductId(),checkInfos.getMessage(), JSONObject.toJSONString(ycfBookCheckReq));
                     return SupplierErrorMsgTransfer.buildMsg(checkInfos.getMessage());//异常消息以供应商返回的
                 }
             }else{
@@ -360,7 +360,7 @@ public class YcfOrderManger extends OrderManager {
             if(ycfOrder!=null&&StringUtils.equals(ycfOrder.getStatusCode(),"200")){
                 ycfCreateOrderRes = ycfOrder.getData();
                 if(ycfCreateOrderRes == null){
-                    log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{} , 【请求供应商json】 :{}",req.getProductId(),ycfOrder.getMessage(),JSONObject.toJSON(ycfCreateOrderReq));
+                    log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{} , 【请求供应商json】 :{}",req.getProductId(),ycfOrder.getMessage(),JSONObject.toJSONString(ycfCreateOrderReq));
                     return SupplierErrorMsgTransfer.buildMsg(ycfOrder.getMessage());//异常消息以供应商返回的
                 }
             }else{
@@ -387,7 +387,7 @@ public class YcfOrderManger extends OrderManager {
             if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
                 ycfPayOrderRes = ycfPayOrder.getData();
                 if(ycfPayOrderRes == null){
-                    log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),ycfPayOrder.getMessage(),JSONObject.toJSON(ycfPayOrderReq));
+                    log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),ycfPayOrder.getMessage(),JSONObject.toJSONString(ycfPayOrderReq));
                     switch (ycfPayOrder.getMessage()){
                         case "支付失败，对应支付流水号已存在" :
                             //todo 如果支付流水号是已存在的  通过查询订单详情校验一下再返回该异常
@@ -431,7 +431,7 @@ public class YcfOrderManger extends OrderManager {
             if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
                 ycfCancelOrderRes = ycfBaseResult.getData();
                 if(ycfCancelOrderRes == null){
-                    log.error("取消订单  供应商返回空对象 传的订单号：{} 产品编号：{} 供应商异常描述 ：{}  ,【请求供应商json】 :{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage(),JSONObject.toJSON(ycfCancelOrderReq));
+                    log.error("取消订单  供应商返回空对象 传的订单号：{} 产品编号：{} 供应商异常描述 ：{}  ,【请求供应商json】 :{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage(),JSONObject.toJSONString(ycfCancelOrderReq));
                     return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消息以供应商返回的
                 }
             }else{
@@ -482,7 +482,7 @@ public class YcfOrderManger extends OrderManager {
             if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
                 ycfCancelOrderRes = ycfBaseResult.getData();
                 if(ycfCancelOrderRes == null){
-                    log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage(),JSONObject.toJSON(ycfCancelOrderReq));
+                    log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage(),JSONObject.toJSONString(ycfCancelOrderReq));
                     return SupplierErrorMsgTransfer.buildMsg(ycfBaseResult.getMessage());//异常消YcfOrderManger息以供应商返回的
                 }
             }else{
