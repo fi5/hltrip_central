@@ -105,7 +105,7 @@ public class YcfOrderManger extends OrderManager {
         try {
             //供应商输出
             YcfBaseResult<YcfBookCheckRes> checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
-            if(checkInfos!=null&&StringUtils.equals(checkInfos.getStatusCode(),"200")){
+            if(checkInfos!=null&&checkInfos.getStatusCode()==200){
                 ycfBookCheckRes = checkInfos.getData();
                 if(ycfBookCheckRes == null){
                     log.error("预订前校验  供应商返回空对象 产品id:{}  供应商异常描述 ：{},【请求供应商json】 :{}",req.getProductId(),checkInfos.getMessage(), JSONObject.toJSONString(ycfBookCheckReq));
@@ -182,7 +182,7 @@ public class YcfOrderManger extends OrderManager {
             log.info("拿到的订单数据:"+JSONObject.toJSONString(order));
             final YcfOrderStatusResult data = order.getData();
             //如果数据为空,直接返回错
-            if(!order.getStatusCode().equals("200") || !order.getSuccess())
+            if(order.getStatusCode()!=200 || !order.getSuccess())
                 return BaseResponse.fail(CentralError.ERROR_NO_ORDER);//异常消息以供应商返回的
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(data.getOrderId());
@@ -205,7 +205,7 @@ public class YcfOrderManger extends OrderManager {
                 return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             log.info("拿到的数据:"+JSONObject.toJSONString(vochers));
             final YcfVouchersResult data = vochers.getData();
-            if(!vochers.getStatusCode().equals("200") || !vochers.getSuccess())
+            if(vochers.getStatusCode()!=200 || !vochers.getSuccess())
                 return BaseResponse.fail(OrderInfoTranser.findCentralError(vochers.getMessage()));//异常消息以供应商返回的
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(req.getOrderId());
@@ -357,7 +357,7 @@ public class YcfOrderManger extends OrderManager {
         YcfCreateOrderRes ycfCreateOrderRes = null;
         try {
             ycfOrder = ycfOrderService.createOrder(ycfCreateOrderReq);
-            if(ycfOrder!=null&&StringUtils.equals(ycfOrder.getStatusCode(),"200")){
+            if(ycfOrder!=null&&ycfOrder.getStatusCode()==200){
                 ycfCreateOrderRes = ycfOrder.getData();
                 if(ycfCreateOrderRes == null){
                     log.error("创建订单  供应商返回空对象 产品id:{}  供应商异常描述 ：{} , 【请求供应商json】 :{}",req.getProductId(),ycfOrder.getMessage(),JSONObject.toJSONString(ycfCreateOrderReq));
@@ -384,7 +384,7 @@ public class YcfOrderManger extends OrderManager {
         YcfPayOrderRes ycfPayOrderRes = null;
         try {
             ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
-            if(ycfPayOrder!=null&&StringUtils.equals(ycfPayOrder.getStatusCode(),"200")){
+            if(ycfPayOrder!=null&&ycfPayOrder.getStatusCode()==200){
                 ycfPayOrderRes = ycfPayOrder.getData();
                 if(ycfPayOrderRes == null){
                     log.error("支付订单  供应商返回空对象 本地订单号:{} ， 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),ycfPayOrder.getMessage(),JSONObject.toJSONString(ycfPayOrderReq));
@@ -428,7 +428,7 @@ public class YcfOrderManger extends OrderManager {
         YcfCancelOrderRes ycfCancelOrderRes = null;
         try {
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
-            if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
+            if(ycfBaseResult!=null&&ycfBaseResult.getStatusCode()==200){
                 ycfCancelOrderRes = ycfBaseResult.getData();
                 if(ycfCancelOrderRes == null){
                     log.error("取消订单  供应商返回空对象 传的订单号：{} 产品编号：{} 供应商异常描述 ：{}  ,【请求供应商json】 :{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage(),JSONObject.toJSONString(ycfCancelOrderReq));
@@ -479,7 +479,7 @@ public class YcfOrderManger extends OrderManager {
         YcfCancelOrderRes ycfCancelOrderRes = null;
         try {
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
-            if(ycfBaseResult!=null&&StringUtils.equals(ycfBaseResult.getStatusCode(),"200")){
+            if(ycfBaseResult!=null&&ycfBaseResult.getStatusCode()==200){
                 ycfCancelOrderRes = ycfBaseResult.getData();
                 if(ycfCancelOrderRes == null){
                     log.error("申请退款  供应商返回空对象 产品编号：{} 供应商异常描述 ：{} ,【请求供应商json】 :{}",req.getPartnerOrderId(),req.getProductCode(),ycfBaseResult.getMessage(),JSONObject.toJSONString(ycfCancelOrderReq));
