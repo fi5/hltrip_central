@@ -15,6 +15,7 @@ import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -46,10 +47,13 @@ public class BaseDataServiceImpl implements BaseDataService {
 					log.error("信息{}", e);
 				}
 			}
-			for(CityPO entry:citys){
+			final Iterator<CityPO> iterator = citys.iterator();
+			while(iterator.hasNext()){
+				CityPO entry = iterator.next();
 				if(null!=validCitys&&validCitys.get(entry.getCityName())==null)
-					citys.remove(entry);
-			}
+					iterator.remove();
+
+				}
 			//目前只有code与城市名
 			return BaseResponse.success(citys);
 		} catch (Exception e) {
