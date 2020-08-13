@@ -4,12 +4,15 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
+import com.huoli.trip.common.entity.CityPO;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
 import com.huoli.trip.common.vo.Coordinate;
+import com.mongodb.client.DistinctIterable;
+import com.mongodb.client.MongoCursor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -23,7 +26,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -287,5 +292,25 @@ public class ProductDaoImpl implements ProductDao {
                 groupOperation.min("priceCalendar.priceInfos.salePrice").as("salePrice"),
                 sortOperation,
                 projectionOperation);
+    }
+
+
+    public List<ProductPO> queryValidCity(String city){
+        // 查询条件
+        Query query = new Query(Criteria.where("city").in(city));
+        List<ProductPO> pros = mongoTemplate.find(query, ProductPO.class);
+        return pros;
+    }
+
+    public HashMap<String,String> queryValidCitys(){
+        // 查询条件
+//        Query query = new Query(Criteria.where("status").is(1));
+        final DistinctIterable<String> citys = mongoTemplate.getCollection(Constants.COLLECTION_NAME_TRIP_PRODUCT).distinct("city", String.class);
+        final MongoCursor<String> iterator = citys.iterator();
+        HashMap<String,String> map=new HashMap<>();
+        while (iterator.hasNext()){
+            map.put(iterator.next(),Constants.COLLECTION_NAME_TRIP_CITY);
+        }
+        return map;
     }
 }
