@@ -339,6 +339,7 @@ public class ProductServiceImpl implements ProductService {
         if(pricePO == null){
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
+        int quantity = request.getQuantity();
         // 含酒店
         if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
             // 晚数
@@ -355,7 +356,7 @@ public class ProductServiceImpl implements ProductService {
             // 日期维度的份数
             int dayQuantity = nightDiff / baseNight;
             // 总份数 = 日期维度的份数 * 购买数量的份数
-            int quantityTotal = dayQuantity * request.getQuantity();
+            int quantityTotal = dayQuantity * quantity;
             if (quantityTotal > productPO.getBuyMax() || quantityTotal < productPO.getBuyMin()) {
                 String msg = String.format("数量不符合购买标准，最少购买%s份，最多购买%s份， quantity=%s", productPO.getBuyMin(), productPO.getBuyMax(), quantityTotal);
                 log.error(msg);
@@ -364,10 +365,10 @@ public class ProductServiceImpl implements ProductService {
             for (int i = 0; i < dayQuantity; i++) {
                 // 日期维度中每份产品的起始日期 = 第一份起始日期 + 第n份 * 基准晚数
                 Date startDate = DateTimeUtil.addDay(request.getStartDate(), i * baseNight);
-                checkPrice(pricePO.getPriceInfos(), startDate, quantityTotal, result);
+                checkPrice(pricePO.getPriceInfos(), startDate, quantity, result);
             }
         } else { // 不含酒店
-            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), request.getQuantity(), result);
+            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, result);
         }
         return BaseResponse.withSuccess(result);
     }
