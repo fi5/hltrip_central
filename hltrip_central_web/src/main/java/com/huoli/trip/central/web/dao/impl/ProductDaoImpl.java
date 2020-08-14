@@ -54,6 +54,7 @@ public class ProductDaoImpl implements ProductDao {
         SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
         // 查询条件
         Criteria criteria = Criteria.where("mainItemCode").is(itemId)
+                .and("status").is(1)
                 .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))
                 .and("priceCalendar.priceInfos.stock").gt(0);
         MatchOperation matchOperation = Aggregation.match(criteria);
@@ -98,7 +99,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductPO> getSalesRecommendList(List<String> productCodes){
         // 查询条件
-        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("code").in(productCodes);
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("status").is(0).and("code").in(productCodes);
         MatchOperation matchOperation = Aggregation.match(criteria);
         Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation, 0));
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
@@ -108,7 +109,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductPO> getFlagRecommendResult(Integer type, int size){
         // 查询条件
-        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("recommendFlag").is(1);
+        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("status").is(1).and("recommendFlag").is(1);
         if(type != null){
             criteria.and("productType").is(type);
         }
@@ -128,7 +129,8 @@ public class ProductDaoImpl implements ProductDao {
         // 查询条件
         Criteria criteria = Criteria.where("mainItem.itemType").is(itemType)
                 .and("mainItem.itemCoordinate").within(sphere)
-                .and("priceCalendar.priceInfos.stock").gt(0);
+                .and("priceCalendar.priceInfos.stock").gt(0)
+                .and("status").is(1);
         MatchOperation matchOperation = Aggregation.match(criteria);
         // 连item表
         List<AggregationOperation> operations = Lists.newArrayList(LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRODUCT_ITEM)
@@ -145,6 +147,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<ProductPO> getByCityAndType(String city, Date date, int type, int size){
         // 查询条件
         Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0)
+                .and("status").is(1)
                 .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(date))
                 .and("city").in(city).and("productType").is(type);
         MatchOperation matchOperation = Aggregation.match(criteria);
@@ -230,6 +233,7 @@ public class ProductDaoImpl implements ProductDao {
     private List<AggregationOperation> pageListAggregation(String city, Integer type, String keyWord){
         // 查询条件
         Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0)
+                .and("status").is(1)
                 .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))
                 .and("productType").is(type)
                 .and("city").is(city);

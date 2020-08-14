@@ -15,6 +15,7 @@ import com.huoli.trip.common.vo.Coordinate;
 import com.huoli.trip.common.vo.request.central.ImageRequest;
 import com.huoli.trip.common.vo.request.central.RecommendRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
