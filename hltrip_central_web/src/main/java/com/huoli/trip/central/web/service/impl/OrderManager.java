@@ -63,4 +63,16 @@ public abstract class OrderManager {
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
         return null;
     }
+
+    /**
+     * 刷新价格
+     * @param productCode
+     * @param supplierProductId
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    public void syncPrice(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
+        return;
+    }
 }

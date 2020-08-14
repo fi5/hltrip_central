@@ -54,6 +54,9 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private OrderFactory orderFactory;
 
+    @Autowired
+    private YcfOrderManger ycfOrderManger;
+
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
@@ -335,6 +338,13 @@ public class ProductServiceImpl implements ProductService {
         if(productPO == null){
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRODUCT_NOT_FOUND_ERROR);
         }
+        // 计算价格前先刷新
+        OrderManager orderManager = orderFactory.getOrderManager(productPO.getSupplierId());
+        orderManager.syncPrice(productPO.getCode(),
+                productPO.getSupplierProductId(),
+                DateTimeUtil.formatDate(request.getStartDate()),
+                DateTimeUtil.formatDate(request.getEndDate()),
+                request.getTraceId());
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
         if(pricePO == null){
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
