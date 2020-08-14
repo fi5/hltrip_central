@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.converter;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 描述: <br> 供应商异常转义
@@ -73,6 +74,10 @@ public class SupplierErrorMsgTransfer {
             case "合作商订单号为空":
                 return BaseResponse.fail(CentralError.ERROR_ORDERNO_ISNULL);
             default:
+                //特殊异常匹配处理
+                if(StringUtils.isNotBlank(msg)&&msg.substring(0,6).equals("订单总价错误")){
+                    return BaseResponse.fail(CentralError.ERROR_ORDER_TOTAL_PRICE);
+                }
                 log.error("错误异常描述是 ：{}",msg);
                 return BaseResponse.fail(9999,msg,null);
         }

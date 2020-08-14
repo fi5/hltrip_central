@@ -5,6 +5,7 @@ import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.vo.Coordinate;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -98,5 +99,13 @@ public interface ProductDao {
      * @return
      */
     List<ProductPO> getByCityAndType(String city, Date date, int type, int size);
+
+	/**
+     *
+     * @param city
+     * @return
+     */
+    List<ProductPO> queryValidCity(String city);
+    HashMap<String,String> queryValidCitys();
 
 }
