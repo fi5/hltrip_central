@@ -84,7 +84,7 @@ public class ProductDaoImpl implements ProductDao {
         aggregations.add(Aggregation.skip(rows));
         aggregations.add(Aggregation.limit(size));
         Aggregation aggregation = Aggregation.newAggregation(aggregations);
-        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation.withOptions(AggregationOptions.builder().allowDiskUse(true).build()), Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return outputType.getMappedResults();
     }
 
@@ -94,7 +94,7 @@ public class ProductDaoImpl implements ProductDao {
         CountOperation countOperation = Aggregation.count().as("count");
         aggregations.add(countOperation);
         Aggregation aggregation = Aggregation.newAggregation(aggregations);
-        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
+        AggregationResults<ProductPO> outputType = mongoTemplate.aggregate(aggregation.withOptions(AggregationOptions.builder().allowDiskUse(true).build()), Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         if(ListUtils.isEmpty(outputType.getMappedResults())|| outputType.getMappedResults().get(0) == null){
             return 0;
         }
