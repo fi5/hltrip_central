@@ -343,7 +343,7 @@ public class ProductServiceImpl implements ProductService {
         orderManager.syncPrice(productPO.getCode(),
                 productPO.getSupplierProductId(),
                 DateTimeUtil.formatDate(request.getStartDate()),
-                DateTimeUtil.formatDate(request.getEndDate()),
+                request.getEndDate() == null ? null : DateTimeUtil.formatDate(request.getEndDate()),
                 request.getTraceId());
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
         if(pricePO == null){
