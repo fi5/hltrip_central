@@ -34,7 +34,7 @@ public class MongoConfig {
 
     @Bean
     public MongoDatabaseFactory dbFactory(){
-        return new SimpleMongoClientDatabaseFactory(ConfigGetter.getByFileItemString(ConfigConstants.CONFIG_FILE_NAME_COMMON, ConfigConstants.CONFIG_ITEM_MONGO_URI));
+        return new SimpleMongoClientDatabaseFactory(ConfigGetter.getByFileItemString(ConfigConstants.CONFIG_FILE_NAME_MONGO, ConfigConstants.CONFIG_ITEM_MONGO_URI));
     }
 
     @Bean
