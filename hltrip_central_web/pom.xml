@@ -129,7 +129,7 @@
     </dependencies>
 
     <build>
-        <finalName>hltrip_central_web</finalName>
+        <finalName>hltrip_central</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
