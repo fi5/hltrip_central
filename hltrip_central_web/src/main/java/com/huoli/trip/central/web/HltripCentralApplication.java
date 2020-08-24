@@ -16,7 +16,7 @@ import org.springframework.context.annotation.ImportResource;
         DataSourceAutoConfiguration.class, DataSourceTransactionManagerAutoConfiguration.class,
         MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ImportResource({"classpath:disconf-config.xml"})
-@EnableDubbo(scanBasePackages = "com.huoli.trip.central.web")
+@EnableDubbo(scanBasePackages = "com.huoli.trip.central")
 @ComponentScan({"com.huoli.trip"})
 public class HltripCentralApplication {
 
