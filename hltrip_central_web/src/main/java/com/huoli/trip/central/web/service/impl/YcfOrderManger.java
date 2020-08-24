@@ -3,7 +3,6 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.*;
-import com.huoli.trip.central.web.dao.ChannelDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.CentralError;
@@ -84,19 +83,19 @@ public class YcfOrderManger extends OrderManager {
         YcfBookCheckReq ycfBookCheckReq = new YcfBookCheckReq();
         //转供应商productId
         ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
-        ycfBookCheckReq.setBeginDate(DateTimeUtil.parseDate(begin));
-        ycfBookCheckReq.setEndDate(DateTimeUtil.parseDate(end));
+        ycfBookCheckReq.setBeginDate(begin);
+        ycfBookCheckReq.setEndDate(end);
         /**
          * 开始日期大于结束日期
          */
-        if(ycfBookCheckReq.getBeginDate().after(ycfBookCheckReq.getEndDate())){
+        if(DateTimeUtil.parseDate(begin).after(DateTimeUtil.parseDate(begin))){
             log.error("预订前校验 开始日期大于结束日期 错误 产品编号：{}",req.getProductId());
             return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_1);
         }
         /**
          * 时间跨度大于90天
          */
-        if(this.isOutTime(ycfBookCheckReq.getBeginDate(),ycfBookCheckReq.getEndDate())){
+        if(this.isOutTime(DateTimeUtil.parseDate(begin),DateTimeUtil.parseDate(begin))){
             log.error("预订前校验 时间跨度大于90天 错误 产品编号：{}",req.getProductId());
             return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_2);
         }
