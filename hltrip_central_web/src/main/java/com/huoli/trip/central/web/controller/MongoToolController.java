@@ -29,8 +29,8 @@ public class MongoToolController {
     private ProductService productService;
 
     @PostMapping("/product")
-    public BaseResponse<Object> getProduct(@RequestBody Map<String, Object> cond){
+    public BaseResponse getProduct(@RequestBody Map<String, Object> cond){
         ProductPageRequest request = JSONObject.toJavaObject(JSON.parseObject(JSONObject.toJSONString(cond)), ProductPageRequest.class);
-        return BaseResponse.withSuccess(productService.pageList(request));
+        return productService.pageList(request);
     }
 }
