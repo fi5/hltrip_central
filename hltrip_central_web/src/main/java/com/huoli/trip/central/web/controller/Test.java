@@ -167,4 +167,14 @@ public class Test {
         }
         return "ok";
     }
+
+    @RequestMapping(value = "reloadCity")
+    public String reloadCity() {
+        try {
+            baseDataService.reSetCity();
+        }catch (Exception e){
+            log.error("reloadCity 异常了",e);
+        }
+        return "ok";
+    }
 }

@@ -32,4 +32,9 @@ public interface BaseDataService {
 	 */
 	BaseResponse<List<Channel>> queryChannelList();
 
+	/**
+	 * 重置城市缓存
+	 */
+	void reSetCity();
+
 }

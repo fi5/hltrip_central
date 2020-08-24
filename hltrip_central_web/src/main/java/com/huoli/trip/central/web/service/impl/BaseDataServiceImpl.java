@@ -40,13 +40,13 @@ public class BaseDataServiceImpl implements BaseDataService {
 		try {
 			List<CityPO> citys = cityDao.queryCitys(req.getKeyword());
 
-			if (validCitys == null) {
+//			if (validCitys == null) {
 				try {
 					validCitys = productDao.queryValidCitys();
 				} catch (Exception e) {
 					log.error("信息{}", e);
 				}
-			}
+//			}
 			final Iterator<CityPO> iterator = citys.iterator();
 			while(iterator.hasNext()){
 				CityPO entry = iterator.next();
@@ -78,5 +78,15 @@ public class BaseDataServiceImpl implements BaseDataService {
 			log.error("获取渠道列表失败 ：{}", e);
 		}
 		return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
+	}
+
+	@Override
+	public void reSetCity() {
+		validCitys=null;
+		try {
+			validCitys = productDao.queryValidCitys();
+		} catch (Exception e) {
+			log.error("信息{}",e);
+		}
 	}
 }
