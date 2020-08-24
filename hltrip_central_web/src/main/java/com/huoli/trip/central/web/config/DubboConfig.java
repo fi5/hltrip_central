@@ -37,6 +37,7 @@ public class DubboConfig {
         RegistryConfig registryConfig = new RegistryConfig();
         registryConfig.setAddress(dubboProperties.getAddress());
         registryConfig.setClient(dubboProperties.getClient());
+        registryConfig.setProtocol("zookeeper");
         return registryConfig;
     }
 
@@ -53,10 +54,10 @@ public class DubboConfig {
         return protocolConfig;
     }
 
-    @Bean
-    public ReferenceConfig referenceConfig(){
-        ReferenceConfig referenceConfig = new ReferenceConfig();
-        referenceConfig.setCheck(false);
-        return referenceConfig;
-    }
+//    @Bean
+//    public ReferenceConfig referenceConfig(){
+//        ReferenceConfig referenceConfig = new ReferenceConfig();
+//        referenceConfig.setCheck(false);
+//        return referenceConfig;
+//    }
 }
