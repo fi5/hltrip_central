@@ -104,7 +104,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductPO> getSalesRecommendList(List<String> productCodes){
         // 查询条件
-        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("status").is(0).and("code").in(productCodes);
+        Criteria criteria = Criteria.where("code").in(productCodes).and("status").is(0).and("priceCalendar.priceInfos.stock").gt(0);
         MatchOperation matchOperation = Aggregation.match(criteria);
         Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation, 0));
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
@@ -114,7 +114,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductPO> getFlagRecommendResult(Integer type, int size){
         // 查询条件
-        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0).and("status").is(1).and("recommendFlag").is(1);
+        Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1).and("priceCalendar.priceInfos.stock").gt(0);
         if(type != null){
             criteria.and("productType").is(type);
         }
@@ -232,40 +232,14 @@ public class ProductDaoImpl implements ProductDao {
         return Aggregation.group(fields)
                 .first("mainItemCode").as("mainItemCode")
                 .first("code").as("code")
-//                .first("supplierProductId").as("supplierProductId")
                 .first("name").as("name")
-//                .first("supplierId").as("supplierId")
-//                .first("supplierName").as("supplierName")
                 .first("mainItem").as("mainItem")
                 .first("status").as("status")
                 .first("productType").as("productType")
-//                .first("buyMax").as("buyMax")
-//                .first("buyMin").as("buyMin")
-//                .first("buyMinNight").as("buyMinNight")
-//                .first("buyMaxNight").as("buyMaxNight")
                 .first("images").as("images")
-//                .first("bookAheadMin").as("bookAheadMin")
                 .first("price").as("price")
                 .first("salePrice").as("salePrice")
-//                .first("validTime").as("validTime")
-//                .first("invalidTime").as("invalidTime")
                 .first("description").as("description")
-//                .first("excludeDesc").as("excludeDesc")
-//                .first("refundType").as("refundType")
-//                .first("delayType").as("delayType")
-//                .first("refundAheadMin").as("refundAheadMin")
-//                .first("refundDesc").as("refundDesc")
-//                .first("bookRules").as("bookRules")
-//                .first("allPreSale").as("allPreSale")
-//                .first("displayStart").as("displayStart")
-//                .first("displayEnd").as("displayEnd")
-//                .first("preSaleStart").as("preSaleStart")
-//                .first("preSaleEnd").as("preSaleEnd")
-//                .first("preSaleDescription").as("preSaleDescription")
-//                .first("limitRules").as("limitRules")
-//                .first("room").as("room")
-//                .first("ticket").as("ticket")
-//                .first("food").as("food")
                 .first("city").as("city")
                 .first("count").as("count")
                 .first("priceCalendar").as("priceCalendar");
@@ -275,13 +249,16 @@ public class ProductDaoImpl implements ProductDao {
         return Fields.from(Fields.field("mainItemCode"),
                 Fields.field("code"),
                 Fields.field("name"),
+                Fields.field("mainItem"),
                 Fields.field("status"),
                 Fields.field("productType"),
                 Fields.field("images"),
                 Fields.field("price"),
                 Fields.field("salePrice"),
                 Fields.field("description"),
-                Fields.field("city"));
+                Fields.field("city"),
+                Fields.field("count"),
+                Fields.field("priceCalendar"));
     }
 
     /**
