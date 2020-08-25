@@ -54,9 +54,6 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private OrderFactory orderFactory;
 
-    @Autowired
-    private YcfOrderManger ycfOrderManger;
-
     @Override
     public BaseResponse<ProductPageResult> pageList(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();

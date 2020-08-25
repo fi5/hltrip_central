@@ -228,6 +228,62 @@ public class ProductDaoImpl implements ProductDao {
                 .first("priceCalendar").as("priceCalendar");
     }
 
+    private GroupOperation getListGroupField(String... fields){
+        return Aggregation.group(fields)
+                .first("mainItemCode").as("mainItemCode")
+                .first("code").as("code")
+//                .first("supplierProductId").as("supplierProductId")
+                .first("name").as("name")
+//                .first("supplierId").as("supplierId")
+//                .first("supplierName").as("supplierName")
+                .first("mainItem").as("mainItem")
+                .first("status").as("status")
+                .first("productType").as("productType")
+//                .first("buyMax").as("buyMax")
+//                .first("buyMin").as("buyMin")
+//                .first("buyMinNight").as("buyMinNight")
+//                .first("buyMaxNight").as("buyMaxNight")
+                .first("images").as("images")
+//                .first("bookAheadMin").as("bookAheadMin")
+                .first("price").as("price")
+                .first("salePrice").as("salePrice")
+//                .first("validTime").as("validTime")
+//                .first("invalidTime").as("invalidTime")
+                .first("description").as("description")
+//                .first("excludeDesc").as("excludeDesc")
+//                .first("refundType").as("refundType")
+//                .first("delayType").as("delayType")
+//                .first("refundAheadMin").as("refundAheadMin")
+//                .first("refundDesc").as("refundDesc")
+//                .first("bookRules").as("bookRules")
+//                .first("allPreSale").as("allPreSale")
+//                .first("displayStart").as("displayStart")
+//                .first("displayEnd").as("displayEnd")
+//                .first("preSaleStart").as("preSaleStart")
+//                .first("preSaleEnd").as("preSaleEnd")
+//                .first("preSaleDescription").as("preSaleDescription")
+//                .first("limitRules").as("limitRules")
+//                .first("room").as("room")
+//                .first("ticket").as("ticket")
+//                .first("food").as("food")
+                .first("city").as("city")
+                .first("count").as("count")
+                .first("priceCalendar").as("priceCalendar");
+    }
+
+    private Fields getListFields(){
+        return Fields.from(Fields.field("mainItemCode"),
+                Fields.field("code"),
+                Fields.field("name"),
+                Fields.field("status"),
+                Fields.field("productType"),
+                Fields.field("images"),
+                Fields.field("price"),
+                Fields.field("salePrice"),
+                Fields.field("description"),
+                Fields.field("city"));
+    }
+
     /**
      * 构建列表页条件
      * @param city
@@ -237,17 +293,17 @@ public class ProductDaoImpl implements ProductDao {
      */
     private List<AggregationOperation> pageListAggregation(String city, Integer type, String keyWord){
         // 查询条件
-        Criteria criteria = Criteria.where("priceCalendar.priceInfos.stock").gt(0)
-                .and("status").is(1)
-                .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))
+        Criteria criteria = Criteria.where("city").is(city)
                 .and("productType").is(type)
-                .and("city").is(city);
+                .and("status").is(1)
+                .and("priceCalendar.priceInfos.stock").gt(0)
+                .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())));
         if(StringUtils.isNotBlank(keyWord)){
             criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
         // 分组
-        GroupOperation groupOperation = getGroupField("mainItemCode");
+        GroupOperation groupOperation = getListGroupField("mainItemCode");
         return ListAggregation(matchOperation, groupOperation);
     }
 
@@ -259,7 +315,7 @@ public class ProductDaoImpl implements ProductDao {
      */
     private  List<AggregationOperation> recommendListAggregation(MatchOperation matchOperation, int size){
         // 分组
-        GroupOperation groupOperation = getGroupField("code");
+        GroupOperation groupOperation = getListGroupField("code");
         List<AggregationOperation> operations = ListAggregation(matchOperation, groupOperation);
         if(size > 0){
             operations.add(Aggregation.limit(size));
@@ -285,7 +341,7 @@ public class ProductDaoImpl implements ProductDao {
         // 按价格正序
         SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
         // 指定字段
-        ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
+        ProjectionOperation projectionOperation = Aggregation.project(getListFields()).andExclude("_id");
         // 分组后排序
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
         return Lists.newArrayList(priceLookup,
