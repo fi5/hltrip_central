@@ -319,12 +319,15 @@ public class ProductDaoImpl implements ProductDao {
         SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
         // 指定字段
         ProjectionOperation projectionOperation = Aggregation.project(getListFields()).andExclude("_id");
+        MatchOperation matchOperation1 = Aggregation.match(Criteria.where("priceCalendar.priceInfos.stock").gt(0)
+                .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date()))));
         // 分组后排序
         SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "salePrice"));
-        return Lists.newArrayList(priceLookup,
+        return Lists.newArrayList(matchOperation,
+                priceLookup,
                 unwindOperation,
                 unwindOperation1,
-                matchOperation,
+                matchOperation1,
                 priceSort,
                 groupOperation.min("priceCalendar.priceInfos.salePrice").as("salePrice"),
                 sortOperation,
