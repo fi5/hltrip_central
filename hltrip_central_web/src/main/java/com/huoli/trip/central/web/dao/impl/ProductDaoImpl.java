@@ -273,8 +273,9 @@ public class ProductDaoImpl implements ProductDao {
         Criteria criteria = Criteria.where("city").is(city)
                 .and("productType").is(type)
                 .and("status").is(1)
-                .and("priceCalendar.priceInfos.stock").gt(0)
-                .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())));
+//                .and("priceCalendar.priceInfos.stock").gt(0)
+//                .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))
+                ;
         if(StringUtils.isNotBlank(keyWord)){
             criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
