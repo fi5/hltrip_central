@@ -272,9 +272,7 @@ public class ProductDaoImpl implements ProductDao {
         // 查询条件
         Criteria criteria = Criteria.where("city").is(city)
                 .and("productType").is(type)
-                .and("status").is(1)
-                .and("priceCalendar.priceInfos.stock").gt(0)
-                .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())));
+                .and("status").is(1);
         if(StringUtils.isNotBlank(keyWord)){
             criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
@@ -319,6 +317,7 @@ public class ProductDaoImpl implements ProductDao {
         SortOperation priceSort = Aggregation.sort(Sort.Direction.ASC, "priceCalendar.priceInfos.salePrice");
         // 指定字段
         ProjectionOperation projectionOperation = Aggregation.project(getListFields()).andExclude("_id");
+        // 拆分后的条件
         MatchOperation matchOperation1 = Aggregation.match(Criteria.where("priceCalendar.priceInfos.stock").gt(0)
                 .and("priceCalendar.priceInfos.saleDate").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date()))));
         // 分组后排序
