@@ -55,16 +55,35 @@ public class ProductServiceImpl implements ProductService {
     private OrderFactory orderFactory;
 
     @Override
-    public BaseResponse<ProductPageResult> pageList(ProductPageRequest request) {
+    public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
         List<Integer> types = ProductConverter.getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
             int total = productDao.getPageListTotal(request.getCity(), t, request.getKeyWord());
-            List<ProductPO> productPOs = productDao.getPageList(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
+            List<ProductPO> productPOs = productDao.getPageListProduct(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
             if (ListUtils.isNotEmpty(productPOs)) {
                 products.addAll(convertToProducts(productPOs, total));
+            }
+        }
+        if(ListUtils.isEmpty(products)){
+            return BaseResponse.withFail(CentralError.NO_RESULT_PRODUCT_LIST_ERROR);
+        }
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<ProductPageResult> pageList(ProductPageRequest request) {
+        ProductPageResult result = new ProductPageResult();
+        List<Integer> types = ProductConverter.getTypes(request.getType());
+        List<Product> products = Lists.newArrayList();
+        result.setProducts(products);
+        for (Integer t : types) {
+            long total = productDao.getPageListForItemTotal(request.getCity(), t, request.getKeyWord());
+            List<ProductItemPO> productItemPOs = productDao.getPageListForItem(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
+            if (ListUtils.isNotEmpty(productItemPOs)) {
+                products.addAll(convertToProductsByItem(productItemPOs, (int)total));
             }
         }
         if(ListUtils.isEmpty(products)){
@@ -416,6 +435,23 @@ public class ProductServiceImpl implements ProductService {
         return productPOs.stream().map(po -> {
             try {
                 return ProductConverter.convertToProduct(po, total);
+            } catch (Exception e) {
+                log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
+                return null;
+            }
+        }).filter(po -> po != null).collect(Collectors.toList());
+    }
+
+    /**
+     * 构建商品列表，根据item列表
+     * @param productItemPOs
+     * @param total
+     * @return
+     */
+    private List<Product> convertToProductsByItem(List<ProductItemPO> productItemPOs, int total) {
+        return productItemPOs.stream().map(po -> {
+            try {
+                return ProductConverter.convertToProductByItem(po, total);
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;

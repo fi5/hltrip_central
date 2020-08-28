@@ -6,6 +6,7 @@ import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.CityPO;
 import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
@@ -78,7 +79,7 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size){
+    public List<ProductPO> getPageListProduct(String city, Integer type, String keyWord, int page, int size){
         List<AggregationOperation> aggregations = pageListAggregation(city, type, keyWord);
         long rows = (page - 1) * size;
         aggregations.add(Aggregation.skip(rows));
@@ -178,6 +179,43 @@ public class ProductDaoImpl implements ProductDao {
     public ProductPO getTripProductByCode(String productCode) {
         Query query = new Query(Criteria.where("code").is(productCode));
         return mongoTemplate.findOne(query, ProductPO.class);
+    }
+
+    @Override
+    public List<ProductItemPO> getPageListForItem(String city, Integer type, String keyWord, int page, int size){
+        long rows = (page - 1) * size;
+        Query query = pageListForItemQuery(city, type, keyWord);
+        query.skip(rows).limit(size);
+        return mongoTemplate.find(query, ProductItemPO.class);
+    }
+
+    @Override
+    public long getPageListForItemTotal(String city, Integer type, String keyWord){
+        Query query = pageListForItemQuery(city, type, keyWord);
+        return mongoTemplate.count(query, ProductItemPO.class);
+    }
+
+    private Query pageListForItemQuery(String city, Integer type, String keyWord){
+        Criteria criteria = Criteria.where("city").is(city).and("product.productType").is(type).and("product.status").is(1);
+        if(StringUtils.isNotBlank(keyWord)){
+            criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
+        }
+        Query query = new Query(criteria);
+        query.fields().include("code")
+                .include("tags")
+                .include("description")
+                .include("product.code")
+                .include("product.name")
+                .include("product.status")
+                .include("product.productType")
+                .include("product.images")
+                .include("product.price")
+                .include("product.salePrice")
+                .include("product.description")
+                .include("product.city")
+                .include("product.count")
+                .include("product.priceCalendar");
+        return query;
     }
 
     /**
