@@ -70,6 +70,23 @@ public class ProductConverter {
     }
 
     /**
+     * 把item列表对象转成product
+     * @param po
+     * @param total
+     * @return
+     */
+    public static Product convertToProductByItem(ProductItemPO po, int total){
+        Product product = JSON.parseObject(JSON.toJSONString(po.getProduct()), Product.class);
+        product.setMainItem(convertToProductItem(po));
+        product.setTotal(total);
+        product.setPriceInfo(convertToPriceInfo(po.getProduct().getPriceCalendar()));
+        if(product.getPriceInfo() != null){
+            product.setSalePrice(product.getPriceInfo().getSalePrice());
+        }
+        return product;
+    }
+
+    /**
      * 转成 ResourceRoom vo
      * @param roomInfoPO
      * @return

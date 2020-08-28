@@ -21,6 +21,13 @@ public interface ProductService {
     BaseResponse<ProductPageResult> pageList(ProductPageRequest request);
 
     /**
+     * item列表
+     * @param request
+     * @return
+     */
+    BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request);
+
+    /**
      * 商品详情
      * @param request
      * @return

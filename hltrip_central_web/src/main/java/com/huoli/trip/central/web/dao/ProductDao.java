@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.PricePO;
+import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.vo.Coordinate;
 
@@ -34,7 +35,7 @@ public interface ProductDao {
      * @param size
      * @return
      */
-    List<ProductPO> getPageList(String city, Integer type, String keyWord, int page, int size);
+    List<ProductPO> getPageListProduct(String city, Integer type, String keyWord, int page, int size);
 
     /**
      * 获取列表总数
@@ -99,6 +100,26 @@ public interface ProductDao {
      * @return
      */
     List<ProductPO> getByCityAndType(String city, Date date, int type, int size);
+
+    /**
+     * item列表
+     * @param city
+     * @param type
+     * @param keyWord
+     * @param page
+     * @param size
+     * @return
+     */
+    List<ProductItemPO> getPageListForItem(String city, Integer type, String keyWord, int page, int size);
+
+    /**
+     * 查总数
+     * @param city
+     * @param type
+     * @param keyWord
+     * @return
+     */
+    long getPageListForItemTotal(String city, Integer type, String keyWord);
 
 	/**
      *
