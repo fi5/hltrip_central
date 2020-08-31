@@ -60,6 +60,12 @@ public class ProductConverter {
         if(po.getRoom() != null && ListUtils.isNotEmpty(po.getRoom().getRooms())){
             po.getRoom().getRooms().stream().map(roomInfoPO -> convertToResourceRoom(roomInfoPO)).collect(Collectors.toList());
         }
+        if(po.getTicket() != null && ListUtils.isNotEmpty(po.getTicket().getTickets())){
+            po.getTicket().getTickets().stream().map(ticketInfoPO -> convertToResourceTicket(ticketInfoPO)).collect(Collectors.toList());
+        }
+        if(po.getFood() != null && ListUtils.isNotEmpty(po.getFood().getFoods())){
+            po.getFood().getFoods().stream().map(foodInfoPO -> convertToResourceFood(foodInfoPO)).collect(Collectors.toList());
+        }
         product.setMainItem(convertToProductItem(po.getMainItem()));
         product.setTotal(total);
         product.setPriceInfo(convertToPriceInfo(po.getPriceCalendar()));
@@ -94,6 +100,26 @@ public class ProductConverter {
     public static ResourceRoom convertToResourceRoom(RoomInfoPO roomInfoPO){
         ResourceRoom resourceRoom = JSON.parseObject(JSON.toJSONString(roomInfoPO), ResourceRoom.class);
         return resourceRoom;
+    }
+
+    /**
+     * 转成 ResourceTicket vo
+     * @param ticketInfoPO
+     * @return
+     */
+    public static ResourceTicket convertToResourceTicket(TicketInfoPO ticketInfoPO){
+        ResourceTicket resourceTicket = JSON.parseObject(JSON.toJSONString(ticketInfoPO), ResourceTicket.class);
+        return resourceTicket;
+    }
+
+    /**
+     * 转成 ResourceFood vo
+     * @param foodInfoPO
+     * @return
+     */
+    public static ResourceFood convertToResourceFood(FoodInfoPO foodInfoPO){
+        ResourceFood resourceFood = JSON.parseObject(JSON.toJSONString(foodInfoPO), ResourceFood.class);
+        return resourceFood;
     }
 
     /**
