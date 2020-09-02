@@ -27,7 +27,7 @@ public class CommonController {
     @Autowired
     private HuoliTrace huoliTrace;
 
-    @PostMapping
+    @PostMapping("/sync/price")
     public BaseResponse syncPrice(@RequestParam
                                       @NotBlank(message = "产品编码productCode不能为空") String productCode,
                                   String supplierProductCode,
