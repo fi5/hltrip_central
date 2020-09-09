@@ -176,11 +176,10 @@ public class HllxOrderManager extends OrderManager {
      */
     public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){
         HllxBaseResult<HllxOrderStatusResult>   resultHllxBaseResult = hllxService.getOrder(req.getOrderId());
-        if(resultHllxBaseResult != null && resultHllxBaseResult.getSuccess()){
+        if(resultHllxBaseResult != null && resultHllxBaseResult.getSuccess() && resultHllxBaseResult.getData() != null ){
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(req.getOrderId());
-            //是否要查询订单的状态
-            //rep.setOrderStatus();
+            rep.setOrderStatus(resultHllxBaseResult.getData().getOrderStatus());
             return BaseResponse.success(rep);
         }
         return BaseResponse.fail(9999,"查询订单失败",null);
