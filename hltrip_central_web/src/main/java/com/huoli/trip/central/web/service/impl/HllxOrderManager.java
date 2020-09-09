@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.service.impl;
 
-import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
@@ -114,7 +113,7 @@ public class HllxOrderManager extends OrderManager {
         if(resHllxBaseResult != null && resHllxBaseResult.getSuccess() && resHllxBaseResult.getData() != null) {
             CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
             //订单号怎么处理
-            //createOrderRes.setOrderId(supplierResponse.getOrderId());
+            createOrderRes.setOrderId(req.getPartnerOrderId());
             createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());
             return BaseResponse.success(createOrderRes);
         }
