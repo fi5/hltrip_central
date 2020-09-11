@@ -1,5 +1,7 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
+import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
@@ -13,6 +15,8 @@ import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.HllxService;
 
 import com.huoli.trip.supplier.self.hllx.vo.*;
+import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
+import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
@@ -183,6 +187,27 @@ public class HllxOrderManager extends OrderManager {
             return BaseResponse.success(rep);
         }
         return BaseResponse.fail(9999,"查询订单失败",null);
+    }
+
+    public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
+
+        try {
+            final HllxBaseResult<HllxOrderVoucherResult> vochers = hllxService.getVochers(req.getOrderId());
+            if(null==vochers)
+                return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+            log.info("拿到的数据:"+ JSONObject.toJSONString(vochers));
+            final HllxOrderVoucherResult data = vochers.getData();
+            if(vochers.getStatusCode()!=200 || !vochers.getSuccess())
+                return BaseResponse.fail(OrderInfoTranser.findCentralError(vochers.getMessage()));//异常消息以供应商返回的
+            OrderDetailRep rep=new OrderDetailRep();
+            rep.setOrderId(req.getOrderId());
+            rep.setVochers(data.getVochers());
+            return BaseResponse.success(rep);
+        } catch (Exception e) {
+            log.error("YCFgetVochers报错:"+JSONObject.toJSONString(req),e);
+            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
+        }
+
     }
 
 
