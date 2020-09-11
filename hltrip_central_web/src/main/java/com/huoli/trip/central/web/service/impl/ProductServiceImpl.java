@@ -29,6 +29,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -414,7 +415,20 @@ public class ProductServiceImpl implements ProductService {
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
-                    result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+                    ProductItem productItem = JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class);
+                    if(productItem != null){
+                        List<ImageBase> imageBases = productItem.getImageDetails();
+                        List<ImageBase> imageBases1 =  productItem.getImages();
+                        if(ListUtils.isNotEmpty(imageBases)){
+                            if(imageBases1 == null){
+                                productItem.setImages(imageBases);
+                            }else{
+                                imageBases1.addAll(imageBases);
+                                productItem.setImages(imageBases1);
+                            }
+                        }
+                        result.setMainItem(productItem);
+                    }
                 }
                 product.setMainItem(null);
                 return product;
