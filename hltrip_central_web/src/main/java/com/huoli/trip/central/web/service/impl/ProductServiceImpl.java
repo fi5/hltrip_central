@@ -80,8 +80,8 @@ public class ProductServiceImpl implements ProductService {
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
-            long total = productDao.getPageListForItemTotal(request.getCity(), t, request.getKeyWord());
-            List<ProductItemPO> productItemPOs = productDao.getPageListForItem(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
+            long total = productDao.getPageListForItemTotal(request.getOriCity(), request.getCity(), t, request.getKeyWord());
+            List<ProductItemPO> productItemPOs = productDao.getPageListForItem(request.getOriCity(), request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
             if (ListUtils.isNotEmpty(productItemPOs)) {
                 products.addAll(convertToProductsByItem(productItemPOs, (int)total));
             }

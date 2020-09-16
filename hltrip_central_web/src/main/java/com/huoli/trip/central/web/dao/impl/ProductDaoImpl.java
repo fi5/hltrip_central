@@ -182,21 +182,28 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductItemPO> getPageListForItem(String city, Integer type, String keyWord, int page, int size){
+    public List<ProductItemPO> getPageListForItem(String oriCity, String desCity, Integer type, String keyWord, int page, int size){
         long rows = (page - 1) * size;
-        Query query = pageListForItemQuery(city, type, keyWord);
+        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord);
         query.skip(rows).limit(size);
         return mongoTemplate.find(query, ProductItemPO.class);
     }
 
     @Override
-    public long getPageListForItemTotal(String city, Integer type, String keyWord){
-        Query query = pageListForItemQuery(city, type, keyWord);
+    public long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord){
+        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord);
         return mongoTemplate.count(query, ProductItemPO.class);
     }
 
-    private Query pageListForItemQuery(String city, Integer type, String keyWord){
-        Criteria criteria = Criteria.where("city").is(city).and("product.productType").is(type).and("product.status").is(1);
+    private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord){
+        Criteria criteria = new Criteria();
+        if(StringUtils.isNotBlank(oriCity)){
+            criteria.and("oriCity").is(oriCity);
+        }
+        if(StringUtils.isNotBlank(desCity)){
+            criteria.and("city").is(desCity);
+        }
+        criteria.and("product.productType").is(type).and("product.status").is(1);
         if(StringUtils.isNotBlank(keyWord)){
             criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
