@@ -284,10 +284,11 @@ public class ProductServiceImpl implements ProductService {
             }
 
             final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
-            result.setSalePrice(priceCalData.getSalesTotal());
+            result.setSalePrice(priceCalData.getAdtSalePriceTotal());
             result.setSettlePrice(priceCalData.getSettlesTotal());
             result.setStock(priceCalData.getMinStock());
-
+            result.setChdSalePrice(priceCalData.getChdSalePriceTotal());
+            result.setChdSettlePrice(priceCalData.getChdSettlePriceTotal());
 
             return BaseResponse.success(result);
         } catch (Exception e) {
@@ -508,18 +509,22 @@ public class ProductServiceImpl implements ProductService {
             throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg, result);
         }
         // 成人总价
-        BigDecimal salesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
+        BigDecimal adtSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSalePrice(), quantityTotal).doubleValue()));
-        BigDecimal settlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
+        BigDecimal adtSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSettlePrice(), quantityTotal).doubleValue()));
         // 儿童总价
         BigDecimal chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
         BigDecimal chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        result.setAdtSalePriceTotal(adtSalesTotal);
+        result.setAdtSettlePriceTotal(adtSettlesTotal);
+        result.setChdSalePriceTotal(chdSalesTotal);
+        result.setChdSettlePriceTotal(chdSettlesTotal);
         // 总价
-        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(salesTotal.doubleValue(), chdSalesTotal.doubleValue())));
-        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(settlesTotal.doubleValue(), chdSettlesTotal.doubleValue())));
+        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal.doubleValue())));
+        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal.doubleValue())));
     }
 
     /**
