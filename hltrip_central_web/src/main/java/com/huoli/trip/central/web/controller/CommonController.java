@@ -4,6 +4,7 @@ import com.huoli.eagle.eye.core.HuoliTrace;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.service.impl.OrderManager;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,7 @@ import javax.validation.constraints.NotBlank;
  */
 @RestController
 @RequestMapping(value = "/common", produces = "application/json")
+@Slf4j
 public class CommonController {
 
     @Autowired
@@ -28,12 +30,14 @@ public class CommonController {
     private HuoliTrace huoliTrace;
 
     @PostMapping("/sync/price")
-    public BaseResponse syncPrice(@RequestParam
+    public BaseResponse syncPriceManual(@RequestParam
                                       @NotBlank(message = "产品编码productCode不能为空") String productCode,
                                   String supplierProductCode,
                                   @NotBlank(message = "开始日期startDate不能为空") String startDate,
                                   String endDate,
                                   @NotBlank(message = "渠道channel不能为空") String channel){
+        log.info("syncPriceManual 手动刷新价格，productCode = {}, supplierProductCode = {}, startDate = {}, endDate = {}, channel = {}",
+                productCode, supplierProductCode, startDate, endDate, channel);
         OrderManager orderManager = orderFactory.getOrderManager(channel);
         orderManager.syncPrice(productCode, supplierProductCode, startDate, endDate, huoliTrace.getTraceInfo().getTraceId());
         return BaseResponse.withSuccess();
