@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
 import com.huoli.trip.common.constant.CentralError;
@@ -10,16 +11,17 @@ import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.PriceCalcRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.HllxService;
 
 import com.huoli.trip.supplier.self.hllx.vo.*;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
-import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,6 +32,9 @@ public class HllxOrderManager extends OrderManager {
 
     @Reference(timeout = 10000, group = "hltrip", check = false)
     private HllxService hllxService;
+
+    @Autowired
+    private ProductService productService;
 
     public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_HLLX;
     public String getChannel(){
@@ -80,7 +85,7 @@ public class HllxOrderManager extends OrderManager {
                 if(hllxBookCheckRes == null){
                     return SupplierErrorMsgTransfer.buildMsg(checkInfos.getMessage());//异常消息以供应商返回的
                 }else{
-                    CenterBookCheck  bookCheck = new CenterBookCheck();
+//                    CenterBookCheck  bookCheck = new CenterBookCheck();
                     List<HllxBookSaleInfo> saleInfos = hllxBookCheckRes.getSaleInfos();
                     if(ListUtils.isNotEmpty(saleInfos)){
                         return BaseResponse.fail(CentralError.NO_STOCK_ERROR);
@@ -88,12 +93,12 @@ public class HllxOrderManager extends OrderManager {
                     HllxBookSaleInfo hllxBookSaleInfo = saleInfos.get(0);
                     int stocks = hllxBookSaleInfo.getTotalStock();
                     if(req.getCount() > stocks){
-                        return BaseResponse.withFail(CentralError.NOTENOUGH_STOCK_ERROR,bookCheck);
+                        return BaseResponse.withFail(CentralError.NOTENOUGH_STOCK_ERROR, null);
                     }
-                    bookCheck.setSettlePrice(hllxBookSaleInfo.getPrice());
-                    bookCheck.setSalePrice(hllxBookSaleInfo.getSalePrice());
-                    bookCheck.setStock(stocks);
-                    return BaseResponse.success(bookCheck);
+//                    bookCheck.setSettlePrice(hllxBookSaleInfo.getPrice());
+//                    bookCheck.setSalePrice(hllxBookSaleInfo.getSalePrice());
+//                    bookCheck.setStock(stocks);
+//                    return BaseResponse.success(bookCheck);
                 }
             }else{
                 return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
@@ -101,6 +106,29 @@ public class HllxOrderManager extends OrderManager {
         }catch (HlCentralException e){
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
         }
+        CenterBookCheck  bookCheck = new CenterBookCheck();
+        PriceCalcRequest calcRequest = new PriceCalcRequest();
+        calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
+        calcRequest.setEndDate(DateTimeUtil.parseDate(end));
+        calcRequest.setProductCode(req.getProductId());
+        calcRequest.setQuantity(req.getCount());
+        PriceCalcResult priceCalcResult = null;
+        try{
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            priceCalcResult = priceCalcResultBaseResponse.getData();
+            //没有价格直接抛异常
+            if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
+                return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+            }
+        }catch (HlCentralException e){
+            log.error("价格计算失败。", e);
+            return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+        }
+        //设置结算总价
+        bookCheck.setSettlePrice(priceCalcResult.getSettlesTotal());
+        //销售总价
+        bookCheck.setSalePrice(priceCalcResult.getSalesTotal());
+        return BaseResponse.success(bookCheck);
     }
 
     /**
