@@ -12,8 +12,7 @@ import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.Coordinate;
-import com.huoli.trip.common.vo.request.central.ImageRequest;
-import com.huoli.trip.common.vo.request.central.RecommendRequest;
+import com.huoli.trip.common.vo.request.central.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
@@ -89,6 +88,93 @@ public class Test0 {
         coordinate.setLongitude(116d);
         request.setCoordinate(coordinate);
         log.info("================================={}", JSON.toJSONString(productService.recommendList(request)));
+    }
+
+//    @Test
+    public void test3(){
+        ProductPageRequest request = new ProductPageRequest();
+        request.setType(0);
+//        request.setCity("广州");
+        request.setPageSize(10);
+//        request.setKeyWord("SIP单票（EB）测试");
+        request.setType(1);
+        log.info("================================={}", JSON.toJSONString(productService.pageList(request)));
+    }
+
+//    @Test
+    public void test4(){
+//        Document document = priceDao.selectByProductCode("yaochufa_247533_1724328");
+//        PricePO pricePO = JSON.parseObject(, PricePO.class);
+        log.info("xxxxxxxxxxxxxxxxxxxxxxxxxx======={}", JSON.toJSONString(priceDao.selectByProductCode("yaochufa_247533_1724328").getId()));
+    }
+
+//    @Test
+    public void test5(){
+        PriceCalcRequest request = new PriceCalcRequest();
+        request.setStartDate(DateTimeUtil.parseDate("2020-08-31 00:00:00"));
+        request.setEndDate(DateTimeUtil.parseDate("2020-08-31 00:00:00"));
+        request.setProductCode("yaochufa_904834_2095377");
+        request.setQuantity(1);
+        request.setTraceId("01c6b55d2d061000");
+        log.info("xxxxxxxxxxxxxxxxxxxxxxxxxx======= {}", JSON.toJSONString(productService.calcTotalPrice(request)));
+//        Set<String> zoneIds = ZoneId.getAvailableZoneIds();
+//        for  (String  zoneId: zoneIds) {
+//            System.out.println(zoneId);
+//        }
+
+    }
+
+//    @Test
+    public void test6(){
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getPageList("北京市", 2, null, 1, 10)));
+//
+//        log.info("-----------------------------------  {}", productDao.getPageListTotal("北京市", 2, null));
+
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getPageList("北京市", 2, null, 1, 10)));
+
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getProductListByItemId("yaochufa_29439", DateTimeUtil.trancateToDate(new Date()))));
+//
+//        Coordinate coordinate = new Coordinate();
+//        coordinate.setLongitude(116.481533);
+//        coordinate.setLatitude(39.996504);
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getLowPriceRecommendResult(2, coordinate, 100d, 10)));
+
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getSalesRecommendList(
+//                Lists.newArrayList("yaochufa_247533_266960",
+//                        "yaochufa_247533_597563",
+//                        "yaochufa_247533_1724318",
+//                        "yaochufa_247533_1724328"))));
+
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getFlagRecommendResult(2, 5)));
+
+        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getByCityAndType("北京市", DateTimeUtil.trancateToDate(new Date()), 2, 10)));
+    }
+
+//    @Test
+    public void test7(){
+        log.info("=========  {}", JSON.toJSONString(mongoTemplate.findOne(new Query(Criteria.where("productCode").is("yaochufa_247533_597563")), PricePO.class)));
+    }
+
+//    @Test
+    public void test8(){
+        ProductPageRequest request = new ProductPageRequest();
+        request.setPageSize(6);
+        request.setCity("成都");
+        request.setPageIndex(1);
+        request.setType(0);
+        productService.pageList(request );
+    }
+
+    @Test
+    public void test9(){
+        Criteria criteria = new Criteria();
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.project("supplierId").and("supplierId").substring(0, 3).as("s1")
+                .and("supplierId").substring(3, 3).as("s2"),
+                Aggregation.match(criteria.and("s2").is("chu").and("s1").is("yao"))
+                );
+        AggregationResults<Protest> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, Protest.class);
+        log.info(JSON.toJSONString(outputType.getMappedResults().get(0)));
     }
 
     public List<ProductPO> getPageList(String city, Integer type, int page, int size){
