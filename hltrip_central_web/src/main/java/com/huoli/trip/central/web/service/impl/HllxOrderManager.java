@@ -18,8 +18,6 @@ import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.HllxService;
 
 import com.huoli.trip.supplier.self.hllx.vo.*;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
-import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
