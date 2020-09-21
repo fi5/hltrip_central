@@ -2,9 +2,11 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
+import com.huoli.trip.central.web.dao.HodometerDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
@@ -45,6 +47,13 @@ import java.util.stream.Collectors;
 @Service(timeout = 10000, group = "hltrip")
 public class ProductServiceImpl implements ProductService {
 
+    /**
+     * 旅游类
+     */
+    private static final ImmutableList<Integer> TRIP_PRODUCTS = ImmutableList.of(ProductType.TRIP_FREE.getCode(),
+            ProductType.TRIP_GROUP_PRIVATE.getCode(), ProductType.TRIP_GROUP.getCode(),
+            ProductType.TRIP_GROUP_LOCAL.getCode(), ProductType.TRIP_GROUP_SEMI.getCode());
+
     @Autowired
     private ProductDao productDao;
 
@@ -53,6 +62,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private OrderFactory orderFactory;
+
+    @Autowired
+    private HodometerDao hodometerDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -366,8 +378,12 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
         int quantity = request.getQuantity();
+        int chdQuantity = request.getChdQuantity();
+        if(TRIP_PRODUCTS.contains(productPO.getProductType())){
+            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity, result);
+        }
         // 含酒店
-        if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
+        else if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
             // 晚数
             int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate());
             int baseNight = productPO.getRoom().getRooms().get(0).getBaseNight();
@@ -417,6 +433,10 @@ public class ProductServiceImpl implements ProductService {
                     result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
                 }
                 product.setMainItem(null);
+                HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
+                if(hodometerPO != null && ListUtils.isNotEmpty(hodometerPO.getHodometers())){
+                    product.setHodometers(hodometerPO.getHodometers());
+                }
                 return product;
             } catch (Exception e) {
                 log.error("转换商品详情结果异常，po = {}", JSON.toJSONString(po), e);
@@ -459,6 +479,10 @@ public class ProductServiceImpl implements ProductService {
         }).filter(po -> po != null).collect(Collectors.toList());
     }
 
+    private void checkPrice(List<PriceInfoPO> priceInfoPOs, Date startDate,
+                            int quantityTotal, PriceCalcResult result){
+        checkPrice(priceInfoPOs, startDate, quantityTotal, 0, result);
+    }
     /**
      * 检查价格
      * @param priceInfoPOs
@@ -466,7 +490,8 @@ public class ProductServiceImpl implements ProductService {
      * @param quantityTotal
      * @param result
      */
-    private void checkPrice(List<PriceInfoPO> priceInfoPOs, Date startDate, int quantityTotal, PriceCalcResult result){
+    private void checkPrice(List<PriceInfoPO> priceInfoPOs, Date startDate,
+                            int quantityTotal, int chdQuantityTotal, PriceCalcResult result){
         // 拿到当前日期价格信息
         PriceInfoPO priceInfoPO = priceInfoPOs.stream().filter(price -> price.getSaleDate().getTime() == startDate.getTime()).findFirst().orElse(null);
         String dateStr = DateTimeUtil.format(startDate, DateTimeUtil.defaultDatePattern);
@@ -475,19 +500,26 @@ public class ProductServiceImpl implements ProductService {
             log.error(msg);
             throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR.getCode(), msg);
         }
-        if (priceInfoPO.getStock() < quantityTotal) {
+        if (priceInfoPO.getStock() < (quantityTotal + chdQuantityTotal)) {
             String msg = String.format("库存不足，{}剩余库存={}, 购买份数={}", dateStr, priceInfoPO.getStock(), quantityTotal);
             log.error(msg);
             // 库存不足要返回具体库存
             result.setMinStock(priceInfoPO.getStock());
             throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg, result);
         }
+        // 成人总价
         BigDecimal salesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSalePrice(), quantityTotal).doubleValue()));
         BigDecimal settlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSettlePrice(), quantityTotal).doubleValue()));
-        result.setSalesTotal(salesTotal);
-        result.setSettlesTotal(settlesTotal);
+        // 儿童总价
+        BigDecimal chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
+                calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
+        BigDecimal chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
+                calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        // 总价
+        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(salesTotal.doubleValue(), chdSalesTotal.doubleValue())));
+        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(settlesTotal.doubleValue(), chdSettlesTotal.doubleValue())));
     }
 
     /**
