@@ -263,6 +263,7 @@ public class ProductServiceImpl implements ProductService {
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
             priceCal.setQuantity(req.getCount());
+            priceCal.setChdQuantity(req.getChdCount());
             if(StringUtils.isNotBlank(req.getStartDate()))
                 priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
             if(StringUtils.isNotBlank(req.getEndDate()))
