@@ -194,6 +194,9 @@ public class ProductServiceImpl implements ProductService {
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
                 result.setBaseNum(baseNum);
             }
+            if(TRIP_PRODUCTS.contains(productPo.getProductType())){
+                result.setBaseNum(productPo.getTripDays());
+            }
 
             return BaseResponse.success(result);
         } catch (Exception e) {
