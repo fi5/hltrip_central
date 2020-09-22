@@ -103,23 +103,25 @@ public interface ProductDao {
 
     /**
      * item列表
-     * @param city
+     * @param oriCity
+     * @param desCity
      * @param type
      * @param keyWord
      * @param page
      * @param size
      * @return
      */
-    List<ProductItemPO> getPageListForItem(String city, Integer type, String keyWord, int page, int size);
+    List<ProductItemPO> getPageListForItem(String oriCity, String desCity,  Integer type, String keyWord, int page, int size);
 
     /**
      * 查总数
-     * @param city
+     * @param oriCity
+     * @param desCity
      * @param type
      * @param keyWord
      * @return
      */
-    long getPageListForItemTotal(String city, Integer type, String keyWord);
+    long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord);
 
 	/**
      *
