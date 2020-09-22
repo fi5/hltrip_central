@@ -9,6 +9,7 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -190,6 +191,26 @@ public class ProductConverter {
         } else {  // 其它类型就按传进来的查
             types = Lists.newArrayList(type);
         }
+        return types;
+    }
+
+    /**
+     * 推荐列表查询类型
+     * @param type
+     * @return
+     */
+    public static List<Integer> getRecommendTypes(int type) {
+        List<Integer> types;
+        List<Integer> all = Arrays.asList(ProductType.values()).stream().map(t -> t.getCode()).collect(Collectors.toList());
+        // 门票+转成两个类型
+        if (type == ProductType.SCENIC_TICKET_PLUS.getCode()) {  // 门票加需要查门票和门票+
+            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
+        } else {  // 其它类型就按传进来的查
+            types = Lists.newArrayList(type);
+        }
+        // 合并去重，优先按传进来的查
+        types.addAll(all);
+        types = types.stream().filter(t -> t != ProductType.UN_LIMIT.getCode()).distinct().collect(Collectors.toList());
         return types;
     }
 

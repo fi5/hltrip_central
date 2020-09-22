@@ -115,7 +115,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<RecommendResult> recommendList(RecommendRequest request) {
         RecommendResult result = new RecommendResult();
-        List<Integer> types = ProductConverter.getTypes(request.getType());
+        List<Integer> types = ProductConverter.getRecommendTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
@@ -144,6 +144,9 @@ public class ProductServiceImpl implements ProductService {
             }
             if (ListUtils.isNotEmpty(productPOs)) {
                 products.addAll(convertToProducts(productPOs, 0));
+            }
+            if(products.size() >= request.getPageSize()){
+                break;
             }
         }
         if(ListUtils.isEmpty(products)){
