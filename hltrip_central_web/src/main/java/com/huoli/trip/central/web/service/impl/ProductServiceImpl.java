@@ -116,7 +116,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<RecommendResult> recommendList(RecommendRequest request) {
         RecommendResult result = new RecommendResult();
-        List<Integer> types = ProductConverter.getTypes(request.getType());
+        List<Integer> types = ProductConverter.getRecommendTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
@@ -145,6 +145,9 @@ public class ProductServiceImpl implements ProductService {
             }
             if (ListUtils.isNotEmpty(productPOs)) {
                 products.addAll(convertToProducts(productPOs, 0));
+            }
+            if(products.size() >= request.getPageSize()){
+                break;
             }
         }
         if(ListUtils.isEmpty(products)){
@@ -191,6 +194,9 @@ public class ProductServiceImpl implements ProductService {
                 //设置基准晚数
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
                 result.setBaseNum(baseNum);
+            }
+            if(TRIP_PRODUCTS.contains(productPo.getProductType())){
+                result.setBaseNum(productPo.getTripDays());
             }
 
             return BaseResponse.success(result);
@@ -264,6 +270,7 @@ public class ProductServiceImpl implements ProductService {
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
             priceCal.setQuantity(req.getCount());
+            priceCal.setChdQuantity(req.getChdCount());
             if(StringUtils.isNotBlank(req.getStartDate()))
                 priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
             if(StringUtils.isNotBlank(req.getEndDate()))
