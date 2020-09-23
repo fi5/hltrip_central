@@ -185,7 +185,8 @@ public class ProductConverter {
         List<Integer> types;
         // 不限需要查所有类型
         if (type == ProductType.UN_LIMIT.getCode()) {
-            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
+            types = Arrays.asList(ProductType.values()).stream().map(t -> t.getCode()).filter(t ->
+                    t != ProductType.UN_LIMIT.getCode()).collect(Collectors.toList());
         } else if (type == ProductType.SCENIC_TICKET_PLUS.getCode()) {  // 门票加需要查门票和门票+
             types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
         } else {  // 其它类型就按传进来的查
