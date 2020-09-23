@@ -198,10 +198,10 @@ public class ProductDaoImpl implements ProductDao {
     private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord){
         Criteria criteria = new Criteria();
         if(StringUtils.isNotBlank(oriCity)){
-            criteria.and("oriCity").is(oriCity);
+            criteria.and("oriCity").regex(oriCity);
         }
         if(StringUtils.isNotBlank(desCity)){
-            criteria.and("city").is(desCity);
+            criteria.and("city").regex(desCity);
         }
         criteria.and("product.productType").is(type).and("product.status").is(1);
         if(StringUtils.isNotBlank(keyWord)){
