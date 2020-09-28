@@ -155,17 +155,18 @@ public class Test0 {
         log.info("=========  {}", JSON.toJSONString(mongoTemplate.findOne(new Query(Criteria.where("productCode").is("yaochufa_247533_597563")), PricePO.class)));
     }
 
-//    @Test
+    @Test
     public void test8(){
         ProductPageRequest request = new ProductPageRequest();
         request.setPageSize(6);
-        request.setCity("成都");
+        request.setCity("上海");
+        request.setOriCity("北京");
         request.setPageIndex(1);
         request.setType(0);
         productService.pageList(request );
     }
 
-    @Test
+//    @Test
     public void test9(){
         Criteria criteria = new Criteria();
         Aggregation aggregation = Aggregation.newAggregation(

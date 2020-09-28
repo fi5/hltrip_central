@@ -444,8 +444,8 @@ public class ProductServiceImpl implements ProductService {
                 }
                 product.setMainItem(null);
                 HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
-                if(hodometerPO != null && ListUtils.isNotEmpty(hodometerPO.getHodometers())){
-                    product.setHodometers(hodometerPO.getHodometers());
+                if(hodometerPO != null){
+                    product.setHodometer(hodometerPO);
                 }
                 return product;
             } catch (Exception e) {
