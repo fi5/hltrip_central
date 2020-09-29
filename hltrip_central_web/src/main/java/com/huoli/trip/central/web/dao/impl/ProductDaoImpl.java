@@ -115,7 +115,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductPO> getFlagRecommendResult(Integer type, int size){
         // 查询条件
-        Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1).and("priceCalendar.priceInfos.stock").gt(0);
+        Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1);
         if(type != null){
             criteria.and("productType").is(type);
         }

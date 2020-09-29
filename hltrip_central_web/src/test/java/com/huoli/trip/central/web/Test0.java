@@ -124,7 +124,7 @@ public class Test0 {
 
     }
 
-//    @Test
+    @Test
     public void test6(){
 //        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getPageList("北京市", 2, null, 1, 10)));
 //
@@ -145,9 +145,12 @@ public class Test0 {
 //                        "yaochufa_247533_1724318",
 //                        "yaochufa_247533_1724328"))));
 
-//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getFlagRecommendResult(2, 5)));
+        RecommendRequest recommendRequest = new RecommendRequest();
+        recommendRequest.setType(1);
+        recommendRequest.setPosition(1);
+        log.info("-----------------------------------  {}", JSON.toJSONString(productService.recommendList(recommendRequest)));
 
-        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getByCityAndType("北京市", DateTimeUtil.trancateToDate(new Date()), 2, 10)));
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getByCityAndType("北京市", DateTimeUtil.trancateToDate(new Date()), 2, 10)));
     }
 
 //    @Test
@@ -155,7 +158,7 @@ public class Test0 {
         log.info("=========  {}", JSON.toJSONString(mongoTemplate.findOne(new Query(Criteria.where("productCode").is("yaochufa_247533_597563")), PricePO.class)));
     }
 
-    @Test
+//    @Test
     public void test8(){
         ProductPageRequest request = new ProductPageRequest();
         request.setPageSize(6);
