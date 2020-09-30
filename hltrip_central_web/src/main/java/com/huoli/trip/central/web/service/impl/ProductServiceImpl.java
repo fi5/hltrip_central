@@ -388,9 +388,9 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
         int quantity = request.getQuantity();
-        int chdQuantity = request.getChdQuantity();
+        Integer chdQuantity = request.getChdQuantity();
         if(TRIP_PRODUCTS.contains(productPO.getProductType())){
-            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity, result);
+            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity == null ? 0 : chdQuantity, result);
         }
         // 含酒店
         else if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
