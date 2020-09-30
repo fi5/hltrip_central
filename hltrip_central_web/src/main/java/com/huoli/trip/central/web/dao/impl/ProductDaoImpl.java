@@ -112,8 +112,8 @@ public class ProductDaoImpl implements ProductDao {
         return output.getMappedResults();
     }
 
-    @Override
-    public List<ProductPO> getFlagRecommendResult(Integer type, int size){
+//    @Override
+    public List<ProductPO> getFlagRecommendResult_(Integer type, int size){
         // 查询条件
         Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1);
         if(type != null){
@@ -123,6 +123,17 @@ public class ProductDaoImpl implements ProductDao {
         Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation, size));
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return output.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getFlagRecommendResult(Integer type, int size){
+        // 查询条件
+        Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1);
+        if(type != null){
+            criteria.and("productType").is(type);
+        }
+        Query query = new Query(criteria).limit(size);
+        return mongoTemplate.find(query, ProductPO.class);
     }
 
     @Override
