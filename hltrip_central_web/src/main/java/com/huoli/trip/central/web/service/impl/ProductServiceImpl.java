@@ -539,8 +539,8 @@ public class ProductServiceImpl implements ProductService {
         result.setChdSalePriceTotal(chdSalesTotal);
         result.setChdSettlePriceTotal(chdSettlesTotal);
         // 总价
-        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal.doubleValue())));
-        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal.doubleValue())));
+        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue())));
+        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue())));
     }
 
     /**
