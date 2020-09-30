@@ -523,10 +523,17 @@ public class ProductServiceImpl implements ProductService {
         BigDecimal adtSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSettlePrice(), quantityTotal).doubleValue()));
         // 儿童总价
-        BigDecimal chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
-                calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
-        BigDecimal chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
-                calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        BigDecimal chdSalesTotal = null;
+        if(priceInfoPO.getChdSalePrice() != null){
+            chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
+                    calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
+        }
+        BigDecimal chdSettlesTotal = null;
+        if(priceInfoPO.getChdSettlePrice() != null){
+            chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
+                    calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        }
+
         result.setAdtSalePriceTotal(adtSalesTotal);
         result.setAdtSettlePriceTotal(adtSettlesTotal);
         result.setChdSalePriceTotal(chdSalesTotal);
