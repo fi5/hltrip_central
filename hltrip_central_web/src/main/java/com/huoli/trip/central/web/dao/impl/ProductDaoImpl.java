@@ -222,6 +222,8 @@ public class ProductDaoImpl implements ProductDao {
         query.fields().include("code")
                 .include("tags")
                 .include("description")
+                .include("oriCity")
+                .include("city")
                 .include("product.code")
                 .include("product.name")
                 .include("product.status")
