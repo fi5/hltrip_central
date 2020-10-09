@@ -389,9 +389,9 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
         int quantity = request.getQuantity();
-        int chdQuantity = request.getChdQuantity();
+        Integer chdQuantity = request.getChdQuantity();
         if(TRIP_PRODUCTS.contains(productPO.getProductType())){
-            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity, result);
+            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity == null ? 0 : chdQuantity, result);
         }
         // 含酒店
         else if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
@@ -458,8 +458,8 @@ public class ProductServiceImpl implements ProductService {
                 }
                 product.setMainItem(null);
                 HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
-                if(hodometerPO != null && ListUtils.isNotEmpty(hodometerPO.getHodometers())){
-                    product.setHodometers(hodometerPO.getHodometers());
+                if(hodometerPO != null){
+                    product.setHodometer(hodometerPO);
                 }
                 return product;
             } catch (Exception e) {
@@ -537,17 +537,24 @@ public class ProductServiceImpl implements ProductService {
         BigDecimal adtSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSettlePrice(), quantityTotal).doubleValue()));
         // 儿童总价
-        BigDecimal chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
-                calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
-        BigDecimal chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
-                calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        BigDecimal chdSalesTotal = null;
+        if(priceInfoPO.getChdSalePrice() != null){
+            chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
+                    calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
+        }
+        BigDecimal chdSettlesTotal = null;
+        if(priceInfoPO.getChdSettlePrice() != null){
+            chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
+                    calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        }
+
         result.setAdtSalePriceTotal(adtSalesTotal);
         result.setAdtSettlePriceTotal(adtSettlesTotal);
         result.setChdSalePriceTotal(chdSalesTotal);
         result.setChdSettlePriceTotal(chdSettlesTotal);
         // 总价
-        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal.doubleValue())));
-        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal.doubleValue())));
+        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue())));
+        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue())));
     }
 
     /**
