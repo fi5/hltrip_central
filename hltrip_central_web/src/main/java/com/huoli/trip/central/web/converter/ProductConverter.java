@@ -87,6 +87,8 @@ public class ProductConverter {
         product.setMainItem(convertToProductItem(po));
         product.setTotal(total);
         product.setPriceInfo(convertToPriceInfo(po.getProduct().getPriceCalendar()));
+        product.setOriCity(po.getOriCity());
+        product.setCity(po.getCity());
         if(product.getPriceInfo() != null){
             product.setSalePrice(product.getPriceInfo().getSalePrice());
         }
