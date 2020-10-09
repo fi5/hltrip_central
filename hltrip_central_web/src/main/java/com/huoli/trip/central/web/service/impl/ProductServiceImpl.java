@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.HodometerDao;
+import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
@@ -65,6 +66,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private HodometerDao hodometerDao;
+
+    @Autowired
+    private PriceDao priceDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -481,7 +485,15 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProductsByItem(List<ProductItemPO> productItemPOs, int total) {
         return productItemPOs.stream().map(po -> {
             try {
-                return ProductConverter.convertToProductByItem(po, total);
+                Product product = ProductConverter.convertToProductByItem(po, total);
+                if(po.getProduct() != null){
+                    List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
+                    if(ListUtils.isNotEmpty(prices)){
+                        product.setGroupDates(prices.stream().map(p ->
+                                DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
+                    }
+                }
+                return product;
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;
