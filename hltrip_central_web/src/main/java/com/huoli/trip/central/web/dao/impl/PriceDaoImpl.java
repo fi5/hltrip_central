@@ -4,6 +4,7 @@ import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.PriceSinglePO;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
 import org.bson.Document;
@@ -79,7 +80,8 @@ public class PriceDaoImpl implements PriceDao {
     @Override
     public List<PriceSinglePO> selectByProductCode(String productCode, int count){
         Aggregation aggregation = Aggregation.newAggregation(Aggregation.unwind("priceInfos"),
-                Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.stock").gt(0)),
+                Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.stock").gt(0)
+                        .and("priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))),
                 Aggregation.sort(Sort.Direction.ASC, "salePrice"),
                 Aggregation.limit(count == 0 ? 1 : count));
         AggregationResults<PriceSinglePO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR, PriceSinglePO.class);

@@ -445,6 +445,9 @@ public class ProductServiceImpl implements ProductService {
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
                     result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+                    if(result.getMainItem() != null && StringUtils.isBlank(result.getMainItem().getAppMainTitle())){
+                        result.getMainItem().setAppMainTitle(product.getName());
+                    }
                 }
                 product.setMainItem(null);
                 HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
