@@ -444,9 +444,22 @@ public class ProductServiceImpl implements ProductService {
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
-                    result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
-                    if(result.getMainItem() != null && StringUtils.isBlank(result.getMainItem().getAppMainTitle())){
-                        result.getMainItem().setAppMainTitle(product.getName());
+                    ProductItem productItem = JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class);
+                    if(productItem != null){
+                        List<ImageBase> imageBases = productItem.getImageDetails();
+                        List<ImageBase> imageBases1 =  productItem.getImages();
+                        if(ListUtils.isNotEmpty(imageBases)){
+                            if(imageBases1 == null){
+                                productItem.setImages(imageBases);
+                            }else{
+                                imageBases1.addAll(imageBases);
+                                productItem.setImages(imageBases1);
+                            }
+                        }
+                        result.setMainItem(productItem);
+                        if(StringUtils.isBlank(productItem.getAppMainTitle())){
+                            productItem.setAppMainTitle(product.getName());
+                        }
                     }
                 }
                 product.setMainItem(null);
