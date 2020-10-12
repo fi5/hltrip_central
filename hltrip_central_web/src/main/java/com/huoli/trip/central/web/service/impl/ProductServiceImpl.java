@@ -458,7 +458,7 @@ public class ProductServiceImpl implements ProductService {
                             }
                         }
                         result.setMainItem(productItem);
-                        if(productItem != null && StringUtils.isBlank(productItem.getAppMainTitle())){
+                        if(StringUtils.isBlank(productItem.getAppMainTitle())){
                             productItem.setAppMainTitle(product.getName());
                         }
                     }
