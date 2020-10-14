@@ -51,6 +51,7 @@ public class HllxOrderManager extends OrderManager {
      * @return
      */
     public BaseResponse<CenterBookCheck> getCenterCheckInfos(BookCheckReq req){
+        log.info("进入可预订检查 hllx");
         String begin = req.getBeginDate();
         String end = req.getEndDate();
         if(StringUtils.isEmpty(end)){
