@@ -44,4 +44,12 @@ public interface PriceDao {
      * @return
      */
     PriceSinglePO selectByProductCodes(List<String> productCodes, Date date);
+
+    /**
+     * 根据产品编码查价格
+     * @param productCode
+     * @param count
+     * @return
+     */
+    List<PriceSinglePO> selectByProductCode(String productCode, int count);
 }

@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.HodometerDao;
+import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
@@ -67,6 +68,9 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private HodometerDao hodometerDao;
 
+    @Autowired
+    private PriceDao priceDao;
+
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
@@ -116,7 +120,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<RecommendResult> recommendList(RecommendRequest request) {
         RecommendResult result = new RecommendResult();
-        List<Integer> types = ProductConverter.getTypes(request.getType());
+        List<Integer> types = ProductConverter.getRecommendTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
@@ -145,6 +149,9 @@ public class ProductServiceImpl implements ProductService {
             }
             if (ListUtils.isNotEmpty(productPOs)) {
                 products.addAll(convertToProducts(productPOs, 0));
+            }
+            if(products.size() >= request.getPageSize()){
+                break;
             }
         }
         if(ListUtils.isEmpty(products)){
@@ -191,6 +198,9 @@ public class ProductServiceImpl implements ProductService {
                 //设置基准晚数
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
                 result.setBaseNum(baseNum);
+            }
+            if(TRIP_PRODUCTS.contains(productPo.getProductType())){
+                result.setBaseNum(productPo.getTripDays());
             }
 
             return BaseResponse.success(result);
@@ -264,6 +274,7 @@ public class ProductServiceImpl implements ProductService {
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
             priceCal.setQuantity(req.getCount());
+            priceCal.setChdQuantity(req.getChdCount());
             if(StringUtils.isNotBlank(req.getStartDate()))
                 priceCal.setStartDate(CommonUtils.curDate.parse(req.getStartDate()));
             if(StringUtils.isNotBlank(req.getEndDate()))
@@ -285,14 +296,14 @@ public class ProductServiceImpl implements ProductService {
             }
 
             final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
-            result.setSalePrice(priceCalData.getAdtSalePriceTotal());
-            result.setSettlePrice(priceCalData.getSettlesTotal());
-            result.setStock(priceCalData.getMinStock());
-            result.setChdSalePrice(priceCalData.getChdSalePriceTotal());
-            result.setChdSettlePrice(priceCalData.getChdSettlePriceTotal());
             result.setSalePrice(priceCalData.getSalesTotal());
             result.setSettlePrice(priceCalData.getSettlesTotal());
-
+            result.setStock(priceCalData.getMinStock());
+            result.setChdSalePrice(priceCalData.getChdSalesPrice());
+            result.setChdSettlePrice(priceCalData.getChdSettlePrice());
+            result.setAdtSalePriceTotal(priceCalData.getAdtSalesPrice());
+            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePrice());
+            result.setStock(priceCalData.getStock());
             return BaseResponse.success(result);
         } catch (Exception e) {
             log.error("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
@@ -382,9 +393,9 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
         int quantity = request.getQuantity();
-        int chdQuantity = request.getChdQuantity();
+        Integer chdQuantity = request.getChdQuantity();
         if(TRIP_PRODUCTS.contains(productPO.getProductType())){
-            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity, result);
+            checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity == null ? 0 : chdQuantity, result);
         }
         // 含酒店
         else if(productPO.getProductType() == ProductType.FREE_TRIP.getCode()) {
@@ -447,12 +458,15 @@ public class ProductServiceImpl implements ProductService {
                             }
                         }
                         result.setMainItem(productItem);
+                        if(StringUtils.isBlank(productItem.getAppMainTitle())){
+                            productItem.setAppMainTitle(product.getName());
+                        }
                     }
                 }
                 product.setMainItem(null);
                 HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
-                if(hodometerPO != null && ListUtils.isNotEmpty(hodometerPO.getHodometers())){
-                    product.setHodometers(hodometerPO.getHodometers());
+                if(hodometerPO != null){
+                    product.setHodometer(hodometerPO);
                 }
                 return product;
             } catch (Exception e) {
@@ -488,7 +502,15 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProductsByItem(List<ProductItemPO> productItemPOs, int total) {
         return productItemPOs.stream().map(po -> {
             try {
-                return ProductConverter.convertToProductByItem(po, total);
+                Product product = ProductConverter.convertToProductByItem(po, total);
+                if(po.getProduct() != null){
+                    List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
+                    if(ListUtils.isNotEmpty(prices)){
+                        product.setGroupDates(prices.stream().map(p ->
+                                DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
+                    }
+                }
+                return product;
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;
@@ -530,17 +552,28 @@ public class ProductServiceImpl implements ProductService {
         BigDecimal adtSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSettlePrice(), quantityTotal).doubleValue()));
         // 儿童总价
-        BigDecimal chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
-                calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
-        BigDecimal chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
-                calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        BigDecimal chdSalesTotal = null;
+        if(priceInfoPO.getChdSalePrice() != null){
+            chdSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
+                    calcPrice(priceInfoPO.getChdSalePrice(), chdQuantityTotal).doubleValue()));
+        }
+        BigDecimal chdSettlesTotal = null;
+        if(priceInfoPO.getChdSettlePrice() != null){
+            chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
+                    calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
+        }
         result.setAdtSalePriceTotal(adtSalesTotal);
         result.setAdtSettlePriceTotal(adtSettlesTotal);
         result.setChdSalePriceTotal(chdSalesTotal);
         result.setChdSettlePriceTotal(chdSettlesTotal);
         // 总价
-        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal.doubleValue())));
-        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal.doubleValue())));
+        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue())));
+        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue())));
+        result.setAdtSalesPrice(priceInfoPO.getSalePrice());
+        result.setAdtSettlePrice(priceInfoPO.getSettlePrice());
+        result.setChdSalesPrice(priceInfoPO.getChdSalePrice());
+        result.setChdSettlePrice(priceInfoPO.getChdSettlePrice());
+        result.setStock(priceInfoPO.getStock());
     }
 
     /**

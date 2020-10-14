@@ -112,10 +112,10 @@ public class ProductDaoImpl implements ProductDao {
         return output.getMappedResults();
     }
 
-    @Override
-    public List<ProductPO> getFlagRecommendResult(Integer type, int size){
+//    @Override
+    public List<ProductPO> getFlagRecommendResult_(Integer type, int size){
         // 查询条件
-        Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1).and("priceCalendar.priceInfos.stock").gt(0);
+        Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1);
         if(type != null){
             criteria.and("productType").is(type);
         }
@@ -123,6 +123,17 @@ public class ProductDaoImpl implements ProductDao {
         Aggregation aggregation = Aggregation.newAggregation(recommendListAggregation(matchOperation, size));
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return output.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getFlagRecommendResult(Integer type, int size){
+        // 查询条件
+        Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1);
+        if(type != null){
+            criteria.and("productType").is(type);
+        }
+        Query query = new Query(criteria).limit(size);
+        return mongoTemplate.find(query, ProductPO.class);
     }
 
     @Override
@@ -198,10 +209,10 @@ public class ProductDaoImpl implements ProductDao {
     private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord){
         Criteria criteria = new Criteria();
         if(StringUtils.isNotBlank(oriCity)){
-            criteria.and("oriCity").is(oriCity);
+            criteria.and("oriCity").regex(oriCity);
         }
         if(StringUtils.isNotBlank(desCity)){
-            criteria.and("city").is(desCity);
+            criteria.and("city").regex(desCity);
         }
         criteria.and("product.productType").is(type).and("product.status").is(1);
         if(StringUtils.isNotBlank(keyWord)){
@@ -211,6 +222,8 @@ public class ProductDaoImpl implements ProductDao {
         query.fields().include("code")
                 .include("tags")
                 .include("description")
+                .include("oriCity")
+                .include("city")
                 .include("product.code")
                 .include("product.name")
                 .include("product.status")

@@ -145,9 +145,12 @@ public class Test0 {
 //                        "yaochufa_247533_1724318",
 //                        "yaochufa_247533_1724328"))));
 
-//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getFlagRecommendResult(2, 5)));
+        RecommendRequest recommendRequest = new RecommendRequest();
+        recommendRequest.setType(1);
+        recommendRequest.setPosition(1);
+        log.info("-----------------------------------  {}", JSON.toJSONString(productService.recommendList(recommendRequest)));
 
-        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getByCityAndType("北京市", DateTimeUtil.trancateToDate(new Date()), 2, 10)));
+//        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getByCityAndType("北京市", DateTimeUtil.trancateToDate(new Date()), 2, 10)));
     }
 
 //    @Test
@@ -159,13 +162,14 @@ public class Test0 {
     public void test8(){
         ProductPageRequest request = new ProductPageRequest();
         request.setPageSize(6);
-        request.setCity("成都");
+        request.setCity("上海");
+        request.setOriCity("北京");
         request.setPageIndex(1);
         request.setType(0);
         productService.pageList(request );
     }
 
-    @Test
+//    @Test
     public void test9(){
         Criteria criteria = new Criteria();
         Aggregation aggregation = Aggregation.newAggregation(
@@ -175,6 +179,14 @@ public class Test0 {
                 );
         AggregationResults<Protest> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, Protest.class);
         log.info(JSON.toJSONString(outputType.getMappedResults().get(0)));
+    }
+
+    @Test
+    public void test10(){
+        CategoryDetailRequest request = new CategoryDetailRequest();
+        request.setProductItemId("yaochufa_sirofusk");
+        request.setSaleDate(new Date(1602432000000L));
+        log.info(JSON.toJSONString(productService.categoryDetail(request)));
     }
 
     public List<ProductPO> getPageList(String city, Integer type, int page, int size){

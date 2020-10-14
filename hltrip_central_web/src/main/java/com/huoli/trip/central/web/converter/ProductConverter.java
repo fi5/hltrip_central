@@ -9,6 +9,7 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,6 +87,8 @@ public class ProductConverter {
         product.setMainItem(convertToProductItem(po));
         product.setTotal(total);
         product.setPriceInfo(convertToPriceInfo(po.getProduct().getPriceCalendar()));
+        product.setOriCity(po.getOriCity());
+        product.setCity(po.getCity());
         if(product.getPriceInfo() != null){
             product.setSalePrice(product.getPriceInfo().getSalePrice());
         }
@@ -184,12 +187,33 @@ public class ProductConverter {
         List<Integer> types;
         // 不限需要查所有类型
         if (type == ProductType.UN_LIMIT.getCode()) {
-            types = Lists.newArrayList(ProductType.FREE_TRIP.getCode(), ProductType.RESTAURANT.getCode(), ProductType.SCENIC_TICKET.getCode(), ProductType.SCENIC_TICKET_PLUS.getCode());
+            types = Arrays.asList(ProductType.values()).stream().map(t -> t.getCode()).filter(t ->
+                    t != ProductType.UN_LIMIT.getCode()).collect(Collectors.toList());
         } else if (type == ProductType.SCENIC_TICKET_PLUS.getCode()) {  // 门票加需要查门票和门票+
             types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
         } else {  // 其它类型就按传进来的查
             types = Lists.newArrayList(type);
         }
+        return types;
+    }
+
+    /**
+     * 推荐列表查询类型
+     * @param type
+     * @return
+     */
+    public static List<Integer> getRecommendTypes(int type) {
+        List<Integer> types;
+        List<Integer> all = Arrays.asList(ProductType.values()).stream().map(t -> t.getCode()).collect(Collectors.toList());
+        // 门票+转成两个类型
+        if (type == ProductType.SCENIC_TICKET_PLUS.getCode()) {  // 门票加需要查门票和门票+
+            types = Lists.newArrayList(ProductType.SCENIC_TICKET_PLUS.getCode(), ProductType.SCENIC_TICKET.getCode());
+        } else {  // 其它类型就按传进来的查
+            types = Lists.newArrayList(type);
+        }
+        // 合并去重，优先按传进来的查
+        types.addAll(all);
+        types = types.stream().filter(t -> t != ProductType.UN_LIMIT.getCode()).distinct().collect(Collectors.toList());
         return types;
     }
 

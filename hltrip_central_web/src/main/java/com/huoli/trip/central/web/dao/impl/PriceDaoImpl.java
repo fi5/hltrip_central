@@ -4,6 +4,7 @@ import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.PriceSinglePO;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
 import org.bson.Document;
@@ -44,13 +45,9 @@ public class PriceDaoImpl implements PriceDao {
 
     @Override
     public PriceSinglePO selectByProductCode(String productCode){
-        Aggregation aggregation = Aggregation.newAggregation(Aggregation.unwind("priceInfos"),
-                Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.stock").gt(0)),
-                Aggregation.sort(Sort.Direction.ASC, "salePrice"),
-                Aggregation.limit(1));
-        AggregationResults<PriceSinglePO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR, PriceSinglePO.class);
-        if(ListUtils.isNotEmpty(output.getMappedResults())){
-            return output.getMappedResults().get(0);
+        List<PriceSinglePO> list = selectByProductCode(productCode, 1);
+        if(ListUtils.isNotEmpty(list)){
+            return list.get(0);
         }
         return null;
     }
@@ -79,4 +76,16 @@ public class PriceDaoImpl implements PriceDao {
         }
         return null;
     }
+
+    @Override
+    public List<PriceSinglePO> selectByProductCode(String productCode, int count){
+        Aggregation aggregation = Aggregation.newAggregation(Aggregation.unwind("priceInfos"),
+                Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.stock").gt(0)
+                        .and("priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))),
+                Aggregation.sort(Sort.Direction.ASC, "salePrice"),
+                Aggregation.limit(count == 0 ? 1 : count));
+        AggregationResults<PriceSinglePO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR, PriceSinglePO.class);
+        return output.getMappedResults();
+    }
+
 }
