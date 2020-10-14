@@ -89,7 +89,7 @@ public class HllxOrderManager extends OrderManager {
                 }else{
 //                    CenterBookCheck  bookCheck = new CenterBookCheck();
                     List<HllxBookSaleInfo> saleInfos = hllxBookCheckRes.getSaleInfos();
-                    if(ListUtils.isNotEmpty(saleInfos)){
+                    if(ListUtils.isEmpty(saleInfos)){
                         return BaseResponse.fail(CentralError.NO_STOCK_ERROR);
                     }
                     HllxBookSaleInfo hllxBookSaleInfo = saleInfos.get(0);
