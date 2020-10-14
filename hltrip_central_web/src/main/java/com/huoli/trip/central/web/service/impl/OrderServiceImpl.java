@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
@@ -55,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
             channelCode = "hllx";
         }
         OrderManager orderManager =orderFactory.getOrderManager(channelCode);
+        log.info("获取到的 orderManager is：{}", JSON.toJSONString(orderManager));
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
