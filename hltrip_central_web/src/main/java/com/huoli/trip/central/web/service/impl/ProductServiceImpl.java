@@ -296,13 +296,13 @@ public class ProductServiceImpl implements ProductService {
             }
 
             final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
-            result.setSalePrice(priceCalData.getAdtSalePriceTotal());
+            result.setSalePrice(priceCalData.getSalesTotal());
             result.setSettlePrice(priceCalData.getSettlesTotal());
             result.setStock(priceCalData.getMinStock());
             result.setChdSalePrice(priceCalData.getChdSalePriceTotal());
             result.setChdSettlePrice(priceCalData.getChdSettlePriceTotal());
-            result.setSalePrice(priceCalData.getSalesTotal());
-            result.setSettlePrice(priceCalData.getSettlesTotal());
+            result.setAdtSalePriceTotal(priceCalData.getAdtSalePriceTotal());
+            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePriceTotal());
 
             return BaseResponse.success(result);
         } catch (Exception e) {

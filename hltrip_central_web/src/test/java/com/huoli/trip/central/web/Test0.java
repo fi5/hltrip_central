@@ -124,7 +124,7 @@ public class Test0 {
 
     }
 
-    @Test
+//    @Test
     public void test6(){
 //        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getPageList("北京市", 2, null, 1, 10)));
 //
@@ -179,6 +179,14 @@ public class Test0 {
                 );
         AggregationResults<Protest> outputType = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, Protest.class);
         log.info(JSON.toJSONString(outputType.getMappedResults().get(0)));
+    }
+
+    @Test
+    public void test10(){
+        CategoryDetailRequest request = new CategoryDetailRequest();
+        request.setProductItemId("yaochufa_sirofusk");
+        request.setSaleDate(new Date(1602432000000L));
+        log.info(JSON.toJSONString(productService.categoryDetail(request)));
     }
 
     public List<ProductPO> getPageList(String city, Integer type, int page, int size){
