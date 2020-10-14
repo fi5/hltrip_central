@@ -50,7 +50,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public BaseResponse<CenterBookCheck> getCheckInfos(BookCheckReq req) {
-        OrderManager orderManager =orderFactory.getOrderManager(req.getChannelCode());
+        String channelCode = req.getChannelCode();
+        if(channelCode.startsWith("hllx")){
+            channelCode = "hllx";
+        }
+        OrderManager orderManager =orderFactory.getOrderManager(channelCode);
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
