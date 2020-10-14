@@ -299,11 +299,11 @@ public class ProductServiceImpl implements ProductService {
             result.setSalePrice(priceCalData.getSalesTotal());
             result.setSettlePrice(priceCalData.getSettlesTotal());
             result.setStock(priceCalData.getMinStock());
-            result.setChdSalePrice(priceCalData.getChdSalePriceTotal());
-            result.setChdSettlePrice(priceCalData.getChdSettlePriceTotal());
-            result.setAdtSalePriceTotal(priceCalData.getAdtSalePriceTotal());
-            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePriceTotal());
-
+            result.setChdSalePrice(priceCalData.getChdSalesPrice());
+            result.setChdSettlePrice(priceCalData.getChdSettlePrice());
+            result.setAdtSalePriceTotal(priceCalData.getAdtSalesPrice());
+            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePrice());
+            result.setStock(priceCalData.getStock());
             return BaseResponse.success(result);
         } catch (Exception e) {
             log.error("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
@@ -562,7 +562,6 @@ public class ProductServiceImpl implements ProductService {
             chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                     calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
         }
-
         result.setAdtSalePriceTotal(adtSalesTotal);
         result.setAdtSettlePriceTotal(adtSettlesTotal);
         result.setChdSalePriceTotal(chdSalesTotal);
@@ -570,6 +569,11 @@ public class ProductServiceImpl implements ProductService {
         // 总价
         result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue())));
         result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue())));
+        result.setAdtSalesPrice(priceInfoPO.getSalePrice());
+        result.setAdtSettlePrice(priceInfoPO.getSettlePrice());
+        result.setChdSalesPrice(priceInfoPO.getChdSalePrice());
+        result.setChdSettlePrice(priceInfoPO.getChdSettlePrice());
+        result.setStock(priceInfoPO.getStock());
     }
 
     /**
