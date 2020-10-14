@@ -298,10 +298,10 @@ public class ProductServiceImpl implements ProductService {
             result.setSalePrice(priceCalData.getSalesTotal());
             result.setSettlePrice(priceCalData.getSettlesTotal());
             result.setStock(priceCalData.getMinStock());
-            result.setChdSalePrice(priceCalData.getChdSalePriceTotal());
-            result.setChdSettlePrice(priceCalData.getChdSettlePriceTotal());
-            result.setAdtSalePriceTotal(priceCalData.getAdtSalePriceTotal());
-            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePriceTotal());
+            result.setChdSalePrice(priceCalData.getChdSalesPrice());
+            result.setChdSettlePrice(priceCalData.getChdSettlePrice());
+            result.setAdtSalePriceTotal(priceCalData.getAdtSalesPrice());
+            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePrice());
 
             return BaseResponse.success(result);
         } catch (Exception e) {
