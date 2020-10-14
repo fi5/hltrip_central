@@ -302,7 +302,7 @@ public class ProductServiceImpl implements ProductService {
             result.setChdSettlePrice(priceCalData.getChdSettlePrice());
             result.setAdtSalePriceTotal(priceCalData.getAdtSalesPrice());
             result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePrice());
-
+            result.setStock(priceCalData.getStock());
             return BaseResponse.success(result);
         } catch (Exception e) {
             log.error("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
@@ -572,6 +572,7 @@ public class ProductServiceImpl implements ProductService {
         result.setAdtSettlePrice(priceInfoPO.getSettlePrice());
         result.setChdSalesPrice(priceInfoPO.getChdSalePrice());
         result.setChdSettlePrice(priceInfoPO.getChdSettlePrice());
+        result.setStock(priceInfoPO.getStock());
     }
 
     /**
