@@ -561,7 +561,6 @@ public class ProductServiceImpl implements ProductService {
             chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                     calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
         }
-
         result.setAdtSalePriceTotal(adtSalesTotal);
         result.setAdtSettlePriceTotal(adtSettlesTotal);
         result.setChdSalePriceTotal(chdSalesTotal);
@@ -569,6 +568,10 @@ public class ProductServiceImpl implements ProductService {
         // 总价
         result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue())));
         result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue())));
+        result.setAdtSalesPrice(priceInfoPO.getSalePrice());
+        result.setAdtSettlePrice(priceInfoPO.getSettlePrice());
+        result.setChdSalesPrice(priceInfoPO.getChdSalePrice());
+        result.setChdSettlePrice(priceInfoPO.getChdSettlePrice());
     }
 
     /**
