@@ -77,6 +77,7 @@ public class HllxOrderManager extends OrderManager {
         //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         req1.setBeginDate(begin);
         req1.setEndDate(end);
+        req1.setProductId(req.getProductId());
         HllxBookCheckRes hllxBookCheckRes;
         try {
             //供应商输出
