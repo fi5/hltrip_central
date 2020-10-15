@@ -51,6 +51,7 @@ public class HllxOrderManager extends OrderManager {
      * @return
      */
     public BaseResponse<CenterBookCheck> getCenterCheckInfos(BookCheckReq req){
+        log.info("进入可预订检查 hllx");
         String begin = req.getBeginDate();
         String end = req.getEndDate();
         if(StringUtils.isEmpty(end)){
@@ -76,6 +77,7 @@ public class HllxOrderManager extends OrderManager {
         //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         req1.setBeginDate(begin);
         req1.setEndDate(end);
+        req1.setProductId(req.getProductId());
         HllxBookCheckRes hllxBookCheckRes;
         try {
             //供应商输出
@@ -87,7 +89,7 @@ public class HllxOrderManager extends OrderManager {
                 }else{
 //                    CenterBookCheck  bookCheck = new CenterBookCheck();
                     List<HllxBookSaleInfo> saleInfos = hllxBookCheckRes.getSaleInfos();
-                    if(ListUtils.isNotEmpty(saleInfos)){
+                    if(ListUtils.isEmpty(saleInfos)){
                         return BaseResponse.fail(CentralError.NO_STOCK_ERROR);
                     }
                     HllxBookSaleInfo hllxBookSaleInfo = saleInfos.get(0);
