@@ -237,6 +237,9 @@ public class ProductServiceImpl implements ProductService {
             orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
             if (product.getMainItem() != null) {
                 result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+                if(StringUtils.isBlank(result.getMainItem().getAppMainTitle())){
+                    result.getMainItem().setAppMainTitle(product.getName());
+                }
             }
 
             //处理product子item
