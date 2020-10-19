@@ -166,6 +166,9 @@ public class ProductServiceImpl implements ProductService {
             ProductPriceCalendarResult result = new ProductPriceCalendarResult();
 
             final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
+            ProductPO productPO = productDao.getTripProductByCode(productPriceReq.getProductCode());
+            // 提前预订天数
+            Integer aheadDays = productPO.getBookAheadMin() == null ? null : (productPO.getBookAheadMin() / 60 / 24);
             if(null==pricePo || CollectionUtils.isEmpty(pricePo.getPriceInfos()))
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             List<PriceInfo> priceInfos = Lists.newArrayList();
@@ -187,6 +190,10 @@ public class ProductServiceImpl implements ProductService {
                 BeanUtils.copyProperties(entry, target);
                 if(target.getSalePrice()!=null && target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
                     continue;
+                // 预订的日期 - 今天 >= 提前预定天数  的才返回，小于预订天数内的不能订；
+                if(aheadDays != null && DateTimeUtil.getDateDiffDays(entry.getSaleDate(), new Date()) < aheadDays ){
+                    continue;
+                }
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }
