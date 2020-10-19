@@ -189,8 +189,8 @@ public class ProductServiceImpl implements ProductService {
                 BeanUtils.copyProperties(entry, target);
                 if(target.getSalePrice()!=null && target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
                     continue;
-                // 预订的日期 - 今天 >= 提前预定天数  的不返回；
-                if(aheadDays != null && DateTimeUtil.getDateDiffDays(entry.getSaleDate(), new Date()) >= aheadDays ){
+                // 预订的日期 - 今天 >= 提前预定天数  的才返回，小于预订天数内的不能订；
+                if(aheadDays != null && DateTimeUtil.getDateDiffDays(entry.getSaleDate(), new Date()) < aheadDays ){
                     continue;
                 }
                 priceInfos.add(target);
