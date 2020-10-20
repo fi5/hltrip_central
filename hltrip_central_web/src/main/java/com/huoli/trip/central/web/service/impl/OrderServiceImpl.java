@@ -5,11 +5,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.service.OrderFactory;
-import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
-import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
 import com.huoli.trip.common.vo.request.central.RefundKafka;
@@ -168,7 +166,7 @@ public class OrderServiceImpl implements OrderService {
             BeanUtils.copyProperties(req,orderStatusKafka);
             orderStatusKafka.setTraceId(TraceIdUtils.getTraceId());
             //订单状态转换下推送
-            orderStatusKafka.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(req.getOrderStatus(),1));
+            orderStatusKafka.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(req.getOrderStatus(),req.getType()));
             ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(orderStatusKafka));
             listenableFuture.addCallback(
                     result -> log.info("订单状态推送kafka成功, params : {}", JSONObject.toJSONString(orderStatusKafka)),

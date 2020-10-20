@@ -47,8 +47,11 @@ public class OrderInfoTranser {
 					rtnStatus=40;
 					break;
 				default:
+					rtnStatus=orderStatus;
 					break;
 			}
+		}else if(type==2){
+			return orderStatus;
 		}
 		return rtnStatus;
 	}
