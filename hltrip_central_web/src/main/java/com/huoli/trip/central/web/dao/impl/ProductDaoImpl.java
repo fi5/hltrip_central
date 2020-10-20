@@ -237,7 +237,9 @@ public class ProductDaoImpl implements ProductDao {
                 .include("product.description")
                 .include("product.city")
                 .include("product.count")
-                .include("product.priceCalendar");
+                .include("product.priceCalendar")
+                .include("product.validTime")
+                .include("product.invalidTime");
         return query;
     }
 
