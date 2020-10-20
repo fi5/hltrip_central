@@ -214,7 +214,10 @@ public class ProductDaoImpl implements ProductDao {
         if(StringUtils.isNotBlank(desCity)){
             criteria.and("city").regex(desCity);
         }
-        criteria.and("product.productType").is(type).and("product.status").is(1);
+        Date date = new Date();
+        criteria.and("product.productType").is(type).and("product.status").is(1)
+                .and("product.validTime").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
+                .and("product.invalidTime").lte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)));
         if(StringUtils.isNotBlank(keyWord)){
             criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
         }
