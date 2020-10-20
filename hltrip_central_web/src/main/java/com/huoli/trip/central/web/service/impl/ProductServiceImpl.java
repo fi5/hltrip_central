@@ -313,6 +313,10 @@ public class ProductServiceImpl implements ProductService {
             result.setAdtSalePriceTotal(priceCalData.getAdtSalesPrice());
             result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePrice());
             result.setStock(priceCalData.getStock());
+            HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(req.getProductCode());
+            if(hodometerPO != null){
+                result.setHodometer(hodometerPO);
+            }
             return BaseResponse.success(result);
         } catch (Exception e) {
             log.error("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
