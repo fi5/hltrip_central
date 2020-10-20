@@ -167,8 +167,6 @@ public class ProductServiceImpl implements ProductService {
 
             final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
             ProductPO productPO = productDao.getTripProductByCode(productPriceReq.getProductCode());
-            Date validTime = productPO.getValidTime();
-            Date invalidTime = productPO.getInvalidTime();
             // 提前预订天数
             Integer aheadDays = productPO.getBookAheadMin() == null ? null : (productPO.getBookAheadMin() / 60 / 24);
             if(null==pricePo || CollectionUtils.isEmpty(pricePo.getPriceInfos()))
@@ -194,14 +192,6 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 // 预订的日期 - 今天 >= 提前预定天数  的才返回，小于预订天数内的不能订；
                 if(aheadDays != null && DateTimeUtil.getDateDiffDays(entry.getSaleDate(), new Date()) < aheadDays ){
-                    continue;
-                }
-                // 不到销售开始日期的不返回
-                if(validTime != null && DateTimeUtil.trancateToDate(entry.getSaleDate()).compareTo(DateTimeUtil.trancateToDate(validTime)) < 0){
-                    continue;
-                }
-                // 超过销售结束日期的不返回
-                if(invalidTime != null && DateTimeUtil.trancateToDate(entry.getSaleDate()).compareTo(DateTimeUtil.trancateToDate(invalidTime)) > 0){
                     continue;
                 }
                 priceInfos.add(target);
