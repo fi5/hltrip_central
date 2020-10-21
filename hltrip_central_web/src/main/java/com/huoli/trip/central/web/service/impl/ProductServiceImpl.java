@@ -263,6 +263,30 @@ public class ProductServiceImpl implements ProductService {
             result.setBuyMinNight(product.getBuyMinNight());
             result.setDelayType(product.getDelayType());
             result.setDescription(product.getDescription());
+            if(StringUtils.isBlank(product.getDescription())){
+                StringBuilder sb = new StringBuilder();
+                if(StringUtils.isNotBlank(product.getBookDesc())){
+                    sb.append("预定须知")
+                            .append("<br>")
+                            .append(product.getBookDesc())
+                            .append("<br>");
+                }
+                if(StringUtils.isNotBlank(product.getIncludeDesc())){
+                    sb.append("费用包含")
+                            .append("<br>")
+                            .append(product.getIncludeDesc())
+                            .append("<br>");
+                }
+                if(StringUtils.isNotBlank(product.getExcludeDesc())){
+                    sb.append("自理费用")
+                            .append("<br>")
+                            .append(product.getExcludeDesc())
+                            .append("<br>");
+                }
+                if(StringUtils.isNotBlank(sb.toString())){
+                    result.setDescription(sb.toString());
+                }
+            }
             result.setExcludeDesc(product.getExcludeDesc());
             result.setName(product.getName());
             result.setProductType(product.getProductType());
