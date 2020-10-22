@@ -302,7 +302,8 @@ public class ProductServiceImpl implements ProductService {
             result.setTicket(product.getTicket());
             result.setFood(product.getFood());
             result.setSupplierName(product.getSupplierName());
-
+            result.setBookDesc(product.getBookDesc());
+            result.setRemark(product.getRemark());
 
 //  调用统一的价格计算并设值
 
@@ -330,13 +331,15 @@ public class ProductServiceImpl implements ProductService {
             }
 
             final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
-            result.setSalePrice(priceCalData.getSalesTotal());
-            result.setSettlePrice(priceCalData.getSettlesTotal());
+            result.setSalePrice(priceCalData.getAdtSalesPrice());
+            result.setSettlePrice(priceCalData.getAdtSettlePrice());
             result.setStock(priceCalData.getMinStock());
             result.setChdSalePrice(priceCalData.getChdSalesPrice());
             result.setChdSettlePrice(priceCalData.getChdSettlePrice());
-            result.setAdtSalePriceTotal(priceCalData.getAdtSalesPrice());
-            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePrice());
+            result.setAdtSalePriceTotal(priceCalData.getAdtSalePriceTotal());
+            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePriceTotal());
+            result.setSalePriceTotal(priceCalData.getSalesTotal());
+            result.setSettlePriceTotal(priceCalData.getSettlesTotal());
             result.setStock(priceCalData.getStock());
             HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(req.getProductCode());
             if(hodometerPO != null){
