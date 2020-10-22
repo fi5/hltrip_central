@@ -178,6 +178,8 @@ public class HllxOrderManager extends OrderManager {
      */
     public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
         HllxCancelOrderReq hllxCancelOrderReq = new HllxCancelOrderReq();
+        hllxCancelOrderReq.setPartnerOrderId(req.getPartnerOrderId());
+        hllxCancelOrderReq.setRemark(req.getRemark());
         HllxBaseResult<HllxCancelOrderRes> hllxCancelOrder = hllxService.cancelOrder(hllxCancelOrderReq);
         if(hllxCancelOrder != null && hllxCancelOrder.getSuccess() && hllxCancelOrder.getData() != null){
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
