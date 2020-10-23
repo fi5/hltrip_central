@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.controller;
 import com.huoli.eagle.eye.core.HuoliTrace;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.service.impl.OrderManager;
+import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class CommonController {
     @Autowired
     private HuoliTrace huoliTrace;
 
+    @Autowired
+    private RecommendTask recommendTask;
+
     @PostMapping("/sync/price")
     public BaseResponse syncPriceManual(@RequestParam
                                       @NotBlank(message = "产品编码productCode不能为空") String productCode,
@@ -40,6 +44,12 @@ public class CommonController {
                 productCode, supplierProductCode, startDate, endDate, channel);
         OrderManager orderManager = orderFactory.getOrderManager(channel);
         orderManager.syncPrice(productCode, supplierProductCode, startDate, endDate, huoliTrace.getTraceInfo().getTraceId());
+        return BaseResponse.withSuccess();
+    }
+
+    @RequestMapping("/refresh/recommend/flag")
+    public BaseResponse refreshRecommendFlagList(){
+        recommendTask.refreshRecommendList();
         return BaseResponse.withSuccess();
     }
 }
