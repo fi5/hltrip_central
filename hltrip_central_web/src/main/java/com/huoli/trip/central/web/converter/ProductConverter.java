@@ -8,6 +8,7 @@ import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +22,25 @@ import java.util.stream.Collectors;
  * 版本：1.0<br>
  * 创建日期：2020/7/7<br>
  */
+@Slf4j
 public class ProductConverter {
+
+    /**
+     * 转成product vo
+     * @param productPOs
+     * @param total
+     * @return
+     */
+    public static List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
+        return productPOs.stream().map(po -> {
+            try {
+                return ProductConverter.convertToProduct(po, total);
+            } catch (Exception e) {
+                log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
+                return null;
+            }
+        }).filter(po -> po != null).collect(Collectors.toList());
+    }
 
     /**
      * 转成product vo
