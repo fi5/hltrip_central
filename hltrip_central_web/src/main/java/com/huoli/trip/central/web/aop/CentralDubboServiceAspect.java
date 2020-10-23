@@ -124,8 +124,11 @@ public class CentralDubboServiceAspect {
                 eventBuilder.withData("code", CentralError.ERROR_UNKNOWN.getCode());
                 eventBuilder.withStatus(EventStatusEnum.FAIL);
             }
-            log.info("[{}], response: {}, cost: {},", function, JSON.toJSONString(result),
-                    stopWatch.getTotalTimeMillis());
+            // 这个方法日志量过大
+            if(!function.equals("recommendList")){
+                log.info("[{}], response: {}, cost: {},", function, JSON.toJSONString(result),
+                        stopWatch.getTotalTimeMillis());
+            }
             return result;
         } catch (ValidationException | TypeMismatchException e){
             log.error("[{}] 请求参数异常: ", function, e);

@@ -148,6 +148,11 @@ public class Test0 {
         RecommendRequest recommendRequest = new RecommendRequest();
         recommendRequest.setType(1);
         recommendRequest.setPosition(1);
+        try {
+            Thread.sleep(1000 * 60);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         log.info("-----------------------------------  {}", JSON.toJSONString(productService.recommendList(recommendRequest)));
 
 //        log.info("-----------------------------------  {}", JSON.toJSONString(productDao.getByCityAndType("北京市", DateTimeUtil.trancateToDate(new Date()), 2, 10)));

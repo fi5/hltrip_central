@@ -61,6 +61,8 @@ public interface ProductDao {
      */
     List<ProductPO> getFlagRecommendResult(Integer type, int size);
 
+    List<ProductPO> getFlagRecommendResult_(Integer type, int size);
+
     /**
      * 获取低价推荐列表
      * @param productType

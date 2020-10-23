@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -11,6 +12,7 @@ import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
+import com.huoli.trip.central.web.service.RedisService;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
@@ -30,12 +32,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
 
 /**
  * 描述：<br/>
@@ -70,6 +75,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private PriceDao priceDao;
+
+    @Autowired
+    private RedisTemplate jedisTemplate;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -133,14 +141,16 @@ public class ProductServiceImpl implements ProductService {
                 } else if(ListUtils.isNotEmpty(request.getProductCodes())){ // 按销量推荐
                     productPOs = productDao.getSalesRecommendList(request.getProductCodes());
                 } else { // 最后用推荐标记查询
-                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
+                    getFlagRecommend(products, t);
+//                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
                 }
             } else if(request.getPosition() == Constants.RECOMMEND_POSITION_TRIP_MAIN){  // 旅游首页推荐
                 // 优先销量推荐
                 if(ListUtils.isNotEmpty(request.getProductCodes())){
                     productPOs = productDao.getSalesRecommendList(request.getProductCodes());
                 } else { // 按推荐标记推荐
-                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
+                    getFlagRecommend(products, t);
+//                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
                 }
             } else {  // 其它根据城市和日期推荐
                 if(StringUtils.isNotBlank(request.getCity()) && request.getSaleDate() != null){
@@ -626,5 +636,20 @@ public class ProductServiceImpl implements ProductService {
     private BigDecimal calcPrice(BigDecimal price, int quantity) {
         BigDecimal total = BigDecimal.valueOf(BigDecimalUtil.mul(price.doubleValue(), quantity));
         return total;
+    }
+
+    /**
+     * 获取缓存的推荐列表
+     * @param products
+     * @param type
+     */
+    private void getFlagRecommend(List<Product> products, Integer type){
+        String key = String.join("", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, type.toString());
+        if(jedisTemplate.hasKey(key)){
+            List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
+            if(ListUtils.isNotEmpty(list)){
+                products.addAll(list);
+            }
+        }
     }
 }

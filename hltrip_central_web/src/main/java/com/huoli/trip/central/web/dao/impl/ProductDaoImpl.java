@@ -112,7 +112,7 @@ public class ProductDaoImpl implements ProductDao {
         return output.getMappedResults();
     }
 
-//    @Override
+    @Override
     public List<ProductPO> getFlagRecommendResult_(Integer type, int size){
         // 查询条件
         Criteria criteria = Criteria.where("recommendFlag").is(1).and("status").is(1);
