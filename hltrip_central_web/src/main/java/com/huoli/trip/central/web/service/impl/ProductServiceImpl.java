@@ -330,15 +330,17 @@ public class ProductServiceImpl implements ProductService {
             }
 
             final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
-            result.setSalePrice(priceCalData.getAdtSalesPrice());
-            result.setSettlePrice(priceCalData.getAdtSettlePrice());
+            result.setSalePrice(priceCalData.getSalesTotal());
+            result.setSettlePrice(priceCalData.getSettlesTotal());
             result.setStock(priceCalData.getMinStock());
             result.setChdSalePrice(priceCalData.getChdSalesPrice());
             result.setChdSettlePrice(priceCalData.getChdSettlePrice());
+            result.setChdSalePriceTotal(priceCalData.getChdSalePriceTotal());
+            result.setChdSettlePriceTotal(priceCalData.getChdSettlePriceTotal());
+            result.setAdtSalePrice(priceCalData.getAdtSalesPrice());
+            result.setAdtSettlePrice(priceCalData.getAdtSettlePrice());
             result.setAdtSalePriceTotal(priceCalData.getAdtSalePriceTotal());
             result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePriceTotal());
-            result.setSalePriceTotal(priceCalData.getSalesTotal());
-            result.setSettlePriceTotal(priceCalData.getSettlesTotal());
             result.setStock(priceCalData.getStock());
             HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(req.getProductCode());
             if(hodometerPO != null){
