@@ -79,7 +79,9 @@ public class SupplierErrorMsgTransfer {
                     return BaseResponse.fail(CentralError.ERROR_ORDER_TOTAL_PRICE);
                 }
                 log.error("错误异常描述是 ：{}",msg);
-                return BaseResponse.fail(9999,msg,null);
+                //2020-10-27 供应商下单失败出统一异常码
+                return BaseResponse.fail(CentralError.ERROR_ORDER_TRIP_ORDER_ERROR.getCode(), msg, null);
+                //return BaseResponse.fail(9999,msg,null);
         }
     }
 }
