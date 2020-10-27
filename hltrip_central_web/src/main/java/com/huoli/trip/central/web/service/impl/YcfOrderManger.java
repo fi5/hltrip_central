@@ -85,6 +85,7 @@ public class YcfOrderManger extends OrderManager {
         ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         ycfBookCheckReq.setBeginDate(begin);
         ycfBookCheckReq.setEndDate(end);
+        ycfBookCheckReq.setTraceId(req.getTraceId());
         /**
          * 开始日期大于结束日期
          */
@@ -173,8 +174,10 @@ public class YcfOrderManger extends OrderManager {
     }
 
    public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){
-
-       final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
+        BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
+        baseOrderRequest.setOrderId(req.getOrderId());
+        baseOrderRequest.setTraceId(req.getTraceId());
+       final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(baseOrderRequest);
        if(order==null)
            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
        try {
@@ -199,7 +202,10 @@ public class YcfOrderManger extends OrderManager {
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
 
         try {
-            final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
+            BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
+            baseOrderRequest.setOrderId(req.getOrderId());
+            baseOrderRequest.setTraceId(req.getTraceId());
+            final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(baseOrderRequest);
             if(null==vochers)
                 return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             log.info("拿到的数据:"+JSONObject.toJSONString(vochers));
@@ -232,6 +238,7 @@ public class YcfOrderManger extends OrderManager {
         bookCheckReq.setBeginDate(begin);
         bookCheckReq.setEndDate(end);
         bookCheckReq.setCount(req.getQunatity());
+        bookCheckReq.setTraceId(req.getTraceId());
         //校验可查询预订
         BaseResponse<CenterBookCheck> centerCheckInfos = this.getCenterCheckInfos(bookCheckReq);
         if(centerCheckInfos.getCode() != 0){
