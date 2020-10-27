@@ -202,7 +202,9 @@ public class ProductServiceImpl implements ProductService {
             if (productPo.getRoom() != null&& CollectionUtils.isNotEmpty(productPo.getRoom().getRooms()))  {
                 //设置基准晚数
                 final Integer baseNum = productPo.getRoom().getRooms().get(0).getBaseNum();
+                final Integer baseNight = productPo.getRoom().getRooms().get(0).getBaseNight();
                 result.setBaseNum(baseNum);
+                result.setBaseNight(baseNight);
             }
             if(TRIP_PRODUCTS.contains(productPo.getProductType())){
                 result.setBaseNum(productPo.getTripDays());
