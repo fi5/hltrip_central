@@ -28,6 +28,7 @@ public class PayOrderConverter implements Converter<PayOrderReq, YcfPayOrderReq,
         ycfPayOrderReq.setPaySerialNumber(req.getPaySerialNumber());
         ycfPayOrderReq.setPartnerOrderId(req.getPartnerOrderId());
         ycfPayOrderReq.setPrice(req.getPrice());
+        ycfPayOrderReq.setTraceId(req.getTraceId());
         return ycfPayOrderReq;
     }
 

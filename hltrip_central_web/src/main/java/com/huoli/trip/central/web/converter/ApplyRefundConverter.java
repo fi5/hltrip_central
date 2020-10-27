@@ -26,6 +26,7 @@ public class ApplyRefundConverter implements Converter<CancelOrderReq, YcfCancel
         YcfCancelOrderReq ycfCancelOrderReq = new YcfCancelOrderReq();
         ycfCancelOrderReq.setPartnerOrderId(req.getPartnerOrderId());
         ycfCancelOrderReq.setRemark(req.getRemark());
+        ycfCancelOrderReq.setTraceId(req.getTraceId());
         return ycfCancelOrderReq;
     }
 

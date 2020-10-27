@@ -47,6 +47,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         ycfCreateOrderReq.setRemark(req.getRemark());
         //总的销售价
         ycfCreateOrderReq.setSellAmount(req.getSellAmount());
+        ycfCreateOrderReq.setTraceId(req.getTraceId());
         return ycfCreateOrderReq;
     }
 

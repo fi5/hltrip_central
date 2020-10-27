@@ -8,7 +8,9 @@ import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.ListUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,6 +36,9 @@ import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_
 @Slf4j
 public class RecommendTask {
 
+    @Value("${schedule.executor}")
+    private String schedule;
+
     @Autowired
     private ProductDao productDao;
 
@@ -47,6 +52,9 @@ public class RecommendTask {
     @PostConstruct
     @Scheduled(cron = "0 0/15 * * * ?")
     public void refreshRecommendList(){
+        if(schedule == null || !StringUtils.equalsIgnoreCase("yes", schedule)){
+            return;
+        }
         log.info("执行刷新推荐列表任务。。。");
         List<Integer> all = Arrays.asList(ProductType.values()).stream().map(t -> t.getCode())
                 .filter(t -> t != ProductType.UN_LIMIT.getCode()).collect(Collectors.toList());
