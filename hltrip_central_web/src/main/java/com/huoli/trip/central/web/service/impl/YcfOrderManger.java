@@ -180,8 +180,10 @@ public class YcfOrderManger extends OrderManager {
     }
 
    public BaseResponse<OrderDetailRep> getOrderDetail(OrderOperReq req){
-
-       final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(req.getOrderId());
+        BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
+        baseOrderRequest.setOrderId(req.getOrderId());
+        baseOrderRequest.setTraceId(req.getTraceId());
+       final YcfBaseResult<YcfOrderStatusResult> order = ycfOrderService.getOrder(baseOrderRequest);
        if(order==null)
            return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
        try {
@@ -204,8 +206,12 @@ public class YcfOrderManger extends OrderManager {
     }
 
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
+
         try {
-            final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
+            BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
+            baseOrderRequest.setOrderId(req.getOrderId());
+            baseOrderRequest.setTraceId(req.getTraceId());
+            final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(baseOrderRequest);
             if(null==vochers)
                 return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             log.info("拿到的数据:"+JSONObject.toJSONString(vochers));
