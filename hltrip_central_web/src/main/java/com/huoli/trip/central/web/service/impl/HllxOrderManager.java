@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
+import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
@@ -79,6 +80,11 @@ public class HllxOrderManager extends OrderManager {
         req1.setEndDate(end);
         req1.setProductId(req.getProductId());
         HllxBookCheckRes hllxBookCheckRes;
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        req1.setTraceId(traceId);
         try {
             //供应商输出
             HllxBaseResult<HllxBookCheckRes> checkInfos = hllxService.getCheckInfos(req1);
@@ -115,6 +121,7 @@ public class HllxOrderManager extends OrderManager {
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getCount());
         PriceCalcResult priceCalcResult = null;
+        calcRequest.setTraceId(traceId);
         try{
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
             priceCalcResult = priceCalcResultBaseResponse.getData();
@@ -143,6 +150,12 @@ public class HllxOrderManager extends OrderManager {
         hllxCreateOrderReq.setDate(req.getBeginDate());
         hllxCreateOrderReq.setProductId(req.getProductId());
         hllxCreateOrderReq.setQunatity(req.getQunatity());
+        HllxBookCheckRes hllxBookCheckRes;
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        hllxCreateOrderReq.setTraceId(traceId);
         HllxBaseResult<HllxCreateOrderRes> resHllxBaseResult = hllxService.createOrder(hllxCreateOrderReq);
         if(resHllxBaseResult != null && resHllxBaseResult.getSuccess() && resHllxBaseResult.getData() != null) {
             CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
@@ -161,6 +174,12 @@ public class HllxOrderManager extends OrderManager {
      */
     public BaseResponse<CenterPayOrderRes> getCenterPayOrder(PayOrderReq req){
         HllxPayOrderReq hllxPayOrderReq = new HllxPayOrderReq();
+        HllxBookCheckRes hllxBookCheckRes;
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        hllxPayOrderReq.setTraceId(traceId);
         HllxBaseResult<HllxPayOrderRes> resHllxBaseResult = hllxService.payOrder(hllxPayOrderReq);
         if(resHllxBaseResult != null && resHllxBaseResult.getSuccess()){
             CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
@@ -180,6 +199,12 @@ public class HllxOrderManager extends OrderManager {
         HllxCancelOrderReq hllxCancelOrderReq = new HllxCancelOrderReq();
         hllxCancelOrderReq.setPartnerOrderId(req.getPartnerOrderId());
         hllxCancelOrderReq.setRemark(req.getRemark());
+        HllxBookCheckRes hllxBookCheckRes;
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        hllxCancelOrderReq.setTraceId(traceId);
         HllxBaseResult<HllxCancelOrderRes> hllxCancelOrder = hllxService.cancelOrder(hllxCancelOrderReq);
         if(hllxCancelOrder != null && hllxCancelOrder.getSuccess() && hllxCancelOrder.getData() != null){
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
@@ -245,6 +270,7 @@ public class HllxOrderManager extends OrderManager {
     public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
         CenterPayCheckRes  payCheckRes = new CenterPayCheckRes();
         payCheckRes.setResult(true);
+        HllxBookCheckRes hllxBookCheckRes;
         return BaseResponse.success(payCheckRes);
     }
 

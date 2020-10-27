@@ -27,7 +27,7 @@ public class TraceIdUtils {
         try {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             traceId = request.getHeader("X-B3-TraceId");
-            log.info("X-B3-TraceId is :{}",traceId);
+            log.info("原始请求传递X-B3-TraceId is :{}",traceId);
         } catch (Exception e) {
             log.error("获取traceID 失败");
         }

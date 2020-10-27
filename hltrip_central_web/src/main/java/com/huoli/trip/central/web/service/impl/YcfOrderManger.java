@@ -5,6 +5,7 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.*;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.util.CentralUtils;
+import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
@@ -101,6 +102,11 @@ public class YcfOrderManger extends OrderManager {
         }
         //供应商输出数据包
         YcfBookCheckRes ycfBookCheckRes = null;
+        String traceId = req.getTraceId();
+        if(StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        ycfBookCheckReq.setTraceId(traceId);
         try {
             //供应商输出
             YcfBaseResult<YcfBookCheckRes> checkInfos = ycfOrderService.getCheckInfos(ycfBookCheckReq);
@@ -150,6 +156,7 @@ public class YcfOrderManger extends OrderManager {
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getCount());
         PriceCalcResult priceCalcResult = null;
+        calcRequest.setTraceId(traceId);
         try{
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
             priceCalcResult = priceCalcResultBaseResponse.getData();
@@ -197,7 +204,6 @@ public class YcfOrderManger extends OrderManager {
     }
 
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
-
         try {
             final YcfBaseResult<YcfVouchersResult> vochers = ycfOrderService.getVochers(req.getOrderId());
             if(null==vochers)
@@ -232,6 +238,11 @@ public class YcfOrderManger extends OrderManager {
         bookCheckReq.setBeginDate(begin);
         bookCheckReq.setEndDate(end);
         bookCheckReq.setCount(req.getQunatity());
+        String traceId = req.getTraceId();
+        if(StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        bookCheckReq.setTraceId(traceId);
         //校验可查询预订
         BaseResponse<CenterBookCheck> centerCheckInfos = this.getCenterCheckInfos(bookCheckReq);
         if(centerCheckInfos.getCode() != 0){
@@ -328,6 +339,7 @@ public class YcfOrderManger extends OrderManager {
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getQunatity());
         PriceCalcResult priceCalcResult = null;
+        calcRequest.setTraceId(traceId);
         try{
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
             priceCalcResult = priceCalcResultBaseResponse.getData();
@@ -354,6 +366,7 @@ public class YcfOrderManger extends OrderManager {
         //供应商对象包装业务实体类
         YcfBaseResult<YcfCreateOrderRes> ycfOrder =null;
         YcfCreateOrderRes ycfCreateOrderRes = null;
+        ycfCreateOrderReq.setTraceId(traceId);
         try {
             ycfOrder = ycfOrderService.createOrder(ycfCreateOrderReq);
             if(ycfOrder!=null&&ycfOrder.getStatusCode()==200){
@@ -382,6 +395,11 @@ public class YcfOrderManger extends OrderManager {
         YcfBaseResult<YcfPayOrderRes> ycfPayOrder = null;
         YcfPayOrderRes ycfPayOrderRes = null;
         try {
+            String traceId = req.getTraceId();
+            if(StringUtils.isEmpty(traceId)){
+                traceId = TraceIdUtils.getTraceId();
+            }
+            ycfPayOrderReq.setTraceId(traceId);
             ycfPayOrder = ycfOrderService.payOrder(ycfPayOrderReq);
             if(ycfPayOrder!=null&&ycfPayOrder.getStatusCode()==200){
                 ycfPayOrderRes = ycfPayOrder.getData();
@@ -426,6 +444,11 @@ public class YcfOrderManger extends OrderManager {
         YcfBaseResult<YcfCancelOrderRes> ycfBaseResult=null;
         YcfCancelOrderRes ycfCancelOrderRes = null;
         try {
+            String traceId = req.getTraceId();
+            if(StringUtils.isEmpty(traceId)){
+                traceId = TraceIdUtils.getTraceId();
+            }
+            ycfCancelOrderReq.setTraceId(traceId);
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
             if(ycfBaseResult!=null&&ycfBaseResult.getStatusCode()==200){
                 ycfCancelOrderRes = ycfBaseResult.getData();
@@ -447,11 +470,16 @@ public class YcfOrderManger extends OrderManager {
 
     public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
         //支付前校验逻辑 判断订单状态是否是待支付
+        String traceId = req.getTraceId();
+        if(StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
         CenterPayCheckRes result = new CenterPayCheckRes();
         OrderOperReq operReq = new OrderOperReq();
         operReq.setOrderId(req.getPartnerOrderId());
         operReq.setChannelCode(req.getChannelCode());
         operReq.setTraceId(req.getTraceId());
+        operReq.setTraceId(traceId);
         try {
             BaseResponse<OrderDetailRep> orderDetail = this.getOrderDetail(operReq);
             if(orderDetail.getCode()==0&&orderDetail.getData()!=null&&orderDetail.getData().getOrderStatus()== OrderStatus.TO_BE_PAID.getCode()){
@@ -477,6 +505,11 @@ public class YcfOrderManger extends OrderManager {
         YcfBaseResult<YcfCancelOrderRes> ycfBaseResult = null;
         YcfCancelOrderRes ycfCancelOrderRes = null;
         try {
+            String traceId = req.getTraceId();
+            if(StringUtils.isEmpty(traceId)){
+                traceId = TraceIdUtils.getTraceId();
+            }
+            ycfCancelOrderReq.setTraceId(traceId);
             ycfBaseResult = ycfOrderService.cancelOrder(ycfCancelOrderReq);
             if(ycfBaseResult!=null&&ycfBaseResult.getStatusCode()==200){
                 ycfCancelOrderRes = ycfBaseResult.getData();
@@ -499,11 +532,16 @@ public class YcfOrderManger extends OrderManager {
     public void refreshStockPrice(ProductPriceReq req){
 
         try {
+            String traceId = req.getTraceId();
+            if(StringUtils.isEmpty(traceId)){
+                traceId = TraceIdUtils.getTraceId();
+            }
             YcfGetPriceRequest stockPriceReq=new YcfGetPriceRequest();
             stockPriceReq.setProductID(req.getSupplierProductId());
             stockPriceReq.setPartnerProductID(req.getProductCode());
             stockPriceReq.setStartDate(req.getStartDate());
             stockPriceReq.setEndDate(req.getEndDate());
+            stockPriceReq.setTraceId(traceId);
             ycfSynService.getPrice(stockPriceReq);
 
         } catch (Exception e) {
@@ -515,6 +553,9 @@ public class YcfOrderManger extends OrderManager {
     public void syncPrice(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
         try {
             YcfGetPriceRequest request = new YcfGetPriceRequest();
+            if(StringUtils.isEmpty(traceId)){
+                traceId = TraceIdUtils.getTraceId();
+            }
             request.setProductID(supplierProductId);
             request.setPartnerProductID(productCode);
             request.setStartDate(startDate);
