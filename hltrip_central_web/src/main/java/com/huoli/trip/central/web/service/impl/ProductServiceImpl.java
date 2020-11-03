@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.HodometerDao;
+import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
@@ -73,6 +74,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private RedisTemplate jedisTemplate;
+
+    @Autowired
+    private PriceDao priceDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -171,6 +175,9 @@ public class ProductServiceImpl implements ProductService {
             ProductPriceCalendarResult result = new ProductPriceCalendarResult();
 
             final PricePO pricePo = productDao.getPricePos(productPriceReq.getProductCode());
+            ProductPO productPO = productDao.getTripProductByCode(productPriceReq.getProductCode());
+            // 提前预订天数
+            Integer aheadDays = productPO.getBookAheadMin() == null ? null : (productPO.getBookAheadMin() / 60 / 24);
             if(null==pricePo || CollectionUtils.isEmpty(pricePo.getPriceInfos()))
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             List<PriceInfo> priceInfos = Lists.newArrayList();
@@ -192,6 +199,10 @@ public class ProductServiceImpl implements ProductService {
                 BeanUtils.copyProperties(entry, target);
                 if(target.getSalePrice()!=null && target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
                     continue;
+                // 预订的日期 - 今天 >= 提前预定天数  的才返回，小于预订天数内的不能订；
+                if(aheadDays != null && DateTimeUtil.getDateDiffDays(entry.getSaleDate(), new Date()) < aheadDays ){
+                    continue;
+                }
                 priceInfos.add(target);
 //                log.info("这里的日期:" + CommonUtils.dateFormat.format(target.getSaleDate()));
             }
@@ -245,6 +256,9 @@ public class ProductServiceImpl implements ProductService {
             orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
             if (product.getMainItem() != null) {
                 result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+                if(StringUtils.isBlank(result.getMainItem().getAppMainTitle())){
+                    result.getMainItem().setAppMainTitle(product.getName());
+                }
             }
 
             //处理product子item
@@ -260,6 +274,30 @@ public class ProductServiceImpl implements ProductService {
             result.setBuyMinNight(product.getBuyMinNight());
             result.setDelayType(product.getDelayType());
             result.setDescription(product.getDescription());
+            if(StringUtils.isBlank(product.getDescription())){
+                StringBuilder sb = new StringBuilder();
+                if(StringUtils.isNotBlank(product.getBookDesc())){
+                    sb.append("预定须知")
+                            .append("<br>")
+                            .append(product.getBookDesc())
+                            .append("<br>");
+                }
+                if(StringUtils.isNotBlank(product.getIncludeDesc())){
+                    sb.append("费用包含")
+                            .append("<br>")
+                            .append(product.getIncludeDesc())
+                            .append("<br>");
+                }
+                if(StringUtils.isNotBlank(product.getExcludeDesc())){
+                    sb.append("自理费用")
+                            .append("<br>")
+                            .append(product.getExcludeDesc())
+                            .append("<br>");
+                }
+                if(StringUtils.isNotBlank(sb.toString())){
+                    result.setDescription(sb.toString());
+                }
+            }
             result.setExcludeDesc(product.getExcludeDesc());
             result.setName(product.getName());
             result.setProductType(product.getProductType());
@@ -275,7 +313,8 @@ public class ProductServiceImpl implements ProductService {
             result.setTicket(product.getTicket());
             result.setFood(product.getFood());
             result.setSupplierName(product.getSupplierName());
-
+            result.setBookDesc(product.getBookDesc());
+            result.setRemark(product.getRemark());
 
 //  调用统一的价格计算并设值
 
@@ -303,14 +342,22 @@ public class ProductServiceImpl implements ProductService {
             }
 
             final PriceCalcResult priceCalData = priceCalcResultBaseResponse.getData();
-            result.setSalePrice(priceCalData.getAdtSalePriceTotal());
-            result.setSettlePrice(priceCalData.getSettlesTotal());
-            result.setStock(priceCalData.getMinStock());
-            result.setChdSalePrice(priceCalData.getChdSalePriceTotal());
-            result.setChdSettlePrice(priceCalData.getChdSettlePriceTotal());
             result.setSalePrice(priceCalData.getSalesTotal());
             result.setSettlePrice(priceCalData.getSettlesTotal());
-
+            result.setStock(priceCalData.getMinStock());
+            result.setChdSalePrice(priceCalData.getChdSalesPrice());
+            result.setChdSettlePrice(priceCalData.getChdSettlePrice());
+            result.setChdSalePriceTotal(priceCalData.getChdSalePriceTotal());
+            result.setChdSettlePriceTotal(priceCalData.getChdSettlePriceTotal());
+            result.setAdtSalePrice(priceCalData.getAdtSalesPrice());
+            result.setAdtSettlePrice(priceCalData.getAdtSettlePrice());
+            result.setAdtSalePriceTotal(priceCalData.getAdtSalePriceTotal());
+            result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePriceTotal());
+            result.setStock(priceCalData.getStock());
+            HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(req.getProductCode());
+            if(hodometerPO != null){
+                result.setHodometer(hodometerPO);
+            }
             return BaseResponse.success(result);
         } catch (Exception e) {
             log.error("getPriceDetail报错:"+ JSONObject.toJSONString(req), e);
@@ -452,7 +499,23 @@ public class ProductServiceImpl implements ProductService {
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
-                    result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
+                    ProductItem productItem = JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class);
+                    if(productItem != null){
+                        List<ImageBase> imageBases = productItem.getImageDetails();
+                        List<ImageBase> imageBases1 =  productItem.getImages();
+                        if(ListUtils.isNotEmpty(imageBases)){
+                            if(imageBases1 == null){
+                                productItem.setImages(imageBases);
+                            }else{
+                                imageBases1.addAll(imageBases);
+                                productItem.setImages(imageBases1);
+                            }
+                        }
+                        result.setMainItem(productItem);
+                        if(StringUtils.isBlank(productItem.getAppMainTitle())){
+                            productItem.setAppMainTitle(product.getName());
+                        }
+                    }
                 }
                 product.setMainItem(null);
                 HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
@@ -493,7 +556,15 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProductsByItem(List<ProductItemPO> productItemPOs, int total) {
         return productItemPOs.stream().map(po -> {
             try {
-                return ProductConverter.convertToProductByItem(po, total);
+                Product product = ProductConverter.convertToProductByItem(po, total);
+                if(po.getProduct() != null){
+                    List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
+                    if(ListUtils.isNotEmpty(prices)){
+                        product.setGroupDates(prices.stream().map(p ->
+                                DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
+                    }
+                }
+                return product;
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;
@@ -545,7 +616,6 @@ public class ProductServiceImpl implements ProductService {
             chdSettlesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSettlesTotal() == null ? 0d : result.getSettlesTotal().doubleValue(),
                     calcPrice(priceInfoPO.getChdSettlePrice(), chdQuantityTotal).doubleValue()));
         }
-
         result.setAdtSalePriceTotal(adtSalesTotal);
         result.setAdtSettlePriceTotal(adtSettlesTotal);
         result.setChdSalePriceTotal(chdSalesTotal);
@@ -553,6 +623,11 @@ public class ProductServiceImpl implements ProductService {
         // 总价
         result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue())));
         result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue())));
+        result.setAdtSalesPrice(priceInfoPO.getSalePrice());
+        result.setAdtSettlePrice(priceInfoPO.getSettlePrice());
+        result.setChdSalesPrice(priceInfoPO.getChdSalePrice());
+        result.setChdSettlePrice(priceInfoPO.getChdSettlePrice());
+        result.setStock(priceInfoPO.getStock());
     }
 
     /**
