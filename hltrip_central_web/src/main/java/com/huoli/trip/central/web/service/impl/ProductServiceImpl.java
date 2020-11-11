@@ -658,15 +658,18 @@ public class ProductServiceImpl implements ProductService {
                 List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
                 if(ListUtils.isNotEmpty(list)){
                     products.addAll(list);
+                    log.info("查到缓存。。{}", JSON.toJSONString(products));
                     return;
                 }
             }
             if(ProductType.FREE_TRIP.getCode() == type.intValue()){
+                log.info("酒店+");
                 recommendTask.refreshRecommendList(1);
                 ProductPageRequest request = new ProductPageRequest();
                 request.setType(type);
                 request.setPageSize(4);
                 BaseResponse<ProductPageResult> response = pageList(request);
+                log.info("列表结果====={}", JSON.toJSONString(response));
                 if(response.getData() != null && response.getData().getProducts() != null){
                     products.addAll(response.getData().getProducts());
                 }
