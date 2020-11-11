@@ -13,6 +13,7 @@ import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.service.RedisService;
+import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
@@ -77,6 +78,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private PriceDao priceDao;
+
+    @Autowired
+    private RecommendTask recommendTask;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -652,7 +656,9 @@ public class ProductServiceImpl implements ProductService {
             List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
             if(ListUtils.isNotEmpty(list)){
                 products.addAll(list);
+                return;
             }
         }
+        recommendTask.refreshRecommendList(1);
     }
 }
