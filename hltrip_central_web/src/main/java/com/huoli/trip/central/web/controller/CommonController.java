@@ -49,7 +49,7 @@ public class CommonController {
 
     @RequestMapping("/refresh/recommend/flag")
     public BaseResponse refreshRecommendFlagList(){
-        recommendTask.refreshRecommendList();
+        recommendTask.refreshRecommendList(1);
         return BaseResponse.withSuccess();
     }
 }

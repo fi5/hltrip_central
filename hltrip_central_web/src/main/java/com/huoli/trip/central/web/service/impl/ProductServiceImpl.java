@@ -13,6 +13,7 @@ import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ProductItemDao;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.service.RedisService;
+import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
@@ -74,10 +75,13 @@ public class ProductServiceImpl implements ProductService {
     private HodometerDao hodometerDao;
 
     @Autowired
+    private RedisTemplate jedisTemplate;
+
+    @Autowired
     private PriceDao priceDao;
 
     @Autowired
-    private RedisTemplate jedisTemplate;
+    private RecommendTask recommendTask;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -648,12 +652,27 @@ public class ProductServiceImpl implements ProductService {
      * @param type
      */
     private void getFlagRecommend(List<Product> products, Integer type){
-        String key = String.join("", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, type.toString());
-        if(jedisTemplate.hasKey(key)){
-            List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
-            if(ListUtils.isNotEmpty(list)){
-                products.addAll(list);
+        try {
+            String key = String.join("", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, type.toString());
+            if(jedisTemplate.hasKey(key)){
+                List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
+                if(ListUtils.isNotEmpty(list)){
+                    products.addAll(list);
+                    return;
+                }
             }
+            if(ProductType.FREE_TRIP.getCode() == type.intValue()){
+                recommendTask.refreshRecommendList(1);
+                ProductPageRequest request = new ProductPageRequest();
+                request.setType(type);
+                request.setPageSize(4);
+                BaseResponse<ProductPageResult> response = pageList(request);
+                if(response.getData() != null && response.getData().getProducts() != null){
+                    products.addAll(response.getData().getProducts());
+                }
+            }
+        } catch (Exception e) {
+            log.error("获取标记推荐列表异常", e);
         }
     }
 }

@@ -52,7 +52,16 @@ public class RecommendTask {
     @PostConstruct
     @Scheduled(cron = "0 0/15 * * * ?")
     public void refreshRecommendList(){
-        if(schedule == null || !StringUtils.equalsIgnoreCase("yes", schedule)){
+        refreshRecommendList(0);
+    }
+
+    /**
+     * 刷新推荐列表缓存
+     * @param force 强制刷新
+     */
+    @Async
+    public void refreshRecommendList(int force){
+        if((schedule == null || !StringUtils.equalsIgnoreCase("yes", schedule)) && force != 1){
             return;
         }
         log.info("执行刷新推荐列表任务。。。");
@@ -71,4 +80,5 @@ public class RecommendTask {
             }
         }
     }
+
 }
