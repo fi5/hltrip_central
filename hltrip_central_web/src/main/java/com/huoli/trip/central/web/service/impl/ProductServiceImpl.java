@@ -651,14 +651,27 @@ public class ProductServiceImpl implements ProductService {
      * @param type
      */
     private void getFlagRecommend(List<Product> products, Integer type){
-        String key = String.join("", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, type.toString());
-        if(jedisTemplate.hasKey(key)){
-            List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
-            if(ListUtils.isNotEmpty(list)){
-                products.addAll(list);
-                return;
+        try {
+            String key = String.join("", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, type.toString());
+            if(jedisTemplate.hasKey(key)){
+                List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
+                if(ListUtils.isNotEmpty(list)){
+                    products.addAll(list);
+                    return;
+                }
             }
+            if(ProductType.FREE_TRIP.getCode() == type.intValue()){
+                recommendTask.refreshRecommendList(1);
+                ProductPageRequest request = new ProductPageRequest();
+                request.setType(type);
+                request.setPageSize(4);
+                BaseResponse<ProductPageResult> response = pageList(request);
+                if(response.getData() != null && response.getData().getProducts() != null){
+                    products.addAll(response.getData().getProducts());
+                }
+            }
+        } catch (Exception e) {
+            log.error("获取标记推荐列表异常", e);
         }
-        recommendTask.refreshRecommendList(1);
     }
 }
