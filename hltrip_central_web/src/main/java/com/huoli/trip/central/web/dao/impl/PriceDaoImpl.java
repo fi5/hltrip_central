@@ -81,7 +81,7 @@ public class PriceDaoImpl implements PriceDao {
     public List<PriceSinglePO> selectByProductCode(String productCode, int count){
         Aggregation aggregation = Aggregation.newAggregation(Aggregation.unwind("priceInfos"),
                 Aggregation.match(Criteria.where("productCode").is(productCode).and("priceInfos.stock").gt(0)
-                        .and("priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))),
+                        .and("priceInfos.saleDate").gt(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(new Date())))),
                 Aggregation.sort(Sort.Direction.ASC, "salePrice"),
                 Aggregation.limit(count == 0 ? 1 : count));
         AggregationResults<PriceSinglePO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR, PriceSinglePO.class);

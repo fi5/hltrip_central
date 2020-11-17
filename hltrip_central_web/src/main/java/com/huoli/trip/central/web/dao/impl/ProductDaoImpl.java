@@ -353,7 +353,7 @@ public class ProductDaoImpl implements ProductDao {
      */
     private  List<AggregationOperation> recommendListAggregation(MatchOperation matchOperation, int size){
         // 分组
-        GroupOperation groupOperation = getListGroupField("code");
+        GroupOperation groupOperation = getListGroupField("mainItemCode");
         List<AggregationOperation> operations = ListAggregation(matchOperation, groupOperation);
         if(size > 0){
             operations.add(Aggregation.limit(size));

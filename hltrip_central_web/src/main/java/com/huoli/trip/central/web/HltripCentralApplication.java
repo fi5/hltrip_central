@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerA
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = {RedisAutoConfiguration.class, RedisRepositoriesAutoConfiguration.class,
         DataSourceAutoConfiguration.class, DataSourceTransactionManagerAutoConfiguration.class,
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.ImportResource;
 @ImportResource({"classpath:disconf-config.xml"})
 @EnableDubbo(scanBasePackages = "com.huoli.trip.central")
 @ComponentScan({"com.huoli.trip"})
+@EnableScheduling
 public class HltripCentralApplication {
 
     public static void main(String[] args) {
