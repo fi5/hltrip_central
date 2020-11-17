@@ -257,9 +257,9 @@ public class ProductServiceImpl implements ProductService {
             log.info("信息:"+JSONObject.toJSONString(OrderFactory.orderManagerMap));
 
             String channelCode = productPo.getSupplierId();
-            if(channelCode.startsWith("hllx")){
+         /*   if(channelCode.startsWith("hllx")){
                 channelCode = "hllx";
-            }
+            }*/
             OrderManager orderManager = orderFactory.getOrderManager(channelCode);
             if (orderManager == null) {
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
@@ -449,9 +449,9 @@ public class ProductServiceImpl implements ProductService {
         }
         // 计算价格前先刷新
         String channelCode = productPO.getSupplierId();
-        if(channelCode.startsWith("hllx")){
+       /* if(channelCode.startsWith("hllx")){
             channelCode = "hllx";
-        }
+        }*/
         OrderManager orderManager = orderFactory.getOrderManager(channelCode);
         orderManager.syncPrice(productPO.getCode(),
                 productPO.getSupplierProductId(),
