@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.HodometerDao;
@@ -36,9 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -658,18 +660,15 @@ public class ProductServiceImpl implements ProductService {
                 List<Product> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), Product.class);
                 if(ListUtils.isNotEmpty(list)){
                     products.addAll(list);
-                    log.info("查到缓存。。{}", JSON.toJSONString(products));
                     return;
                 }
             }
             if(ProductType.FREE_TRIP.getCode() == type.intValue()){
-                log.info("酒店+");
                 recommendTask.refreshRecommendList(1);
                 ProductPageRequest request = new ProductPageRequest();
                 request.setType(type);
                 request.setPageSize(4);
                 BaseResponse<ProductPageResult> response = pageList(request);
-                log.info("列表结果====={}", JSON.toJSONString(response));
                 if(response.getData() != null && response.getData().getProducts() != null){
                     products.addAll(response.getData().getProducts());
                 }
