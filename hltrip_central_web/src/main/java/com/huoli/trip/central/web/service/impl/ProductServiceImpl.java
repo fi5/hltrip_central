@@ -250,10 +250,15 @@ public class ProductServiceImpl implements ProductService {
             log.info("拿到的productInfo:"+JSONObject.toJSONString(product));
             log.info("信息:"+JSONObject.toJSONString(OrderFactory.orderManagerMap));
 
-            OrderManager orderManager = orderFactory.getOrderManager(productPo.getSupplierId());
+            String channelCode = productPo.getSupplierId();
+            if(channelCode.startsWith("hllx")){
+                channelCode = "hllx";
+            }
+            OrderManager orderManager = orderFactory.getOrderManager(channelCode);
             if (orderManager == null) {
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             }
+
             orderManager.refreshStockPrice(req);//这个方法会查最新价格,存mongo
             if (product.getMainItem() != null) {
                 result.setMainItem(JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class));
@@ -437,7 +442,11 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRODUCT_NOT_FOUND_ERROR);
         }
         // 计算价格前先刷新
-        OrderManager orderManager = orderFactory.getOrderManager(productPO.getSupplierId());
+        String channelCode = productPO.getSupplierId();
+        if(channelCode.startsWith("hllx")){
+            channelCode = "hllx";
+        }
+        OrderManager orderManager = orderFactory.getOrderManager(channelCode);
         orderManager.syncPrice(productPO.getCode(),
                 productPO.getSupplierProductId(),
                 DateTimeUtil.formatDate(request.getStartDate()),
