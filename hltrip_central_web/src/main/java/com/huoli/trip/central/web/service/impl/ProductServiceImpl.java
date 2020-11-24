@@ -132,6 +132,20 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public BaseResponse<CategoryDetailResult> previewDetail(PreviewDetailRequest request) {
+        CategoryDetailResult result = new CategoryDetailResult();
+        ProductPO productPO = productDao.getPreviewDetail(request.getProductId());
+        if(productPO == null){
+            return BaseResponse.withFail(CentralError.PRICE_CALC_PRODUCT_NOT_FOUND_ERROR);
+        }
+        if(StringUtils.isBlank(productPO.getMainItemCode())){
+            return BaseResponse.withFail(CentralError.NO_PRODUCT_MAIN_ITEM_NO_RELATED_ERROR);
+        }
+        convertToCategoryDetailResult(Lists.newArrayList(productPO), result);
+        return BaseResponse.success(result);
+    }
+
+    @Override
     public BaseResponse<RecommendResult> recommendList(RecommendRequest request) {
         RecommendResult result = new RecommendResult();
         List<Integer> types = ProductConverter.getRecommendTypes(request.getType());

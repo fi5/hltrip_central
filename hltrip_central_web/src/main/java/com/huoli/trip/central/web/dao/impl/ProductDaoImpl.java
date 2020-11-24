@@ -79,6 +79,12 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
+    public ProductPO getPreviewDetail(String productCode){
+        ProductPO productPO = mongoTemplate.findOne(Query.query(Criteria.where("code").is(productCode)), ProductPO.class);
+        return productPO;
+    }
+
+    @Override
     public List<ProductPO> getPageListProduct(String city, Integer type, String keyWord, int page, int size){
         List<AggregationOperation> aggregations = pageListAggregation(city, type, keyWord);
         long rows = (page - 1) * size;

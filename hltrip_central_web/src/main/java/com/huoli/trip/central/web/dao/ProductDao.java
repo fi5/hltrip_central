@@ -133,4 +133,11 @@ public interface ProductDao {
     List<ProductPO> queryValidCity(String city);
     HashMap<String,String> queryValidCitys();
 
+    /**
+     * 预览
+     * @param productCode
+     * @return
+     */
+    ProductPO getPreviewDetail(String productCode);
+
 }
