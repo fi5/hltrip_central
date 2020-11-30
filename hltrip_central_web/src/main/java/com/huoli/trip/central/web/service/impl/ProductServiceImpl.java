@@ -274,7 +274,9 @@ public class ProductServiceImpl implements ProductService {
          /*   if(channelCode.startsWith("hllx")){
                 channelCode = "hllx";
             }*/
+            log.info("渠道信息为：{}",channelCode);
             OrderManager orderManager = orderFactory.getOrderManager(channelCode);
+            log.info("获取到的manager 是：{}",JSON.toJSONString(orderManager));
             if (orderManager == null) {
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
             }
