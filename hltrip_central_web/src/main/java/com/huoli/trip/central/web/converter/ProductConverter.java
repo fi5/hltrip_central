@@ -111,6 +111,9 @@ public class ProductConverter {
         if(product.getPriceInfo() != null){
             product.setSalePrice(product.getPriceInfo().getSalePrice());
         }
+        if(ListUtils.isEmpty(product.getImages()) && ListUtils.isNotEmpty(po.getMainImages())){
+            product.setImages(po.getMainImages().stream().map(i -> convertToImageBase(i)).collect(Collectors.toList()));
+        }
         return product;
     }
 
