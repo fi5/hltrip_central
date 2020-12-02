@@ -180,6 +180,8 @@ public class HllxOrderManager extends OrderManager {
             traceId = TraceIdUtils.getTraceId();
         }
         hllxPayOrderReq.setTraceId(traceId);
+        hllxPayOrderReq.setChannelCode(req.getChannelCode());
+        hllxPayOrderReq.setChannelOrderId(req.getChannelOrderId());
         HllxBaseResult<HllxPayOrderRes> resHllxBaseResult = hllxService.payOrder(hllxPayOrderReq);
         if(resHllxBaseResult != null && resHllxBaseResult.getSuccess()){
             CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
