@@ -66,4 +66,11 @@ public interface ProductService {
      * @return
      */
     BaseResponse<PriceCalcResult> calcTotalPrice(PriceCalcRequest request);
+
+    /**
+     * 预览
+     * @param request
+     * @return
+     */
+    BaseResponse<CategoryDetailResult> previewDetail(PreviewDetailRequest request);
 }
