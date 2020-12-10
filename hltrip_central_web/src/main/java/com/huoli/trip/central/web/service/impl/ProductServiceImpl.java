@@ -465,9 +465,6 @@ public class ProductServiceImpl implements ProductService {
         }
         // 计算价格前先刷新
         String channelCode = productPO.getSupplierId();
-       /* if(channelCode.startsWith("hllx")){
-            channelCode = "hllx";
-        }*/
         OrderManager orderManager = orderFactory.getOrderManager(channelCode);
         orderManager.syncPrice(productPO.getCode(),
                 productPO.getSupplierProductId(),
@@ -626,7 +623,7 @@ public class ProductServiceImpl implements ProductService {
             throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR.getCode(), msg);
         }
         if (priceInfoPO.getStock() < (quantityTotal + chdQuantityTotal)) {
-            String msg = String.format("库存不足，{}剩余库存={}, 购买份数={}", dateStr, priceInfoPO.getStock(), quantityTotal);
+            String msg = String.format("库存不足，%s剩余库存=%s, 购买份数=%s", dateStr, priceInfoPO.getStock(), quantityTotal);
             log.error(msg);
             // 库存不足要返回具体库存
             result.setMinStock(priceInfoPO.getStock());
