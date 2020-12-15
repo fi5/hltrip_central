@@ -1,23 +1,42 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
+import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
+import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
-import com.huoli.trip.common.vo.request.OrderOperReq;
+import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.exception.HlCentralException;
+import com.huoli.trip.common.util.DateTimeUtil;
+import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.PriceCalcRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import com.huoli.trip.common.vo.response.central.PriceCalcResult;
+import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
+import com.huoli.trip.supplier.self.difengyun.vo.request.DfyBookCheckRequest;
+import com.huoli.trip.supplier.self.difengyun.vo.request.DfyCancelOrderRequest;
+import com.huoli.trip.supplier.self.difengyun.vo.request.DfyCreateOrderRequest;
+import com.huoli.trip.supplier.self.difengyun.vo.request.DfyRefundTicketRequest;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
+import com.huoli.trip.supplier.self.hllx.vo.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfOrderStatusResult;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
 import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -38,6 +57,10 @@ public class DfyOrderManager extends OrderManager {
 
     @Reference(timeout = 10000,group = "hltrip", check = false)
     private DfyOrderService dfyOrderService;
+
+    @Autowired
+    private ProductService productService;
+
 
 
 
@@ -158,5 +181,230 @@ public class DfyOrderManager extends OrderManager {
         }
 
     }
+
+
+    /**
+     * 可预订检查
+     * @param req
+     * @return
+     */
+    public BaseResponse<CenterBookCheck> getCenterCheckInfos(BookCheckReq req){
+        log.info("进入可预订检查 dfy");
+        String begin = req.getBeginDate();
+        String end = req.getEndDate();
+        if(StringUtils.isEmpty(end)){
+            end = begin;
+        }
+
+        /**
+         * 开始日期大于结束日期
+         */
+        if(DateTimeUtil.parseDate(begin).after(DateTimeUtil.parseDate(begin))){
+            return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_1);
+        }
+        /**
+         * 时间跨度大于90天
+         */
+        /*if(this.isOutTime(DateTimeUtil.parseDate(begin),DateTimeUtil.parseDate(begin))){
+            return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_2);
+        }*/
+
+        //开始组装供应商请求参数
+        DfyBookCheckRequest req1 = new DfyBookCheckRequest();
+        //转供应商productId
+        //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
+        req1.setBeginDate(begin);
+        req1.setEndDate(end);
+        req1.setProductId(req.getProductId());
+        HllxBookCheckRes hllxBookCheckRes;
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        req1.setTraceId(traceId);
+        try {
+            //供应商输出
+            DfyBaseResult checkInfos = dfyOrderService.getCheckInfos(req1);
+            if(checkInfos!=null && checkInfos.getStatusCode()==200){
+                /*hllxBookCheckRes = checkInfos.getData();
+                if(hllxBookCheckRes == null){
+                    return SupplierErrorMsgTransfer.buildMsg(checkInfos.getMessage());//异常消息以供应商返回的
+                }else{
+//                    CenterBookCheck  bookCheck = new CenterBookCheck();
+                    List<HllxBookSaleInfo> saleInfos = hllxBookCheckRes.getSaleInfos();
+                    if(ListUtils.isEmpty(saleInfos)){
+                        return BaseResponse.fail(CentralError.NO_STOCK_ERROR);
+                    }
+                    HllxBookSaleInfo hllxBookSaleInfo = saleInfos.get(0);
+                    int stocks = hllxBookSaleInfo.getTotalStock();
+                    if(req.getCount() > stocks){
+                        return BaseResponse.withFail(CentralError.NOTENOUGH_STOCK_ERROR, null);
+                    }
+//                    bookCheck.setSettlePrice(hllxBookSaleInfo.getPrice());
+//                    bookCheck.setSalePrice(hllxBookSaleInfo.getSalePrice());
+//                    bookCheck.setStock(stocks);
+//                    return BaseResponse.success(bookCheck);
+                }*/
+            }else{
+                return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
+            }
+        }catch (HlCentralException e){
+            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
+        }
+        CenterBookCheck  bookCheck = new CenterBookCheck();
+        PriceCalcRequest calcRequest = new PriceCalcRequest();
+        calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
+        calcRequest.setEndDate(DateTimeUtil.parseDate(end));
+        calcRequest.setProductCode(req.getProductId());
+        calcRequest.setQuantity(req.getCount());
+        PriceCalcResult priceCalcResult = null;
+        calcRequest.setTraceId(traceId);
+        try{
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            priceCalcResult = priceCalcResultBaseResponse.getData();
+            //没有价格直接抛异常
+            if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
+                return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+            }
+        }catch (HlCentralException e){
+            log.error("价格计算失败。", e);
+            return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
+        }
+        //设置结算总价
+        bookCheck.setSettlePrice(priceCalcResult.getSettlesTotal());
+        //销售总价
+        bookCheck.setSalePrice(priceCalcResult.getSalesTotal());
+        return BaseResponse.success(bookCheck);
+    }
+
+
+    /**
+     * 创建订单
+     * @param req
+     * @return
+     */
+    public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
+        DfyCreateOrderRequest dfyCreateOrderRequest = new DfyCreateOrderRequest();
+        dfyCreateOrderRequest.setStartTime(req.getBeginDate());
+        dfyCreateOrderRequest.setProductId(req.getProductId());
+        dfyCreateOrderRequest.setBookNumber(req.getQunatity());
+        HllxBookCheckRes hllxBookCheckRes;
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        dfyCreateOrderRequest.setTraceId(traceId);
+        DfyBaseResult<DfyCreateOrderResponse> order = dfyOrderService.createOrder(dfyCreateOrderRequest);
+        if(order != null && order.getStatusCode() == 200 && order.getData() != null) {
+            CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
+            //订单号怎么处理
+            createOrderRes.setOrderId(order.getData().getOrderId());
+            createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());
+            return BaseResponse.success(createOrderRes);
+        }
+        return BaseResponse.fail(CentralError.ERROR_ORDER);
+    }
+
+
+    /**
+     * 支付订单
+     * @param req
+     * @return
+     */
+    public BaseResponse<CenterPayOrderRes> getCenterPayOrder(PayOrderReq req){
+      /*HllxPayOrderReq hllxPayOrderReq = new HllxPayOrderReq();
+        HllxBookCheckRes hllxBookCheckRes;
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        hllxPayOrderReq.setTraceId(traceId);
+        hllxPayOrderReq.setChannelCode(req.getChannelCode());
+        hllxPayOrderReq.setChannelOrderId(req.getChannelOrderId());
+        HllxBaseResult<HllxPayOrderRes> resHllxBaseResult = hllxService.payOrder(hllxPayOrderReq);
+        if(resHllxBaseResult != null && resHllxBaseResult.getSuccess()){
+            CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
+            payOrderRes.setChannelOrderId(req.getPartnerOrderId());
+            payOrderRes.setOrderStatus(10);
+            return BaseResponse.success(payOrderRes);
+        }*/
+        return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+    }
+
+
+    /**
+     * 取消订单
+     * @param req
+     * @return
+     */
+    public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
+        DfyCancelOrderRequest dfyCancelOrderRequest = new DfyCancelOrderRequest();
+        dfyCancelOrderRequest.setOrderId(req.getPartnerOrderId());
+        dfyCancelOrderRequest.setRemark(req.getRemark());
+        String traceId = req.getTraceId();
+        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
+            traceId = TraceIdUtils.getTraceId();
+        }
+        dfyCancelOrderRequest.setTraceId(traceId);
+        DfyBaseResult dfyBaseResult = dfyOrderService.cancelOrder(dfyCancelOrderRequest);
+        if(dfyBaseResult != null && dfyBaseResult.isSuccess() && dfyBaseResult.getData() != null){
+            CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
+            /*centerCancelOrderRes.setOrderStatus(dfyBaseResult.getData().getOrderStatus());*/
+            return BaseResponse.success(centerCancelOrderRes);
+        }
+        return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
+    }
+
+
+    /**
+     * 支付前校验
+     * @param req
+     * @return
+     */
+    public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
+        CenterPayCheckRes  payCheckRes = new CenterPayCheckRes();
+        BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
+        baseOrderRequest.setOrderId(req.getPartnerOrderId());
+        baseOrderRequest.setTraceId(req.getTraceId());
+        baseOrderRequest.setSupplierOrderId(req.getChannelOrderId());
+        BaseResponse<DfyOrderDetail> dfyOrderDetailBaseResponse = dfyOrderService.orderDetail(baseOrderRequest);
+        if(dfyOrderDetailBaseResponse.isSuccess() && dfyOrderDetailBaseResponse.getData() != null){
+            DfyOrderDetail dfyOrderDetail = dfyOrderDetailBaseResponse.getData();
+            String status = dfyOrderDetail.getOrderStatus();
+            String canPay = dfyOrderDetail.getCanPay();
+            if("待支付".equals(status)&&"1".equals(canPay)){
+                payCheckRes.setResult(true);
+            }else{
+                //稍后可支付
+                payCheckRes.setResult(false);
+            }
+        }else{
+            //不可支付
+            payCheckRes.setResult(false);
+        }
+        return BaseResponse.success(payCheckRes);
+    }
+
+
+    /**
+     * 申请退款
+     * @param req
+     * @return
+     */
+    public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
+        DfyRefundTicketRequest dfyRefundTicketRequest = new DfyRefundTicketRequest();
+        dfyRefundTicketRequest.setTraceId(req.getTraceId());
+        dfyRefundTicketRequest.setOrderId(req.getPartnerOrderId());
+        dfyRefundTicketRequest.setCauseType("5");
+        dfyRefundTicketRequest.setCauseContent(req.getRemark());
+        DfyBaseResult<DfyRefundTicketResponse> dfyRefundTicketResponseDfyBaseResult = dfyOrderService.rufundTicket(dfyRefundTicketRequest);
+        if(dfyRefundTicketResponseDfyBaseResult != null && dfyRefundTicketResponseDfyBaseResult.isSuccess()){
+            CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
+            centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+            return BaseResponse.success(centerCancelOrderRes);
+        }
+        return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
+    }
+
 
 }
