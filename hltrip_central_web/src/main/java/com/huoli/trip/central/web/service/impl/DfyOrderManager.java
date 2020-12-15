@@ -1,27 +1,27 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.huoli.trip.central.web.converter.OrderInfoTranser;
-import com.huoli.trip.common.constant.CentralError;
-import com.huoli.trip.common.constant.ChannelConstant;
-import com.huoli.trip.common.vo.request.OrderOperReq;
-import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.order.OrderDetailRep;
-import com.huoli.trip.supplier.api.DfyOrderService;
-import com.huoli.trip.supplier.api.YcfOrderService;
-import com.huoli.trip.supplier.api.YcfSyncService;
-import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
-import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfOrderStatusResult;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
-import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
+//import com.huoli.trip.central.web.converter.OrderInfoTranser;
+//import com.huoli.trip.common.constant.CentralError;
+//import com.huoli.trip.common.constant.ChannelConstant;
+//import com.huoli.trip.common.vo.request.OrderOperReq;
+//import com.huoli.trip.common.vo.response.BaseResponse;
+//import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+//import com.huoli.trip.supplier.api.DfyOrderService;
+//import com.huoli.trip.supplier.api.YcfOrderService;
+//import com.huoli.trip.supplier.api.YcfSyncService;
+//import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
+//import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
+//import com.huoli.trip.supplier.self.yaochufa.vo.YcfOrderStatusResult;
+//import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
+//import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.dubbo.config.annotation.Reference;
+//import org.apache.commons.collections.CollectionUtils;
+//import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
+//
+//import java.util.ArrayList;
+//import java.util.List;
 
 /**
  * 描述：desc<br>
