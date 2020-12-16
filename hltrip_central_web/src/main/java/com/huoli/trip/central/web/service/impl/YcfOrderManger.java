@@ -196,7 +196,7 @@ public class YcfOrderManger extends OrderManager {
             rep.setOrderId(data.getOrderId());
             //转换成consumer统一的订单状态
             rep.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(data.getOrderStatus(),1));
-//            rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
+            rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
             return BaseResponse.success(rep);
         } catch (Exception e) {
             log.error("YCFgetOrderDetail报错:"+JSONObject.toJSONString(req),e);

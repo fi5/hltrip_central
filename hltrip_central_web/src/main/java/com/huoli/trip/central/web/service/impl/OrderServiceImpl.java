@@ -66,7 +66,7 @@ public class OrderServiceImpl implements OrderService {
     public BaseResponse refundNotice(RefundNoticeReq req) {
 
         try {
-//            log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
+            log.info("refundNotice发送kafka"+ JSONObject.toJSONString(req));
             String topic = Constants.REFUND_ORDER_TOPIC;
             RefundKafka kafkaInfo = new RefundKafka();
             kafkaInfo.setOrderId(req.getPartnerOrderId());
