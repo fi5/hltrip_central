@@ -20,11 +20,10 @@ import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyBookCheckRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyCancelOrderRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyCreateOrderRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyRefundTicketRequest;
+import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
+import com.huoli.trip.supplier.self.difengyun.vo.request.*;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
 import com.huoli.trip.supplier.self.hllx.vo.*;
@@ -164,8 +163,6 @@ public class DfyOrderManager extends OrderManager {
                                 }
                                 break;
                         }
-
-
                     }
                 }
                 rep.setVochers(vochers);
@@ -216,7 +213,6 @@ public class DfyOrderManager extends OrderManager {
         req1.setBeginDate(begin);
         req1.setEndDate(end);
         req1.setProductId(req.getProductId());
-        HllxBookCheckRes hllxBookCheckRes;
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
             traceId = TraceIdUtils.getTraceId();
@@ -224,27 +220,24 @@ public class DfyOrderManager extends OrderManager {
         req1.setTraceId(traceId);
         try {
             //供应商输出
-            DfyBaseResult checkInfos = dfyOrderService.getCheckInfos(req1);
+            DfyBaseResult<DfyBookCheckResponse> checkInfos = dfyOrderService.getCheckInfos(req1);
             if(checkInfos!=null && checkInfos.getStatusCode()==200){
-                /*hllxBookCheckRes = checkInfos.getData();
-                if(hllxBookCheckRes == null){
-                    return SupplierErrorMsgTransfer.buildMsg(checkInfos.getMessage());//异常消息以供应商返回的
+                DfyBookCheckResponse dfyBookCheckResponse = checkInfos.getData();
+                if(dfyBookCheckResponse == null){
+                    return SupplierErrorMsgTransfer.buildMsg(checkInfos.getMsg());//异常消息以供应商返回的
                 }else{
 //                    CenterBookCheck  bookCheck = new CenterBookCheck();
-                    List<HllxBookSaleInfo> saleInfos = hllxBookCheckRes.getSaleInfos();
+                    List<DfyBookSaleInfo> saleInfos = dfyBookCheckResponse.getSaleInfos();
                     if(ListUtils.isEmpty(saleInfos)){
                         return BaseResponse.fail(CentralError.NO_STOCK_ERROR);
                     }
-                    HllxBookSaleInfo hllxBookSaleInfo = saleInfos.get(0);
-                    int stocks = hllxBookSaleInfo.getTotalStock();
+                    DfyBookSaleInfo dfyBookSaleInfo = saleInfos.get(0);
+                    int stocks = dfyBookSaleInfo.getTotalStock();
                     if(req.getCount() > stocks){
                         return BaseResponse.withFail(CentralError.NOTENOUGH_STOCK_ERROR, null);
                     }
-//                    bookCheck.setSettlePrice(hllxBookSaleInfo.getPrice());
-//                    bookCheck.setSalePrice(hllxBookSaleInfo.getSalePrice());
-//                    bookCheck.setStock(stocks);
-//                    return BaseResponse.success(bookCheck);
-                }*/
+//
+                }
             }else{
                 return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
             }
@@ -312,22 +305,17 @@ public class DfyOrderManager extends OrderManager {
      * @return
      */
     public BaseResponse<CenterPayOrderRes> getCenterPayOrder(PayOrderReq req){
-      /*HllxPayOrderReq hllxPayOrderReq = new HllxPayOrderReq();
-        HllxBookCheckRes hllxBookCheckRes;
-        String traceId = req.getTraceId();
-        if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
-            traceId = TraceIdUtils.getTraceId();
-        }
-        hllxPayOrderReq.setTraceId(traceId);
-        hllxPayOrderReq.setChannelCode(req.getChannelCode());
-        hllxPayOrderReq.setChannelOrderId(req.getChannelOrderId());
-        HllxBaseResult<HllxPayOrderRes> resHllxBaseResult = hllxService.payOrder(hllxPayOrderReq);
-        if(resHllxBaseResult != null && resHllxBaseResult.getSuccess()){
+        DfyPayOrderRequest request = new DfyPayOrderRequest();
+        request.setTraceId(req.getTraceId());
+        request.setChannelCode(req.getChannelCode());
+        request.setChannelOrderId(req.getChannelOrderId());
+        DfyBaseResult dfyBaseResult = dfyOrderService.payOrder(request);
+        if(dfyBaseResult != null && dfyBaseResult.isSuccess()){
             CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
             payOrderRes.setChannelOrderId(req.getPartnerOrderId());
             payOrderRes.setOrderStatus(10);
             return BaseResponse.success(payOrderRes);
-        }*/
+        }
         return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
     }
 
