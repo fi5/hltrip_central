@@ -218,8 +218,13 @@ public class ProductServiceImpl implements ProductService {
                 target.setSaleDate(saleDate);
 
                 BeanUtils.copyProperties(entry, target);
-                if(target.getSalePrice()!=null && target.getSalePrice().floatValue()<=0)//销售价格为0的去掉
+                // 价格为空或者不是正数的过滤掉
+                if(target.getSalePrice() == null || target.getSalePrice().floatValue()<=0)
                     continue;
+                // 库存为空或者不是正数的过滤掉
+                if(target.getStock() == null || target.getStock() <= 0){
+                    continue;
+                }
                 // 预订的日期 - 今天 >= 提前预定天数  的才返回，小于预订天数内的不能订；
                 if(aheadDays != null && DateTimeUtil.getDateDiffDays(entry.getSaleDate(), new Date()) < aheadDays ){
                     continue;
@@ -343,7 +348,7 @@ public class ProductServiceImpl implements ProductService {
             result.setSupplierName(product.getSupplierName());
             result.setBookDesc(product.getBookDesc());
             result.setRemark(product.getRemark());
-
+            result.setOperatorPhone(product.getOperatorPhone());
 //  调用统一的价格计算并设值
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
