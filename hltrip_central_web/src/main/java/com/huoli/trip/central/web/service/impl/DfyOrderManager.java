@@ -20,7 +20,9 @@ import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
+import com.huoli.trip.supplier.self.difengyun.vo.Contact;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
+import com.huoli.trip.supplier.self.difengyun.vo.Tourist;
 import com.huoli.trip.supplier.self.difengyun.vo.request.*;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
@@ -281,7 +283,30 @@ public class DfyOrderManager extends OrderManager {
         dfyCreateOrderRequest.setStartTime(req.getBeginDate());
         dfyCreateOrderRequest.setProductId(req.getProductId());
         dfyCreateOrderRequest.setBookNumber(req.getQunatity());
-        HllxBookCheckRes hllxBookCheckRes;
+        Contact contact  = new Contact();
+        contact.setContactTel(req.getMobile());
+        contact.setContactName(req.getEmail());
+        contact.setContactName(req.getCname());
+        //contact.setPsptId();
+        //contact.setPsptType();
+        dfyCreateOrderRequest.setContact(contact);
+
+        //出行人
+        List<CreateOrderReq.BookGuest> guests = req.getGuests();
+        if(ListUtils.isNotEmpty(guests)) {
+            List<Tourist> touristList = new ArrayList<>();
+            for (CreateOrderReq.BookGuest guest: guests) {
+                Tourist tourist = new Tourist();
+                tourist.setName(guest.getCname());
+                tourist.setEmail(guest.getEmail());
+                tourist.setTel(guest.getMobile());
+                tourist.setPsptType(guest.getCredentialType());
+                tourist.setPsptId(guest.getCredential());
+                touristList.add(tourist);
+            }
+            dfyCreateOrderRequest.setTouristList(touristList);
+        }
+
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
             traceId = TraceIdUtils.getTraceId();
@@ -360,12 +385,8 @@ public class DfyOrderManager extends OrderManager {
             DfyOrderDetail dfyOrderDetail = dfyOrderDetailBaseResponse.getData();
             String status = dfyOrderDetail.getOrderStatus();
             String canPay = dfyOrderDetail.getCanPay();
-            if("待支付".equals(status)&&"1".equals(canPay)){
-                payCheckRes.setResult(true);
-            }else{
-                //稍后可支付
-                payCheckRes.setResult(false);
-            }
+            //稍后可支付
+            payCheckRes.setResult("待支付".equals(status) && "1".equals(canPay));
         }else{
             //不可支付
             payCheckRes.setResult(false);
