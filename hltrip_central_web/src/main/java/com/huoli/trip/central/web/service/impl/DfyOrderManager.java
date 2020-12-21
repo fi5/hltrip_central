@@ -20,6 +20,7 @@ import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
+import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
 import com.huoli.trip.supplier.self.difengyun.vo.Contact;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
 import com.huoli.trip.supplier.self.difengyun.vo.Tourist;
@@ -287,6 +288,15 @@ public class DfyOrderManager extends OrderManager {
         contact.setContactTel(req.getMobile());
         contact.setContactName(req.getEmail());
         contact.setContactName(req.getCname());
+        int psptc = req.getCredentialType();
+        String psptId = req.getChannelCode();
+        if(StringUtils.isNotEmpty(psptId)) {
+            DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(psptc);
+            if (certificateByCode != null) {
+                contact.setPsptType(certificateByCode.getCode());
+                contact.setPsptId(psptId);
+            }
+        }
         //contact.setPsptId();
         //contact.setPsptType();
         dfyCreateOrderRequest.setContact(contact);
@@ -300,8 +310,12 @@ public class DfyOrderManager extends OrderManager {
                 tourist.setName(guest.getCname());
                 tourist.setEmail(guest.getEmail());
                 tourist.setTel(guest.getMobile());
-                tourist.setPsptType(guest.getCredentialType());
-                tourist.setPsptId(guest.getCredential());
+                int psptcode = guest.getCredentialType();
+                DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(psptcode);
+                if (certificateByCode != null) {
+                    tourist.setPsptType(certificateByCode.getCode());
+                    tourist.setPsptId(guest.getCredential());
+                }
                 touristList.add(tourist);
             }
             dfyCreateOrderRequest.setTouristList(touristList);
