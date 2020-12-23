@@ -404,17 +404,17 @@ public class DfyOrderManager extends OrderManager {
             String canPay = dfyOrderDetail.getCanPay();
             if("待支付".equals(status) && "1".equals(canPay)){
                 payCheckRes.setResult(true);
-                payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
+                //payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
+                return BaseResponse.success(payCheckRes);
             }else{
                 //稍后重试
                 payCheckRes.setResult(false);
-                payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_WAITING.getCode()));
+                return BaseResponse.fail(CentralError.SUPPLIER_PAY_CHECK_WAITING);
             }
         }else{
             payCheckRes.setResult(false);
-            payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_ERROR.getCode()));
+            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
         }
-        return BaseResponse.success(payCheckRes);
     }
 
 
