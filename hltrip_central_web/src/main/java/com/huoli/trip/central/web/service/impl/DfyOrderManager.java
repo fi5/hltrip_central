@@ -43,6 +43,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+//
+//import java.util.ArrayList;
+//import java.util.List;
 
 /**
  * 描述：desc<br>
@@ -94,7 +97,7 @@ public class DfyOrderManager extends OrderManager {
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(dfyOrderDetail.getOrderId());
             //转换成consumer统一的订单状态
-            rep.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(dfyOrderDetail.getOrderStatus(),2));
+            rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(),3));
 //            rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
             return BaseResponse.success(rep);
         } catch (Exception e) {
@@ -131,7 +134,7 @@ public class DfyOrderManager extends OrderManager {
             OrderDetailRep rep = new OrderDetailRep();
             rep.setOrderId(dfyOrderDetail.getOrderId());
             //转换成consumer统一的订单状态
-            rep.setOrderStatus(OrderInfoTranser.genCommonOrderStatus(dfyOrderDetail.getOrderStatus(), 2));
+            rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 3));
 
 
             if(null!=dfyOrderDetail.getEnterCertificate()&& CollectionUtils.isNotEmpty(dfyOrderDetail.getEnterCertificate().getEnterCertificateTypeInfo())){
