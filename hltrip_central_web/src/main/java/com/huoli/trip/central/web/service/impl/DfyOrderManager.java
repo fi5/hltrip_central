@@ -285,7 +285,7 @@ public class DfyOrderManager extends OrderManager {
     public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
         DfyCreateOrderRequest dfyCreateOrderRequest = new DfyCreateOrderRequest();
         dfyCreateOrderRequest.setStartTime(req.getBeginDate());
-        dfyCreateOrderRequest.setProductId(req.getProductId());
+        dfyCreateOrderRequest.setProductId(req.getProductId().split("—")[1]);
         dfyCreateOrderRequest.setBookNumber(req.getQunatity());
         Contact contact  = new Contact();
         contact.setContactTel(req.getMobile());
