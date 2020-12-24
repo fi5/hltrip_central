@@ -58,7 +58,7 @@ public class OrderInfoTranser {
 
 
 
-	public static int genCommonOrderStatus(String orderStatus, int type) {
+	public static int genCommonOrderStringStatus(String orderStatus, int type) {
 		int rtnStatus=0;
 		if(type==1){//要出发转换
 //			0	待支付：创建订单成功，合作方尚未付款。
@@ -99,6 +99,8 @@ public class OrderInfoTranser {
 					break;
 			}
 		}else if(type==2){
+			return Integer.parseInt(orderStatus);
+		}else if(type==3){
 			/**
 			 * 订单状态:
 
