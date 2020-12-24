@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
@@ -328,6 +329,7 @@ public class DfyOrderManager extends OrderManager {
         }
         dfyCreateOrderRequest.setTraceId(traceId);
         DfyBaseResult<DfyCreateOrderResponse> order = dfyOrderService.createOrder(dfyCreateOrderRequest);
+        log.info("1111111111111:{}", JSON.toJSONString(order));
         if(order != null && order.getStatusCode() == 200 && order.getData() != null) {
             CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
             //订单号怎么处理
