@@ -292,9 +292,10 @@ public class DfyOrderManager extends OrderManager {
         contact.setContactName(req.getEmail());
         contact.setContactName(req.getCname());
         int psptc = req.getCredentialType();
+        int dfypsc = changecredentialType(psptc);
         String psptId = req.getChannelCode();
         if(StringUtils.isNotEmpty(psptId)) {
-            DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(psptc);
+            DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(dfypsc);
             if (certificateByCode != null) {
                 contact.setPsptType(certificateByCode.getCode());
                 contact.setPsptId(psptId);
@@ -314,7 +315,8 @@ public class DfyOrderManager extends OrderManager {
                 tourist.setEmail(guest.getEmail());
                 tourist.setTel(guest.getMobile());
                 int psptcode = guest.getCredentialType();
-                DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(psptcode);
+                int dfypscode = changecredentialType(psptcode);
+                DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(dfypscode);
                 if (certificateByCode != null) {
                     tourist.setPsptType(certificateByCode.getCode());
                     tourist.setPsptId(guest.getCredential());
@@ -436,6 +438,34 @@ public class DfyOrderManager extends OrderManager {
             return BaseResponse.success(centerCancelOrderRes);
         }
         return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
+    }
+
+    private Integer changecredentialType(int guestsCredentialType){
+        Integer result = null;
+        switch(guestsCredentialType){
+            case 0 :
+                result = 1;
+                break; //可选
+            case 1 :
+                result= 2;
+                break;
+            case 2:
+                result = 4;
+            case 3:
+                break;
+            case 4 :
+                break; //可选
+            case 5 :
+                result = 7;
+                break;
+            case 6:
+            case 7:
+                result = 3;
+                break;
+            default : //可选
+                //语句
+        }
+        return result;
     }
 
 
