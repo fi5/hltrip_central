@@ -293,7 +293,7 @@ public class DfyOrderManager extends OrderManager {
         contact.setContactName(req.getCname());
         int psptc = req.getCredentialType();
         int dfypsc = changecredentialType(psptc);
-        String psptId = req.getChannelCode();
+        String psptId = req.getCredential();
         if(StringUtils.isNotEmpty(psptId)) {
             DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(dfypsc);
             if (certificateByCode != null) {
