@@ -445,7 +445,11 @@ public class DfyOrderManager extends OrderManager {
         dfyRefundTicketRequest.setTraceId(req.getTraceId());
         dfyRefundTicketRequest.setOrderId(req.getOutOrderId());
         dfyRefundTicketRequest.setCauseType("5");
-        dfyRefundTicketRequest.setCauseContent(req.getRemark());
+        String remark = req.getRemark();
+        if(StringUtils.isEmpty(remark)){
+            remark = "发生意外,无法出行！";
+        }
+        dfyRefundTicketRequest.setCauseContent(remark);
         DfyBaseResult<DfyRefundTicketResponse> dfyRefundTicketResponseDfyBaseResult = dfyOrderService.rufundTicket(dfyRefundTicketRequest);
         if(dfyRefundTicketResponseDfyBaseResult != null && dfyRefundTicketResponseDfyBaseResult.isSuccess()){
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
