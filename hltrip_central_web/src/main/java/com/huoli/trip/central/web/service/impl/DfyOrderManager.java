@@ -409,9 +409,9 @@ public class DfyOrderManager extends OrderManager {
         baseOrderRequest.setSupplierOrderId(req.getChannelOrderId());
         BaseResponse<DfyOrderDetail> dfyOrderDetailBaseResponse = dfyOrderService.orderDetail(baseOrderRequest);
         if(dfyOrderDetailBaseResponse.isSuccess() && dfyOrderDetailBaseResponse.getData() != null){
-            DfyOrderDetail dfyOrderDetail = dfyOrderDetailBaseResponse.getData();
-            String status = dfyOrderDetail.getOrderStatus();
-            String canPay = dfyOrderDetail.getCanPay();
+            DfyOrderDetail.OrderInfo orderInfo = dfyOrderDetailBaseResponse.getData().getOrderInfo();
+            String status = dfyOrderDetailBaseResponse.getData().getOrderStatus();
+            String canPay = orderInfo.getCanPay();
             if("待支付".equals(status) && "1".equals(canPay)){
                 payCheckRes.setResult(true);
                 //payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
