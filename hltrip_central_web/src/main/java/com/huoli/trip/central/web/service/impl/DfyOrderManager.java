@@ -109,6 +109,7 @@ public class DfyOrderManager extends OrderManager {
         try {
             BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
             baseOrderRequest.setOrderId(req.getOrderId());
+            baseOrderRequest.setSupplierOrderId(req.getSupplierOrderId());
             baseOrderRequest.setTraceId(req.getTraceId());
 //            final BaseResponse<OrderDetailRep> vochers = dfyOrderService.getVochers(baseOrderRequest);
 //            if(null==vochers)
