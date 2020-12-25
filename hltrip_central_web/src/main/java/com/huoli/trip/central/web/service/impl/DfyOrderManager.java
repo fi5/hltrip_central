@@ -371,7 +371,11 @@ public class DfyOrderManager extends OrderManager {
     public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
         DfyCancelOrderRequest dfyCancelOrderRequest = new DfyCancelOrderRequest();
         dfyCancelOrderRequest.setOrderId(req.getOutOrderId());
-        dfyCancelOrderRequest.setRemark(req.getRemark());
+        String remark = req.getRemark();
+        if(StringUtils.isEmpty(remark)){
+            remark = "发生意外,无法出行！";
+        }
+        dfyCancelOrderRequest.setRemark(remark);
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
             traceId = TraceIdUtils.getTraceId();
@@ -439,7 +443,11 @@ public class DfyOrderManager extends OrderManager {
         dfyRefundTicketRequest.setTraceId(req.getTraceId());
         dfyRefundTicketRequest.setOrderId(req.getPartnerOrderId());
         dfyRefundTicketRequest.setCauseType("5");
-        dfyRefundTicketRequest.setCauseContent(req.getRemark());
+        String remark = req.getRemark();
+        if(StringUtils.isEmpty(remark)){
+            remark = "发生意外,无法出行！";
+        }
+        dfyRefundTicketRequest.setCauseContent(remark);
         DfyBaseResult<DfyRefundTicketResponse> dfyRefundTicketResponseDfyBaseResult = dfyOrderService.rufundTicket(dfyRefundTicketRequest);
         if(dfyRefundTicketResponseDfyBaseResult != null && dfyRefundTicketResponseDfyBaseResult.isSuccess()){
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
