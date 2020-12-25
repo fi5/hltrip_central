@@ -20,6 +20,7 @@ import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
+import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
 import com.huoli.trip.supplier.self.difengyun.vo.Contact;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
 import com.huoli.trip.supplier.self.difengyun.vo.Tourist;
@@ -285,12 +286,22 @@ public class DfyOrderManager extends OrderManager {
     public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
         DfyCreateOrderRequest dfyCreateOrderRequest = new DfyCreateOrderRequest();
         dfyCreateOrderRequest.setStartTime(req.getBeginDate());
-        dfyCreateOrderRequest.setProductId(req.getProductId());
+        dfyCreateOrderRequest.setProductId(req.getProductId().split("—")[1]);
         dfyCreateOrderRequest.setBookNumber(req.getQunatity());
         Contact contact  = new Contact();
         contact.setContactTel(req.getMobile());
         contact.setContactName(req.getEmail());
         contact.setContactName(req.getCname());
+        int psptc = req.getCredentialType();
+        int dfypsc = changecredentialType(psptc);
+        String psptId = req.getCredential();
+        if(StringUtils.isNotEmpty(psptId)) {
+            DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(dfypsc);
+            if (certificateByCode != null) {
+                contact.setPsptType(certificateByCode.getCode());
+                contact.setPsptId(psptId);
+            }
+        }
         //contact.setPsptId();
         //contact.setPsptType();
         dfyCreateOrderRequest.setContact(contact);
@@ -304,8 +315,13 @@ public class DfyOrderManager extends OrderManager {
                 tourist.setName(guest.getCname());
                 tourist.setEmail(guest.getEmail());
                 tourist.setTel(guest.getMobile());
-                tourist.setPsptType(guest.getCredentialType());
-                tourist.setPsptId(guest.getCredential());
+                int psptcode = guest.getCredentialType();
+                int dfypscode = changecredentialType(psptcode);
+                DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(dfypscode);
+                if (certificateByCode != null) {
+                    tourist.setPsptType(certificateByCode.getCode());
+                    tourist.setPsptId(guest.getCredential());
+                }
                 touristList.add(tourist);
             }
             dfyCreateOrderRequest.setTouristList(touristList);
@@ -391,17 +407,17 @@ public class DfyOrderManager extends OrderManager {
             String canPay = dfyOrderDetail.getCanPay();
             if("待支付".equals(status) && "1".equals(canPay)){
                 payCheckRes.setResult(true);
-                payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
+                //payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
+                return BaseResponse.success(payCheckRes);
             }else{
                 //稍后重试
                 payCheckRes.setResult(false);
-                payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_WAITING.getCode()));
+                return BaseResponse.fail(CentralError.SUPPLIER_PAY_CHECK_WAITING);
             }
         }else{
             payCheckRes.setResult(false);
-            payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_ERROR.getCode()));
+            return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
         }
-        return BaseResponse.success(payCheckRes);
     }
 
 
@@ -423,6 +439,34 @@ public class DfyOrderManager extends OrderManager {
             return BaseResponse.success(centerCancelOrderRes);
         }
         return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
+    }
+
+    private Integer changecredentialType(int guestsCredentialType){
+        Integer result = null;
+        switch(guestsCredentialType){
+            case 0 :
+                result = 1;
+                break; //可选
+            case 1 :
+                result= 2;
+                break;
+            case 2:
+                result = 4;
+            case 3:
+                break;
+            case 4 :
+                break; //可选
+            case 5 :
+                result = 7;
+                break;
+            case 6:
+            case 7:
+                result = 3;
+                break;
+            default : //可选
+                //语句
+        }
+        return result;
     }
 
 
