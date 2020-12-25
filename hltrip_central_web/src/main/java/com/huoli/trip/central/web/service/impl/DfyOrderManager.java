@@ -371,7 +371,7 @@ public class DfyOrderManager extends OrderManager {
      */
     public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
         DfyCancelOrderRequest dfyCancelOrderRequest = new DfyCancelOrderRequest();
-        dfyCancelOrderRequest.setOrderId(req.getPartnerOrderId());
+        dfyCancelOrderRequest.setOrderId(req.getOutOrderId());
         dfyCancelOrderRequest.setRemark(req.getRemark());
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
@@ -414,7 +414,7 @@ public class DfyOrderManager extends OrderManager {
             DfyOrderDetail dfyOrderDetail = dfyOrderDetailBaseResponse.getData();
             String status = dfyOrderDetail.getOrderStatus();
             String canPay = dfyOrderDetail.getCanPay();
-            if("待支付".equals(status) && "1".equals(canPay)){
+            if("待付款".equals(status) && "1".equals(canPay)){
                 payCheckRes.setResult(true);
                 //payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
                 return BaseResponse.success(payCheckRes);
