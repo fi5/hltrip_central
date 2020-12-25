@@ -30,6 +30,8 @@ import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
+import com.huoli.trip.supplier.self.difengyun.vo.response.*;
+import com.huoli.trip.supplier.self.hllx.vo.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -135,9 +137,9 @@ public class DfyOrderManager extends OrderManager {
             rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 3));
 
 
-            if(null!=dfyOrderDetail.getEnterCertificate()&& CollectionUtils.isNotEmpty(dfyOrderDetail.getEnterCertificate().getEnterCertificateTypeInfo())){
+            if(null!=dfyOrderDetail.getOrderInfo().getEnterCertificate()&& CollectionUtils.isNotEmpty(dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo())){
                 List<OrderDetailRep.Voucher> vochers = new ArrayList<>();
-                for(DfyOrderDetail.EnterCertificateTypeInfo typeInfo:dfyOrderDetail.getEnterCertificate().getEnterCertificateTypeInfo()){
+                for(DfyOrderDetail.EnterCertificateTypeInfo typeInfo:dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo()){
                     for(DfyOrderDetail.TicketCertInfo oneInfo:typeInfo.getTicketCertInfos()){
 
                         switch (oneInfo.getCertType()){//凭证类型   1.纯文本  2.二维码 3.PDF
@@ -373,7 +375,7 @@ public class DfyOrderManager extends OrderManager {
      */
     public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
         DfyCancelOrderRequest dfyCancelOrderRequest = new DfyCancelOrderRequest();
-        dfyCancelOrderRequest.setOrderId(req.getPartnerOrderId());
+        dfyCancelOrderRequest.setOrderId(req.getOutOrderId());
         dfyCancelOrderRequest.setRemark(req.getRemark());
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
@@ -384,6 +386,16 @@ public class DfyOrderManager extends OrderManager {
         if(dfyBaseResult != null && dfyBaseResult.isSuccess() && dfyBaseResult.getData() != null){
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
             /*centerCancelOrderRes.setOrderStatus(dfyBaseResult.getData().getOrderStatus());*/
+            DfyOrderStatusRequest dfyOrderStatusRequest = new DfyOrderStatusRequest();
+            dfyOrderStatusRequest.setOrderId(req.getOutOrderId());
+            DfyBaseResult<DfyOrderStatusResponse> dfyOrderStatusResponseDfyBaseResult = dfyOrderService.orderStatus(dfyOrderStatusRequest);
+            if(dfyOrderStatusResponseDfyBaseResult != null && dfyOrderStatusResponseDfyBaseResult.isSuccess() && dfyOrderStatusResponseDfyBaseResult.getData() != null){
+                String orderStatus = dfyOrderStatusResponseDfyBaseResult.getData().getOrderStatus();
+                int i = OrderInfoTranser.genCommonOrderStringStatus(orderStatus, 3);
+                centerCancelOrderRes.setOrderStatus(i);
+            }else{
+                centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+            }
             return BaseResponse.success(centerCancelOrderRes);
         }
         return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
@@ -403,9 +415,9 @@ public class DfyOrderManager extends OrderManager {
         baseOrderRequest.setSupplierOrderId(req.getChannelOrderId());
         BaseResponse<DfyOrderDetail> dfyOrderDetailBaseResponse = dfyOrderService.orderDetail(baseOrderRequest);
         if(dfyOrderDetailBaseResponse.isSuccess() && dfyOrderDetailBaseResponse.getData() != null){
-            DfyOrderDetail dfyOrderDetail = dfyOrderDetailBaseResponse.getData();
-            String status = dfyOrderDetail.getOrderStatus();
-            String canPay = dfyOrderDetail.getCanPay();
+            DfyOrderDetail.OrderInfo orderInfo = dfyOrderDetailBaseResponse.getData().getOrderInfo();
+            String status = dfyOrderDetailBaseResponse.getData().getOrderStatus();
+            String canPay = orderInfo.getCanPay();
             if("待支付".equals(status) && "1".equals(canPay)){
                 payCheckRes.setResult(true);
                 //payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
