@@ -373,7 +373,11 @@ public class DfyOrderManager extends OrderManager {
     public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
         DfyCancelOrderRequest dfyCancelOrderRequest = new DfyCancelOrderRequest();
         dfyCancelOrderRequest.setOrderId(req.getOutOrderId());
-        dfyCancelOrderRequest.setRemark(req.getRemark());
+        String remark = req.getRemark();
+        if(StringUtils.isEmpty(remark)) {
+            remark = "行程变更";
+            dfyCancelOrderRequest.setRemark(remark);
+        }
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
             traceId = TraceIdUtils.getTraceId();
