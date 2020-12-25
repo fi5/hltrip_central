@@ -135,9 +135,9 @@ public class DfyOrderManager extends OrderManager {
             rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 3));
 
 
-            if(null!=dfyOrderDetail.getEnterCertificate()&& CollectionUtils.isNotEmpty(dfyOrderDetail.getEnterCertificate().getEnterCertificateTypeInfo())){
+            if(null!=dfyOrderDetail.getOrderInfo().getEnterCertificate()&& CollectionUtils.isNotEmpty(dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo())){
                 List<OrderDetailRep.Voucher> vochers = new ArrayList<>();
-                for(DfyOrderDetail.EnterCertificateTypeInfo typeInfo:dfyOrderDetail.getEnterCertificate().getEnterCertificateTypeInfo()){
+                for(DfyOrderDetail.EnterCertificateTypeInfo typeInfo:dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo()){
                     for(DfyOrderDetail.TicketCertInfo oneInfo:typeInfo.getTicketCertInfos()){
 
                         switch (oneInfo.getCertType()){//凭证类型   1.纯文本  2.二维码 3.PDF
