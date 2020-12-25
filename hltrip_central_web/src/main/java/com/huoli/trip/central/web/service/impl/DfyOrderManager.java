@@ -356,7 +356,8 @@ public class DfyOrderManager extends OrderManager {
         DfyBaseResult dfyBaseResult = dfyOrderService.payOrder(request);
         if(dfyBaseResult != null && dfyBaseResult.isSuccess()){
             CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
-            payOrderRes.setChannelOrderId(req.getPartnerOrderId());
+            payOrderRes.setChannelOrderId(req.getChannelOrderId());
+            payOrderRes.setLocalOrderId(req.getPartnerOrderId());
             payOrderRes.setOrderStatus(10);
             return BaseResponse.success(payOrderRes);
         }
