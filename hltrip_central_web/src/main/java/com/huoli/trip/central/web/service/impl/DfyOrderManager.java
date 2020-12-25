@@ -332,15 +332,11 @@ public class DfyOrderManager extends OrderManager {
         }
         dfyCreateOrderRequest.setTraceId(traceId);
         DfyBaseResult<DfyCreateOrderResponse> order = dfyOrderService.createOrder(dfyCreateOrderRequest);
-        log.info("1111111111111:{}", JSON.toJSONString(order));
         if(order != null && order.getStatusCode() == 200 && order.getData() != null) {
             CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
             //订单号怎么处理
-            log.info("2222222222222");
             createOrderRes.setOrderId(order.getData().getOrderId());
-            log.info("222222222222233333333333333333");
             createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());
-            log.info("22222222222223333333333333333354");
             return BaseResponse.success(createOrderRes);
         }
         return BaseResponse.fail(CentralError.ERROR_ORDER);
