@@ -25,10 +25,7 @@ import com.huoli.trip.supplier.self.difengyun.vo.Contact;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
 import com.huoli.trip.supplier.self.difengyun.vo.Tourist;
 import com.huoli.trip.supplier.self.difengyun.vo.request.*;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
+import com.huoli.trip.supplier.self.difengyun.vo.response.*;
 import com.huoli.trip.supplier.self.hllx.vo.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfOrderStatusResult;
@@ -382,6 +379,16 @@ public class DfyOrderManager extends OrderManager {
         if(dfyBaseResult != null && dfyBaseResult.isSuccess() && dfyBaseResult.getData() != null){
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
             /*centerCancelOrderRes.setOrderStatus(dfyBaseResult.getData().getOrderStatus());*/
+            DfyOrderStatusRequest dfyOrderStatusRequest = new DfyOrderStatusRequest();
+            dfyOrderStatusRequest.setOrderId(req.getOutOrderId());
+            DfyBaseResult<DfyOrderStatusResponse> dfyOrderStatusResponseDfyBaseResult = dfyOrderService.orderStatus(dfyOrderStatusRequest);
+            if(dfyOrderStatusResponseDfyBaseResult != null && dfyOrderStatusResponseDfyBaseResult.isSuccess() && dfyOrderStatusResponseDfyBaseResult.getData() != null){
+                String orderStatus = dfyOrderStatusResponseDfyBaseResult.getData().getOrderStatus();
+                int i = OrderInfoTranser.genCommonOrderStringStatus(orderStatus, 3);
+                centerCancelOrderRes.setOrderStatus(i);
+            }else{
+                centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+            }
             return BaseResponse.success(centerCancelOrderRes);
         }
         return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
