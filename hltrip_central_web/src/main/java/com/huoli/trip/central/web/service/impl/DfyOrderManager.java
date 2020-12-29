@@ -353,6 +353,7 @@ public class DfyOrderManager extends OrderManager {
         request.setTraceId(req.getTraceId());
         request.setChannelCode(req.getChannelCode());
         request.setChannelOrderId(req.getChannelOrderId());
+        request.setPrice(String.valueOf(req.getPrice()));
         DfyBaseResult dfyBaseResult = dfyOrderService.payOrder(request);
         if(dfyBaseResult != null && dfyBaseResult.isSuccess()){
             CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
