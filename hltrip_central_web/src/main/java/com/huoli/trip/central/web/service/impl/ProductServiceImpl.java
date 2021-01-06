@@ -199,6 +199,8 @@ public class ProductServiceImpl implements ProductService {
             Integer aheadDays = productPO.getBookAheadMin() == null ? null : (productPO.getBookAheadMin() / 60 / 24);
             if(null==pricePo || CollectionUtils.isEmpty(pricePo.getPriceInfos()))
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
+            // 加价
+            increasePrice(pricePo.getPriceInfos(), productPO.getSupplierId(), productPO.getCode());
             List<PriceInfo> priceInfos = Lists.newArrayList();
             for (PriceInfoPO entry : pricePo.getPriceInfos()) {
                 String saleDate = CommonUtils.curDate.format(entry.getSaleDate());
