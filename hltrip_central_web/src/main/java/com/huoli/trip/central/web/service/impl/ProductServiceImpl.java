@@ -530,15 +530,18 @@ public class ProductServiceImpl implements ProductService {
      */
     private void increasePrice(List<PriceInfoPO> priceInfos, String channelCode, String productCode){
         try {
+            log.info("准备获取加价配置。。原始价格={}", JSON.toJSONString(priceInfos));
             SupplierPolicyPO supplierPolicy = supplierPolicyDao.getSupplierPolicyBySupplierId(channelCode);
             // 没有配置或者没有配置加价类型都不计算
             if(supplierPolicy != null && supplierPolicy.getPriceType() != null){
+                log.info("获取到价格配置={}", JSONObject.toJSONString(supplierPolicy));
                 // 如果配置了通用加价就用通用加价规则
                 if(supplierPolicy.getPriceType() == Constants.SUPPLIER_POLICY_PRICE_COMMON){
                     supplierPolicy = supplierPolicyDao.getSupplierPolicyBySupplierId(Constants.SUPPLIER_CODE_COMMON);
                 }
                 ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
                 for (PriceInfoPO priceInfo : priceInfos) {
+                    log.info("加价日期 {}", DateTimeUtil.formatDate(priceInfo.getSaleDate()));
                     // 加价计算
                     if(priceInfo.getSalePrice() != null){
                         priceInfo.setSalePrice(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
@@ -556,6 +559,9 @@ public class ProductServiceImpl implements ProductService {
                         }
                     }
                 }
+                log.info("加价完成，加价后价格={}", JSON.toJSONString(priceInfos));
+            }else {
+                log.info("没有获取到加价配置或者配置不完整，channel = {}", channelCode);
             }
         } catch (Exception e) {
             log.error("加价计算失败，不影响主流程，channel = {}, productCode = {}", channelCode, productCode, e);
