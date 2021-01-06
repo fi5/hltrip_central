@@ -5,15 +5,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
-import com.huoli.trip.central.web.dao.HodometerDao;
-import com.huoli.trip.central.web.dao.PriceDao;
-import com.huoli.trip.central.web.dao.ProductDao;
-import com.huoli.trip.central.web.dao.ProductItemDao;
+import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.OrderFactory;
-import com.huoli.trip.central.web.service.RedisService;
 import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
@@ -36,11 +31,11 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -84,6 +79,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private RecommendTask recommendTask;
+
+    @Autowired
+    private SupplierPolicyDao supplierPolicyDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -477,11 +475,15 @@ public class ProductServiceImpl implements ProductService {
                 request.getEndDate() == null ? null : DateTimeUtil.formatDate(request.getEndDate()),
                 request.getTraceId());
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
-        if(pricePO == null){
+        if(pricePO == null || ListUtils.isEmpty(pricePO.getPriceInfos())){
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
+        // 加价
+        increasePrice(pricePO.getPriceInfos(), channelCode, productPO.getCode());
+
         int quantity = request.getQuantity();
         Integer chdQuantity = request.getChdQuantity();
+        // 跟团游
         if(TRIP_PRODUCTS.contains(productPO.getProductType())){
             checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity == null ? 0 : chdQuantity, result);
         }
@@ -518,6 +520,45 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
+    /**
+     * 加价计算
+     * @param priceInfos
+     * @param channelCode
+     * @param productCode
+     */
+    private void increasePrice(List<PriceInfoPO> priceInfos, String channelCode, String productCode){
+        try {
+            SupplierPolicyPO supplierPolicy = supplierPolicyDao.getSupplierPolicyBySupplierId(channelCode);
+            // 没有配置或者没有配置加价类型都不计算
+            if(supplierPolicy != null && supplierPolicy.getPriceType() != null){
+                // 如果配置了通用加价就用通用加价规则
+                if(supplierPolicy.getPriceType() == Constants.SUPPLIER_POLICY_PRICE_COMMON){
+                    supplierPolicy = supplierPolicyDao.getSupplierPolicyBySupplierId(Constants.SUPPLIER_CODE_COMMON);
+                }
+                ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
+                for (PriceInfoPO priceInfo : priceInfos) {
+                    // 加价计算
+                    if(priceInfo.getSalePrice() != null){
+                        priceInfo.setSalePrice(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
+                                priceInfo.getSalePrice().toPlainString()))));
+                    }
+                    // 如果有儿童价也加价
+                    if(priceInfo.getChdSalePrice() != null){
+                        // 如果儿童单独配置了加价规则就用儿童的，否则用成人的
+                        if(StringUtils.isNotBlank(supplierPolicy.getChdPriceFormula())){
+                            priceInfo.setChdSalePrice(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getChdPriceFormula().replace("price",
+                                    priceInfo.getChdSalePrice().toPlainString()))));
+                        } else {
+                            priceInfo.setChdSalePrice(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
+                                    priceInfo.getChdSalePrice().toPlainString()))));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("加价计算失败，不影响主流程，channel = {}, productCode = {}", channelCode, productCode, e);
+        }
+    }
     /**
      * 构建商品详情结果
      * @param productPOs
