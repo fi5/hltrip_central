@@ -544,9 +544,9 @@ public class ProductServiceImpl implements ProductService {
                 for (PriceInfoPO priceInfo : priceInfos) {
                     log.info("加价日期 {}", DateTimeUtil.formatDate(priceInfo.getSaleDate()));
                     // 加价计算
-                    if(priceInfo.getSalePrice() != null){
+                    if(priceInfo.getSettlePrice() != null){
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                priceInfo.getSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                                priceInfo.getSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
                         // 如果加价后价格超过门市价就用门市价
                         if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
                             priceInfo.setSalePrice(marketPrice);
@@ -555,14 +555,14 @@ public class ProductServiceImpl implements ProductService {
                         }
                     }
                     // 如果有儿童价也加价
-                    if(priceInfo.getChdSalePrice() != null){
+                    if(priceInfo.getChdSettlePrice() != null){
                         String formula = supplierPolicy.getPriceFormula();
                         // 如果儿童单独配置了加价规则就用儿童的
                         if(StringUtils.isNotBlank(supplierPolicy.getChdPriceFormula())){
                             formula = supplierPolicy.getChdPriceFormula();
                         }
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(formula.replace("price",
-                                priceInfo.getChdSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);;
+                                priceInfo.getChdSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);;
                         // 如果加价后价格超过门市价就用门市价
                         if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
                             priceInfo.setChdSalePrice(marketPrice);
