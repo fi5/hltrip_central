@@ -579,6 +579,7 @@ public class ProductServiceImpl implements ProductService {
         }
         result.setProducts(productPOs.stream().map(po -> {
             try {
+                increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode());
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
@@ -622,6 +623,7 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
         return productPOs.stream().map(po -> {
             try {
+                increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode());
                 return ProductConverter.convertToProduct(po, total);
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
@@ -639,15 +641,17 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProductsByItem(List<ProductItemPO> productItemPOs, int total) {
         return productItemPOs.stream().map(po -> {
             try {
-                Product product = ProductConverter.convertToProductByItem(po, total);
                 if(po.getProduct() != null){
+                    increasePrice(Lists.newArrayList(po.getProduct().getPriceCalendar().getPriceInfos()), po.getProduct().getSupplierId(), po.getProduct().getCode());
+                    Product product = ProductConverter.convertToProductByItem(po, total);
                     List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
                     if(ListUtils.isNotEmpty(prices)){
                         product.setGroupDates(prices.stream().map(p ->
                                 DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
                     }
+                    return product;
                 }
-                return product;
+                return null;
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;
