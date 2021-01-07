@@ -642,7 +642,7 @@ public class ProductServiceImpl implements ProductService {
         return productItemPOs.stream().map(po -> {
             try {
                 if(po.getProduct() != null){
-                    increasePrice(Lists.newArrayList(po.getProduct().getPriceCalendar().getPriceInfos()), po.getProduct().getSupplierId(), po.getProduct().getCode());
+                    increasePrice(Lists.newArrayList(po.getProduct().getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getProduct().getCode());
                     Product product = ProductConverter.convertToProductByItem(po, total);
                     List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
                     if(ListUtils.isNotEmpty(prices)){
