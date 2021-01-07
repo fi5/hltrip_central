@@ -546,7 +546,7 @@ public class ProductServiceImpl implements ProductService {
                     // 加价计算
                     if(priceInfo.getSalePrice() != null){
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                priceInfo.getSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_DOWN);
+                                priceInfo.getSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
                         // 如果加价后价格超过门市价就用门市价
                         if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
                             priceInfo.setSalePrice(marketPrice);
@@ -562,7 +562,7 @@ public class ProductServiceImpl implements ProductService {
                             formula = supplierPolicy.getChdPriceFormula();
                         }
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(formula.replace("price",
-                                priceInfo.getChdSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_DOWN);;
+                                priceInfo.getChdSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);;
                         // 如果加价后价格超过门市价就用门市价
                         if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
                             priceInfo.setChdSalePrice(marketPrice);
