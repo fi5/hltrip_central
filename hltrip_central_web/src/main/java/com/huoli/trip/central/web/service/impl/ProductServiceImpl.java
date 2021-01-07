@@ -34,6 +34,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -545,7 +546,7 @@ public class ProductServiceImpl implements ProductService {
                     // 加价计算
                     if(priceInfo.getSalePrice() != null){
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                priceInfo.getSalePrice().toPlainString())));
+                                priceInfo.getSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_DOWN);
                         // 如果加价后价格超过门市价就用门市价
                         if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
                             priceInfo.setSalePrice(marketPrice);
@@ -561,7 +562,7 @@ public class ProductServiceImpl implements ProductService {
                             formula = supplierPolicy.getChdPriceFormula();
                         }
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(formula.replace("price",
-                                priceInfo.getChdSalePrice().toPlainString())));
+                                priceInfo.getChdSalePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_DOWN);;
                         // 如果加价后价格超过门市价就用门市价
                         if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
                             priceInfo.setChdSalePrice(marketPrice);
