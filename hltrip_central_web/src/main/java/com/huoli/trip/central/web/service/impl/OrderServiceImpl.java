@@ -13,7 +13,7 @@ import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
 import com.huoli.trip.common.vo.request.central.RefundKafka;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
-import com.huoli.trip.supplier.api.YcfOrderService;
+import com.huoli.trip.supplier.api.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
@@ -35,12 +35,13 @@ import org.springframework.util.concurrent.ListenableFuture;
 @Service(timeout = 10000,group = "hltrip")
 public class OrderServiceImpl implements OrderService {
 
-    @Reference(timeout = 10000,group = "hltrip")
-    private YcfOrderService ycfOrderService;
+    @Reference(group = "hltrip",timeout = 30000,check=false,retries = 3)
+    ProductService productService;
     @Autowired
     KafkaTemplate kafkaTemplate;
     @Autowired
     OrderFactory orderFactory;
+
 
     @Override
     public Object getOrderStatus(OrderStatusRequest request) {
@@ -58,7 +59,7 @@ public class OrderServiceImpl implements OrderService {
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
-        BaseResponse<CenterBookCheck> checkRes = orderManager.getCenterCheckInfos(req);;
+        BaseResponse<CenterBookCheck> checkRes = orderManager.getCenterCheckInfos(req);
         return checkRes;
     }
 
@@ -126,7 +127,11 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);;
+        BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);
+        if(result != null && result.getCode() != 0){
+            log.info("供应商创建订单失败,唤起本地更新产品为下线状态");
+            productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
+        }
         return result;
     }
 
@@ -135,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterPayOrderRes> result = orderManager.getCenterPayOrder(req);;
+        BaseResponse<CenterPayOrderRes> result = orderManager.getCenterPayOrder(req);
         return result;
     }
 
