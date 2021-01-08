@@ -5,15 +5,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
-import com.huoli.trip.central.web.dao.HodometerDao;
-import com.huoli.trip.central.web.dao.PriceDao;
-import com.huoli.trip.central.web.dao.ProductDao;
-import com.huoli.trip.central.web.dao.ProductItemDao;
+import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.OrderFactory;
-import com.huoli.trip.central.web.service.RedisService;
 import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
@@ -36,11 +31,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.math.MathContext;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -84,6 +80,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private RecommendTask recommendTask;
+
+    @Autowired
+    private SupplierPolicyDao supplierPolicyDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -201,6 +200,8 @@ public class ProductServiceImpl implements ProductService {
             Integer aheadDays = productPO.getBookAheadMin() == null ? null : (productPO.getBookAheadMin() / 60 / 24);
             if(null==pricePo || CollectionUtils.isEmpty(pricePo.getPriceInfos()))
                 return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
+            // 加价
+            increasePrice(pricePo.getPriceInfos(), productPO.getSupplierId(), productPO.getCode(), productPO.getPrice());
             List<PriceInfo> priceInfos = Lists.newArrayList();
             for (PriceInfoPO entry : pricePo.getPriceInfos()) {
                 String saleDate = CommonUtils.curDate.format(entry.getSaleDate());
@@ -477,11 +478,15 @@ public class ProductServiceImpl implements ProductService {
                 request.getEndDate() == null ? null : DateTimeUtil.formatDate(request.getEndDate()),
                 request.getTraceId());
         PricePO pricePO = productDao.getPricePos(request.getProductCode());
-        if(pricePO == null){
+        if(pricePO == null || ListUtils.isEmpty(pricePO.getPriceInfos())){
             return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
+        // 加价
+        increasePrice(pricePO.getPriceInfos(), channelCode, productPO.getCode(), productPO.getPrice());
+
         int quantity = request.getQuantity();
         Integer chdQuantity = request.getChdQuantity();
+        // 跟团游
         if(TRIP_PRODUCTS.contains(productPO.getProductType())){
             checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, chdQuantity == null ? 0 : chdQuantity, result);
         }
@@ -519,6 +524,62 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
+     * 加价计算
+     * @param priceInfos
+     * @param channelCode
+     * @param productCode
+     */
+    private void increasePrice(List<PriceInfoPO> priceInfos, String channelCode, String productCode, BigDecimal marketPrice){
+        try {
+            log.info("准备获取加价配置。。原始价格={}", JSON.toJSONString(priceInfos));
+            SupplierPolicyPO supplierPolicy = supplierPolicyDao.getSupplierPolicyBySupplierId(channelCode);
+            // 没有配置或者没有配置加价类型都不计算
+            if(supplierPolicy != null && supplierPolicy.getPriceType() != null){
+                log.info("获取到价格配置={}", JSONObject.toJSONString(supplierPolicy));
+                // 如果配置了通用加价就用通用加价规则
+                if(supplierPolicy.getPriceType() == Constants.SUPPLIER_POLICY_PRICE_COMMON){
+                    supplierPolicy = supplierPolicyDao.getSupplierPolicyBySupplierId(Constants.SUPPLIER_CODE_COMMON);
+                }
+                ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
+                for (PriceInfoPO priceInfo : priceInfos) {
+                    log.info("加价日期 {}", DateTimeUtil.formatDate(priceInfo.getSaleDate()));
+                    // 加价计算
+                    if(priceInfo.getSettlePrice() != null){
+                        BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
+                                priceInfo.getSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                        // 如果加价后价格超过门市价就用门市价
+                        if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
+                            priceInfo.setSalePrice(marketPrice);
+                        } else {
+                            priceInfo.setSalePrice(newPrice);
+                        }
+                    }
+                    // 如果有儿童价也加价
+                    if(priceInfo.getChdSettlePrice() != null){
+                        String formula = supplierPolicy.getPriceFormula();
+                        // 如果儿童单独配置了加价规则就用儿童的
+                        if(StringUtils.isNotBlank(supplierPolicy.getChdPriceFormula())){
+                            formula = supplierPolicy.getChdPriceFormula();
+                        }
+                        BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(formula.replace("price",
+                                priceInfo.getChdSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);;
+                        // 如果加价后价格超过门市价就用门市价
+                        if(marketPrice != null && marketPrice.compareTo(newPrice) == 0){
+                            priceInfo.setChdSalePrice(marketPrice);
+                        } else {
+                            priceInfo.setChdSalePrice(newPrice);
+                        }
+                    }
+                }
+                log.info("加价完成，加价后价格={}", JSON.toJSONString(priceInfos));
+            }else {
+                log.info("没有获取到加价配置或者配置不完整，channel = {}", channelCode);
+            }
+        } catch (Exception e) {
+            log.error("加价计算失败，不影响主流程，channel = {}, productCode = {}", channelCode, productCode, e);
+        }
+    }
+    /**
      * 构建商品详情结果
      * @param productPOs
      * @param result
@@ -530,6 +591,7 @@ public class ProductServiceImpl implements ProductService {
         }
         result.setProducts(productPOs.stream().map(po -> {
             try {
+                increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(),po.getPrice());
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
@@ -573,6 +635,7 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
         return productPOs.stream().map(po -> {
             try {
+                increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(), po.getPrice());
                 return ProductConverter.convertToProduct(po, total);
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
@@ -590,15 +653,18 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProductsByItem(List<ProductItemPO> productItemPOs, int total) {
         return productItemPOs.stream().map(po -> {
             try {
-                Product product = ProductConverter.convertToProductByItem(po, total);
                 if(po.getProduct() != null){
+                    increasePrice(Lists.newArrayList(po.getProduct().getPriceCalendar().getPriceInfos()),
+                            po.getSupplierId(), po.getProduct().getCode(), po.getProduct().getPrice());
+                    Product product = ProductConverter.convertToProductByItem(po, total);
                     List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
                     if(ListUtils.isNotEmpty(prices)){
                         product.setGroupDates(prices.stream().map(p ->
                                 DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
                     }
+                    return product;
                 }
-                return product;
+                return null;
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
                 return null;
