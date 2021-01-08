@@ -572,7 +572,7 @@ public class ProductServiceImpl implements ProductService {
                     }
                 }
                 log.info("加价完成，加价后价格={}", JSON.toJSONString(priceInfos));
-            }else {
+            } else {
                 log.info("没有获取到加价配置或者配置不完整，channel = {}", channelCode);
             }
         } catch (Exception e) {
