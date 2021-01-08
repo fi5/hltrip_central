@@ -339,7 +339,7 @@ public class DfyOrderManager extends OrderManager {
             createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());
             return BaseResponse.success(createOrderRes);
         }
-        return BaseResponse.fail(CentralError.ERROR_ORDER);
+        return BaseResponse.fail(CentralError.ERROR_ORDER_TRIP_ORDER_ERROR);
     }
 
 
