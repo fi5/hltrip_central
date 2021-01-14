@@ -97,13 +97,58 @@ public class DfyOrderManager extends OrderManager {
             rep.setOrderId(dfyOrderDetail.getOrderId());
             //转换成consumer统一的订单状态
             rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(),3));
-//            rep.setVochers(JSONObject.parseArray(JSONObject.toJSONString(data.getVochers()), OrderDetailRep.Voucher.class));
+            rep.setVochers(genVouchers(dfyOrderDetail));
             return BaseResponse.success(rep);
         } catch (Exception e) {
             log.error("DfygetOrderDetail报错:"+JSONObject.toJSONString(req),e);
             return BaseResponse.fail(9999,order.getMessage(),null);
         }
 
+    }
+
+    private List<OrderDetailRep.Voucher> genVouchers(DfyOrderDetail dfyOrderDetail) {
+
+        try {
+            if(null!=dfyOrderDetail.getOrderInfo().getEnterCertificate()&& CollectionUtils.isNotEmpty(dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo())){
+                List<OrderDetailRep.Voucher> vochers = new ArrayList<>();
+                for(DfyOrderDetail.EnterCertificateTypeInfo typeInfo:dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo()){
+                    for(DfyOrderDetail.TicketCertInfo oneInfo:typeInfo.getTicketCertInfos()){
+
+                        switch (oneInfo.getCertType()){//凭证类型   1.纯文本  2.二维码 3.PDF
+                            case 1:
+                                for(String entry:oneInfo.getFileUrls()){
+                                    OrderDetailRep.Voucher oneVoucher=new OrderDetailRep.Voucher();
+                                    oneVoucher.setVocherNo(entry);
+                                    oneVoucher.setType(1);
+                                    vochers.add(oneVoucher);
+                                }
+                                break;
+
+                            case 2:
+                                for(String entry:oneInfo.getFileUrls()){
+                                    OrderDetailRep.Voucher oneVoucher=new OrderDetailRep.Voucher();
+                                    oneVoucher.setVocherUrl(entry);
+                                    oneVoucher.setType(2);
+                                    vochers.add(oneVoucher);
+                                }
+                                break;
+                            case 3:
+                                for(String entry:oneInfo.getFileUrls()){
+                                    OrderDetailRep.Voucher oneVoucher=new OrderDetailRep.Voucher();
+                                    oneVoucher.setVocherUrl(entry);
+                                    oneVoucher.setType(3);
+                                    vochers.add(oneVoucher);
+                                }
+                                break;
+                        }
+                    }
+                }
+                return  vochers;
+            }
+        } catch (Exception e) {
+        	log.error("genVouchers错",e);
+        }
+        return null;
     }
 
     public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
@@ -135,45 +180,7 @@ public class DfyOrderManager extends OrderManager {
             rep.setOrderId(dfyOrderDetail.getOrderId());
             //转换成consumer统一的订单状态
             rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 3));
-
-
-            if(null!=dfyOrderDetail.getOrderInfo().getEnterCertificate()&& CollectionUtils.isNotEmpty(dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo())){
-                List<OrderDetailRep.Voucher> vochers = new ArrayList<>();
-                for(DfyOrderDetail.EnterCertificateTypeInfo typeInfo:dfyOrderDetail.getOrderInfo().getEnterCertificate().getEnterCertificateTypeInfo()){
-                    for(DfyOrderDetail.TicketCertInfo oneInfo:typeInfo.getTicketCertInfos()){
-
-                        switch (oneInfo.getCertType()){//凭证类型   1.纯文本  2.二维码 3.PDF
-                        	case 1:
-                                for(String entry:oneInfo.getFileUrls()){
-                                    OrderDetailRep.Voucher oneVoucher=new OrderDetailRep.Voucher();
-                                    oneVoucher.setVocherNo(entry);
-                                    oneVoucher.setType(1);
-                                    vochers.add(oneVoucher);
-                                }
-                        	break;
-
-                        	case 2:
-                                for(String entry:oneInfo.getFileUrls()){
-                                    OrderDetailRep.Voucher oneVoucher=new OrderDetailRep.Voucher();
-                                    oneVoucher.setVocherUrl(entry);
-                                    oneVoucher.setType(2);
-                                    vochers.add(oneVoucher);
-                                }
-                        		break;
-                            case 3:
-                                for(String entry:oneInfo.getFileUrls()){
-                                    OrderDetailRep.Voucher oneVoucher=new OrderDetailRep.Voucher();
-                                    oneVoucher.setVocherUrl(entry);
-                                    oneVoucher.setType(3);
-                                    vochers.add(oneVoucher);
-                                }
-                                break;
-                        }
-                    }
-                }
-                rep.setVochers(vochers);
-            }
-
+            rep.setVochers(genVouchers(dfyOrderDetail));
 
             return BaseResponse.success(rep);
 
