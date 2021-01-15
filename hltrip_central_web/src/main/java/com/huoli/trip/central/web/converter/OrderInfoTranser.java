@@ -125,9 +125,14 @@ public class OrderInfoTranser {
 				case "已完成":
 					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();//20,"待出行",
 					break;
+				case "申请退款中":
+					rtnStatus = OrderStatus.APPLYING_FOR_REFUND.getCode();//21,"申请退款中",
+					break;
 				case "已取消":
 					rtnStatus = OrderStatus.CANCELLED.getCode();//40
 					break;
+				case "已退款":
+					rtnStatus = OrderStatus.REFUNDED.getCode();//50
 				default:
 					rtnStatus=Integer.parseInt(orderStatus);
 					break;
