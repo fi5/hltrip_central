@@ -133,6 +133,7 @@ public class OrderInfoTranser {
 					break;
 				case "已退款":
 					rtnStatus = OrderStatus.REFUNDED.getCode();//50
+					break;
 				default:
 					rtnStatus=Integer.parseInt(orderStatus);
 					break;
