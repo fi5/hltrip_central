@@ -542,7 +542,6 @@ public class ProductServiceImpl implements ProductService {
                 }
                 ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
                 for (PriceInfoPO priceInfo : priceInfos) {
-                    log.info("加价日期 {}", DateTimeUtil.formatDate(priceInfo.getSaleDate()));
                     // 加价计算
                     if(priceInfo.getSettlePrice() != null){
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
@@ -572,7 +571,7 @@ public class ProductServiceImpl implements ProductService {
                     }
                 }
                 log.info("加价完成，加价后价格={}", JSON.toJSONString(priceInfos));
-            }else {
+            } else {
                 log.info("没有获取到加价配置或者配置不完整，channel = {}", channelCode);
             }
         } catch (Exception e) {
