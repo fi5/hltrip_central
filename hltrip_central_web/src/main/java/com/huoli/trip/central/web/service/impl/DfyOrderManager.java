@@ -420,21 +420,16 @@ public class DfyOrderManager extends OrderManager {
         baseOrderRequest.setOrderId(req.getPartnerOrderId());
         baseOrderRequest.setTraceId(req.getTraceId());
         baseOrderRequest.setSupplierOrderId(req.getChannelOrderId());
-        BaseResponse<DfyOrderDetail> dfyOrderDetailBaseResponse = dfyOrderService.orderDetail(baseOrderRequest);
-        if(dfyOrderDetailBaseResponse.isSuccess() && dfyOrderDetailBaseResponse.getData() != null){
-            DfyOrderDetail.OrderInfo orderInfo = dfyOrderDetailBaseResponse.getData().getOrderInfo();
-            String status = dfyOrderDetailBaseResponse.getData().getOrderStatus();
-            String canPay = orderInfo.getCanPay();
-            if("待付款".equals(status) && "1".equals(canPay)){
+        int canpay = canpay(baseOrderRequest);
+            if(1 == canpay){
                 payCheckRes.setResult(true);
                 //payCheckRes.setCode(String.valueOf(CentralError.SUPPLIER_PAY_CHECK_SUCCESS.getCode()));
                 return BaseResponse.success(payCheckRes);
-            }else{
+            }else if(0 ==canpay){
                 //稍后重试
                 payCheckRes.setResult(false);
                 return BaseResponse.fail(CentralError.SUPPLIER_PAY_CHECK_WAITING);
-            }
-        }else{
+            }else{
             payCheckRes.setResult(false);
             return BaseResponse.fail(CentralError.ERROR_ORDER_PAY_BEFORE);
         }
@@ -493,5 +488,47 @@ public class DfyOrderManager extends OrderManager {
         return result;
     }
 
+    private int canpay(BaseOrderRequest baseOrderRequest) {
+        BaseResponse<DfyOrderDetail> dfyOrderDetailBaseResponse = dfyOrderService.orderDetail(baseOrderRequest);
+        if (dfyOrderDetailBaseResponse.isSuccess() && dfyOrderDetailBaseResponse.getData() != null) {
+            DfyOrderDetail.OrderInfo orderInfo = dfyOrderDetailBaseResponse.getData().getOrderInfo();
+            String status = dfyOrderDetailBaseResponse.getData().getOrderStatus();
+            String canPay = orderInfo.getCanPay();
+            if (!"待付款".equals(status) || !"1".equals(canPay)) {
+                try {
+                    Thread.sleep(10000);
+                    dfyOrderDetailBaseResponse = dfyOrderService.orderDetail(baseOrderRequest);
+                } catch (InterruptedException e) {
+                    log.error("支付校验线程等待出现异常");
+                }
+            }
+            if (dfyOrderDetailBaseResponse.isSuccess() && dfyOrderDetailBaseResponse.getData() != null) {
+                orderInfo = dfyOrderDetailBaseResponse.getData().getOrderInfo();
+                status = dfyOrderDetailBaseResponse.getData().getOrderStatus();
+                canPay = orderInfo.getCanPay();
+                if (!"待付款".equals(status) || !"1".equals(canPay)) {
+                    try {
+                        Thread.sleep(10000);
+                        dfyOrderDetailBaseResponse = dfyOrderService.orderDetail(baseOrderRequest);
+                    } catch (InterruptedException e) {
+                        log.error("支付校验线程等待出现异常");
+                    }
+                }
+            }
 
+            if (dfyOrderDetailBaseResponse.isSuccess() && dfyOrderDetailBaseResponse.getData() != null) {
+                orderInfo = dfyOrderDetailBaseResponse.getData().getOrderInfo();
+                status = dfyOrderDetailBaseResponse.getData().getOrderStatus();
+                canPay = orderInfo.getCanPay();
+                if ("待付款".equals(status) && "1".equals(canPay)) {
+                    return 1;
+                }else{
+                    return 0;
+                }
+            }else{
+                return -1;
+            }
+        }
+        return 0;
+    }
 }
