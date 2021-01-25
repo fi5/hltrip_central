@@ -235,6 +235,7 @@ public class ProductDaoImpl implements ProductDao {
                 .include("oriCity")
                 .include("city")
                 .include("mainImages")
+                .include("supplierId")
                 .include("product.code")
                 .include("product.name")
                 .include("product.status")
@@ -247,7 +248,8 @@ public class ProductDaoImpl implements ProductDao {
                 .include("product.count")
                 .include("product.priceCalendar")
                 .include("product.validTime")
-                .include("product.invalidTime");
+                .include("product.invalidTime")
+                .include("product.supplierId");
         return query;
     }
 
