@@ -444,7 +444,7 @@ public class DfyOrderManager extends OrderManager {
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
         DfyRefundTicketRequest dfyRefundTicketRequest = new DfyRefundTicketRequest();
         dfyRefundTicketRequest.setTraceId(req.getTraceId());
-        dfyRefundTicketRequest.setOrderId(req.getPartnerOrderId());
+        dfyRefundTicketRequest.setOrderId(req.getOutOrderId());
         dfyRefundTicketRequest.setCauseType("5");
         String remark = req.getRemark();
         if(StringUtils.isEmpty(remark)){
