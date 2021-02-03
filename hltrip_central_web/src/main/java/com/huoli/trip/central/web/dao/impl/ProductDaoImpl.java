@@ -223,8 +223,11 @@ public class ProductDaoImpl implements ProductDao {
         if(StringUtils.isNotBlank(desCity)){
             criteria.and("city").regex(desCity);
         }
-        if(StringUtils.isNotBlank(oriCity)){
-            criteriaOriCity.orOperator(Criteria.where("oriCity").regex(oriCity), Criteria.where("oriCity").regex("全国"));
+        // 只有旅游产品会查出发地
+        if(Constants.TRIP_PRODUCT_LIST.contains(type)){
+            if(StringUtils.isNotBlank(oriCity)){
+                criteriaOriCity.orOperator(Criteria.where("oriCity").regex(oriCity), Criteria.where("oriCity").regex("全国"));
+            }
         }
         if(StringUtils.isNotBlank(keyWord)){
             criteriaKeyWord.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
