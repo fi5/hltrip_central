@@ -245,7 +245,7 @@ public class DfyToursOrderManager extends OrderManager {
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
 		DfyCreateToursOrderRequest dfyCreateOrderRequest = new DfyCreateToursOrderRequest();
 		dfyCreateOrderRequest.setStartTime(req.getBeginDate());
-		dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getProductId().split("_")[1]));
+		dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getSupplierProductId()));
 		dfyCreateOrderRequest.setAdultNum(req.getAdultNum());
 		dfyCreateOrderRequest.setChildNum(req.getChildNum());
 		dfyCreateOrderRequest.setStartCity(req.getStartCity());
