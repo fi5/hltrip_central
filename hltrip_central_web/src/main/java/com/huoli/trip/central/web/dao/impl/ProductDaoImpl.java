@@ -229,6 +229,7 @@ public class ProductDaoImpl implements ProductDao {
         }
         Query query = new Query(criteria);
         query.fields().include("code")
+                .include("name")
                 .include("tags")
                 .include("description")
                 .include("oriCity")

@@ -350,6 +350,7 @@ public class ProductServiceImpl implements ProductService {
             result.setBookDesc(product.getBookDesc());
             result.setRemark(product.getRemark());
             result.setOperatorPhone(product.getOperatorPhone());
+            result.setCityCode(product.getOriCityCode());
 //  调用统一的价格计算并设值
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
@@ -542,7 +543,6 @@ public class ProductServiceImpl implements ProductService {
                 }
                 ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
                 for (PriceInfoPO priceInfo : priceInfos) {
-                    log.info("加价日期 {}", DateTimeUtil.formatDate(priceInfo.getSaleDate()));
                     // 加价计算
                     if(priceInfo.getSettlePrice() != null){
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
@@ -572,7 +572,7 @@ public class ProductServiceImpl implements ProductService {
                     }
                 }
                 log.info("加价完成，加价后价格={}", JSON.toJSONString(priceInfos));
-            }else {
+            } else {
                 log.info("没有获取到加价配置或者配置不完整，channel = {}", channelCode);
             }
         } catch (Exception e) {
@@ -591,7 +591,9 @@ public class ProductServiceImpl implements ProductService {
         }
         result.setProducts(productPOs.stream().map(po -> {
             try {
-                increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(),po.getPrice());
+                if(po.getPriceCalendar() != null && po.getPriceCalendar().getPriceInfos() != null){
+                    increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(),po.getPrice());
+                }
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
@@ -635,7 +637,9 @@ public class ProductServiceImpl implements ProductService {
     private List<Product> convertToProducts(List<ProductPO> productPOs, int total) {
         return productPOs.stream().map(po -> {
             try {
-                increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(), po.getPrice());
+                if(po.getPriceCalendar() != null && po.getPriceCalendar().getPriceInfos() != null){
+                    increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(), po.getPrice());
+                }
                 return ProductConverter.convertToProduct(po, total);
             } catch (Exception e) {
                 log.error("转换商品列表结果异常，po = {}", JSON.toJSONString(po), e);
@@ -654,8 +658,11 @@ public class ProductServiceImpl implements ProductService {
         return productItemPOs.stream().map(po -> {
             try {
                 if(po.getProduct() != null){
-                    increasePrice(Lists.newArrayList(po.getProduct().getPriceCalendar().getPriceInfos()),
-                            po.getSupplierId(), po.getProduct().getCode(), po.getProduct().getPrice());
+                    if(po.getProduct() != null && po.getProduct().getPriceCalendar() != null
+                            && po.getProduct().getPriceCalendar().getPriceInfos() != null){
+                        increasePrice(Lists.newArrayList(po.getProduct().getPriceCalendar().getPriceInfos()),
+                                po.getSupplierId(), po.getProduct().getCode(), po.getProduct().getPrice());
+                    }
                     Product product = ProductConverter.convertToProductByItem(po, total);
                     List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
                     if(ListUtils.isNotEmpty(prices)){
