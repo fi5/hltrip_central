@@ -214,19 +214,22 @@ public class ProductDaoImpl implements ProductDao {
 
     private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord){
         Criteria criteria = new Criteria();
-        if(StringUtils.isNotBlank(oriCity)){
-            criteria.and("oriCity").regex(oriCity);
-        }
-        if(StringUtils.isNotBlank(desCity)){
-            criteria.and("city").regex(desCity);
-        }
+        Criteria criteriaOriCity = new Criteria();
+        Criteria criteriaKeyWord = new Criteria();
         Date date = new Date();
         criteria.and("product.productType").is(type).and("product.status").is(1)
                 .and("product.validTime").lte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
                 .and("product.invalidTime").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)));
-        if(StringUtils.isNotBlank(keyWord)){
-            criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
+        if(StringUtils.isNotBlank(desCity)){
+            criteria.and("city").regex(desCity);
         }
+        if(StringUtils.isNotBlank(oriCity)){
+            criteriaOriCity.orOperator(Criteria.where("oriCity").regex(oriCity), Criteria.where("oriCity").regex("全国"));
+        }
+        if(StringUtils.isNotBlank(keyWord)){
+            criteriaKeyWord.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
+        }
+        criteria.andOperator(criteriaOriCity, criteriaKeyWord);
         Query query = new Query(criteria);
         query.fields().include("code")
                 .include("name")
