@@ -265,6 +265,7 @@ public class DfyToursOrderManager extends OrderManager {
 				//tourist.setBirthday();
 				//tourist.setPsptEndDate();
 				//tourist.setSex();
+				tourist.setTouristType(guest.getGuestType());
 				int psptcode = guest.getCredentialType();
 				int dfypscode = changecredentialType(psptcode);
 				DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(dfypscode);
