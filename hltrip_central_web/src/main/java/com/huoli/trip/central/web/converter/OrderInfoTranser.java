@@ -151,7 +151,7 @@ public class OrderInfoTranser {
 					rtnStatus = OrderStatus.TO_BE_PAID.getCode();//1,"待支付",
 					break;
 				case "已确认":
-					rtnStatus = OrderStatus.TO_BE_CONFIRMED.getCode();//待确认 10已经支付了的
+					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();//待确认 10已经支付了的,这个应该转待出行
 					break;
 				case "已完成":
 					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();//20,"待出行",
