@@ -84,7 +84,7 @@ public class DfyToursOrderManager extends OrderManager {
 			OrderDetailRep rep=new OrderDetailRep();
 			rep.setOrderId(dfyOrderDetail.getOrderId());
 			//转换成consumer统一的订单状态
-			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(),3));
+			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(),4));
 			rep.setVochers(genVouchers(dfyOrderDetail));
 			return BaseResponse.success(rep);
 		} catch (Exception e) {
@@ -134,7 +134,7 @@ public class DfyToursOrderManager extends OrderManager {
 			OrderDetailRep rep = new OrderDetailRep();
 			rep.setOrderId(dfyOrderDetail.getOrderId());
 			//转换成consumer统一的订单状态
-			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 3));
+			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 4));
 			rep.setVochers(genVouchers(dfyOrderDetail));
 
 			return BaseResponse.success(rep);
