@@ -267,7 +267,7 @@ public class ProductServiceImpl implements ProductService {
             try {
                 product=ProductConverter.convertToProduct(productPo, 0);
             } catch (Exception e) {
-            	log.info("",e);
+                log.info("",e);
             }
             if(null==product )
                 return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
@@ -367,7 +367,7 @@ public class ProductServiceImpl implements ProductService {
             } catch (HlCentralException he) {
                 return BaseResponse.fail(he.getCode(),he.getError(),he.getData());
             } catch (Exception e) {
-            	log.info("",e);
+                log.info("",e);
                 return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
             }
 
@@ -389,6 +389,7 @@ public class ProductServiceImpl implements ProductService {
             result.setAdtSalePriceTotal(priceCalData.getAdtSalePriceTotal());
             result.setAdtSettlePriceTotal(priceCalData.getAdtSettlePriceTotal());
             result.setStock(priceCalData.getStock());
+            result.setRoomDiffPrice(priceCalData.getRoomDiffPrice());
             HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(req.getProductCode());
             if(hodometerPO != null){
                 result.setHodometer(hodometerPO);
@@ -401,7 +402,7 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
-	/**
+    /**
      * 查询room,ticket,food里的item
      * @param product
      */
@@ -434,7 +435,7 @@ public class ProductServiceImpl implements ProductService {
             }
 
         } catch (Exception e) {
-        	log.info("",e);
+            log.info("",e);
         }
 
     }
@@ -707,6 +708,11 @@ public class ProductServiceImpl implements ProductService {
             result.setMinStock(priceInfoPO.getStock());
             throw new HlCentralException(CentralError.PRICE_CALC_STOCK_SHORT_ERROR.getCode(), msg, result);
         }
+        double roomDiff = 0;
+        if((quantityTotal) % 2 != 0 && priceInfoPO.getRoomDiffPrice() != null
+                && priceInfoPO.getRoomDiffPrice().compareTo(BigDecimal.valueOf(0)) == 1){
+            roomDiff = priceInfoPO.getRoomDiffPrice().doubleValue();
+        }
         // 成人总价
         BigDecimal adtSalesTotal = BigDecimal.valueOf(BigDecimalUtil.add(result.getSalesTotal() == null ? 0d : result.getSalesTotal().doubleValue(),
                 calcPrice(priceInfoPO.getSalePrice(), quantityTotal).doubleValue()));
@@ -728,13 +734,14 @@ public class ProductServiceImpl implements ProductService {
         result.setChdSalePriceTotal(chdSalesTotal);
         result.setChdSettlePriceTotal(chdSettlesTotal);
         // 总价
-        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue())));
-        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue())));
+        result.setSalesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSalesTotal.doubleValue(), chdSalesTotal == null ? 0d : chdSalesTotal.doubleValue(), roomDiff)));
+        result.setSettlesTotal(BigDecimal.valueOf(BigDecimalUtil.add(adtSettlesTotal.doubleValue(), chdSettlesTotal == null ? 0d : chdSettlesTotal.doubleValue(), roomDiff)));
         result.setAdtSalesPrice(priceInfoPO.getSalePrice());
         result.setAdtSettlePrice(priceInfoPO.getSettlePrice());
         result.setChdSalesPrice(priceInfoPO.getChdSalePrice());
         result.setChdSettlePrice(priceInfoPO.getChdSettlePrice());
         result.setStock(priceInfoPO.getStock());
+        result.setRoomDiffPrice(priceInfoPO.getRoomDiffPrice());
     }
 
     /**
