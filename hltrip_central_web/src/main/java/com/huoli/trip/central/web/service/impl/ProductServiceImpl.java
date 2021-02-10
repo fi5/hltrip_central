@@ -34,12 +34,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
+import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
 
 /**
  * 描述：<br/>

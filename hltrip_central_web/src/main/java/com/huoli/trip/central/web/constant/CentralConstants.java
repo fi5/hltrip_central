@@ -8,7 +8,12 @@ package com.huoli.trip.central.web.constant;
  * 版本：1.0<br>
  * 创建日期：2020/10/23<br>
  */
-public class Constants {
+public class CentralConstants {
+
+    /**
+     * 推荐产品展示数量
+     */
+    public static final String CONFIG_RECOMMEND_SIZE = "recommend.size";
 
     /**
      * 标记推荐列表前缀
