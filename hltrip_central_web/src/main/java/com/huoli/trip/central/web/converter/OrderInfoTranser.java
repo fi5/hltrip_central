@@ -130,6 +130,7 @@ public class OrderInfoTranser {
 					break;
 				case "已消费":
 					rtnStatus = OrderStatus.CONSUMED.getCode();//30已消费
+					break;
 				case "已取消":
 					rtnStatus = OrderStatus.CANCELLED.getCode();//40
 					break;
