@@ -128,6 +128,8 @@ public class OrderInfoTranser {
 				case "申请退款中":
 					rtnStatus = OrderStatus.APPLYING_FOR_REFUND.getCode();//21,"申请退款中",
 					break;
+				case "已消费":
+					rtnStatus = OrderStatus.CONSUMED.getCode();//30已消费
 				case "已取消":
 					rtnStatus = OrderStatus.CANCELLED.getCode();//40
 					break;
