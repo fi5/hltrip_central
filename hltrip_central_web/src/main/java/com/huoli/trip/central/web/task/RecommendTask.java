@@ -1,11 +1,18 @@
 package com.huoli.trip.central.web.task;
 
 import com.alibaba.fastjson.JSON;
+import com.huoli.trip.central.web.constant.CentralConstants;
 import com.huoli.trip.central.web.converter.ProductConverter;
+import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.service.RedisService;
+import com.huoli.trip.common.constant.ConfigConstants;
+import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
+import com.huoli.trip.common.entity.PriceSinglePO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.entity.RecommendProductPO;
+import com.huoli.trip.common.util.ConfigGetter;
 import com.huoli.trip.common.util.ListUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -17,12 +24,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
+import static com.huoli.trip.central.web.constant.CentralConstants.*;
 
 /**
  * 描述：<br/>
@@ -48,6 +56,9 @@ public class RecommendTask {
     @Autowired
     private RedisTemplate jedisTemplate;
 
+    @Autowired
+    private PriceDao priceDao;
+
     @Async
     @PostConstruct
     @Scheduled(cron = "0 0/15 * * * ?")
@@ -65,20 +76,31 @@ public class RecommendTask {
             return;
         }
         log.info("执行刷新推荐列表任务。。。");
-        List<Integer> all = Arrays.asList(ProductType.values()).stream().map(t -> t.getCode())
-                .filter(t -> t != ProductType.UN_LIMIT.getCode()).collect(Collectors.toList());
-        for (Integer t : all) {
-            String key = String.join("", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, t.toString());
-            List<ProductPO> productPOs = productDao.getFlagRecommendResult_(t, 4);
-            if (ListUtils.isNotEmpty(productPOs)) {
-                log.info("类型{}有。。", t);
+        List<RecommendProductPO> recommendProductPOs = productDao.getRecommendProducts();
+        if(ListUtils.isNotEmpty(recommendProductPOs)){
+            List<RecommendProductPO> recommends = recommendProductPOs.stream().map(r -> {
+                ProductPO productPO = productDao.getTripProductByCode(r.getProductCode());
+                if(productPO.getStatus() != Constants.PRODUCT_STATUS_VALID){
+                     productDao.updateRecommendProductStatus(productPO.getCode(), productPO.getStatus());
+                     return null;
+                }
+                PriceSinglePO priceSinglePO = priceDao.selectByProductCode(productPO.getCode());
+                productPO.setPriceCalendar(priceSinglePO);
+                return r;
+            }).filter(r -> r != null).collect(Collectors.toList());
+            recommends.stream().collect(Collectors.groupingBy(RecommendProductPO::getPosition)).forEach((k, v) -> {
+                if(v.size() > 3){
+                    v = v.subList(0, ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE));
+                }
+                List<String> ids = v.stream().map(r -> r.getId()).collect(Collectors.toList());
+                productDao.updateRecommendDisplay(ids, Constants.RECOMMEND_DISPLAY_YES);
+                productDao.updateRecommendNotDisplay(ids);
+                String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, k.toString());
                 redisService.set(key,
-                        JSON.toJSONString(ProductConverter.convertToProducts(productPOs, 0)), 1, TimeUnit.DAYS);
-            } else {
-                log.info("类型{}没有。。", t);
-                jedisTemplate.delete(key);
-            }
+                        JSON.toJSONString(v), 1, TimeUnit.DAYS);
+            });
+        } else {
+            log.error("没有可用推荐产品了。");
         }
     }
-
 }

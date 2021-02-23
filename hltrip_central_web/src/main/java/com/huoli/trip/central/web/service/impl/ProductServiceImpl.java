@@ -34,12 +34,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
+import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
 
 /**
  * 描述：<br/>
@@ -161,7 +160,7 @@ public class ProductServiceImpl implements ProductService {
                     productPOs = productDao.getSalesRecommendList(request.getProductCodes());
                 } else { // 最后用推荐标记查询
                     getFlagRecommend(products, t);
-//                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
+                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
                 }
             } else if(request.getPosition() == Constants.RECOMMEND_POSITION_TRIP_MAIN){  // 旅游首页推荐
                 // 优先销量推荐
@@ -523,6 +522,16 @@ public class ProductServiceImpl implements ProductService {
             checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, result);
         }
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public List<Product> getFlagRecommendProducts(Integer productType, int size){
+        List<ProductPO> productPOs = productDao.getFlagRecommendResult_(productType, size);
+        return productPOs.stream().map(p -> {
+            Product product = new Product();
+            BeanUtils.copyProperties(p, product);
+            return product;
+        }).collect(Collectors.toList());
     }
 
     /**

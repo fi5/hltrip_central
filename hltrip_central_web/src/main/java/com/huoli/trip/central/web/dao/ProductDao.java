@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.dao;
 import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.entity.RecommendProductPO;
 import com.huoli.trip.common.vo.Coordinate;
 
 import java.util.Date;
@@ -125,6 +126,38 @@ public interface ProductDao {
      */
     long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord);
 
+    /**
+     * 预览
+     * @param productCode
+     * @return
+     */
+    ProductPO getPreviewDetail(String productCode);
+
+    /**
+     * 设置展示状态
+     * @param ids
+     * @param display
+     */
+    void updateRecommendDisplay(List<String> ids, int display);
+
+    /**
+     * 设置不展示
+     * @param ids 排除的id
+     */
+    void updateRecommendNotDisplay(List<String> ids);
+
+    /**
+     * 推荐产品
+     * @return
+     */
+    List<RecommendProductPO> getRecommendProducts();
+
+    /**
+     * 更新推荐状态
+     * @param productCode
+     */
+    void updateRecommendProductStatus(String productCode, Integer productStatus);
+
 	/**
      *
      * @param city
@@ -133,11 +166,5 @@ public interface ProductDao {
     List<ProductPO> queryValidCity(String city);
     HashMap<String,String> queryValidCitys();
 
-    /**
-     * 预览
-     * @param productCode
-     * @return
-     */
-    ProductPO getPreviewDetail(String productCode);
 
 }
