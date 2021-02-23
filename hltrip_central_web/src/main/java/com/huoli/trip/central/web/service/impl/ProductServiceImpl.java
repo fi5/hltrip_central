@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
+import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_POSITION_KEY_PREFIX;
 
 /**
  * 描述：<br/>
@@ -160,7 +161,7 @@ public class ProductServiceImpl implements ProductService {
                     productPOs = productDao.getSalesRecommendList(request.getProductCodes());
                 } else { // 最后用推荐标记查询
                     getFlagRecommend(products, t);
-                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
+//                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
                 }
             } else if(request.getPosition() == Constants.RECOMMEND_POSITION_TRIP_MAIN){  // 旅游首页推荐
                 // 优先销量推荐
@@ -186,6 +187,38 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
         }
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<RecommendResult> recommendListV2(RecommendRequest request) {
+        RecommendResult result = new RecommendResult();
+        String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, request.getPosition().toString());
+        if(jedisTemplate.hasKey(key)){
+            List<RecommendProduct> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), RecommendProduct.class);
+            result.setRecommendProducts(list);
+            return BaseResponse.withSuccess(result);
+        }
+        recommendTask.refreshRecommendList(1);
+        ProductPageRequest productPageRequest = new ProductPageRequest();
+        productPageRequest.setType(ProductType.FREE_TRIP.getCode());
+        productPageRequest.setPageSize(4);
+        BaseResponse<ProductPageResult> response = pageList(productPageRequest);
+        if(response.getData() != null && response.getData().getProducts() != null){
+            return BaseResponse.withSuccess(response.getData().getProducts().stream().map(p -> {
+                RecommendProduct recommendProduct = new RecommendProduct();
+                recommendProduct.setPriceInfo(p.getPriceInfo());
+                recommendProduct.setProductCode(p.getCode());
+                recommendProduct.setProductName(p.getName());
+                recommendProduct.setProductStatus(p.getStatus());
+                recommendProduct.setProductType(p.getProductType());
+                recommendProduct.setSupplierId(p.getSupplierId());
+                recommendProduct.setSupplierName(p.getSupplierName());
+                recommendProduct.setCity(p.getCity());
+                recommendProduct.setMainImages(p.getMainItem().getMainImages());
+                return recommendProduct;
+            }).collect(Collectors.toList()));
+        }
+        return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
     }
 
     @Override
