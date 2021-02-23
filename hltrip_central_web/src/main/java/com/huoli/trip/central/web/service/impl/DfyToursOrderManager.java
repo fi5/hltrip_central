@@ -84,7 +84,7 @@ public class DfyToursOrderManager extends OrderManager {
 			OrderDetailRep rep=new OrderDetailRep();
 			rep.setOrderId(dfyOrderDetail.getOrderId());
 			//转换成consumer统一的订单状态
-			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(),3));
+			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(),4));
 			rep.setVochers(genVouchers(dfyOrderDetail));
 			return BaseResponse.success(rep);
 		} catch (Exception e) {
@@ -134,7 +134,7 @@ public class DfyToursOrderManager extends OrderManager {
 			OrderDetailRep rep = new OrderDetailRep();
 			rep.setOrderId(dfyOrderDetail.getOrderId());
 			//转换成consumer统一的订单状态
-			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 3));
+			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 4));
 			rep.setVochers(genVouchers(dfyOrderDetail));
 
 			return BaseResponse.success(rep);
@@ -265,6 +265,7 @@ public class DfyToursOrderManager extends OrderManager {
 				//tourist.setBirthday();
 				//tourist.setPsptEndDate();
 				//tourist.setSex();
+				tourist.setTouristType(guest.getGuestType());
 				int psptcode = guest.getCredentialType();
 				int dfypscode = changecredentialType(psptcode);
 				DfyCertificateType certificateByCode = DfyCertificateType.getCertificateByCode(dfypscode);
@@ -349,8 +350,8 @@ public class DfyToursOrderManager extends OrderManager {
 	public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
 		CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
 		centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
-		return BaseResponse.success(centerCancelOrderRes);
-
+		//return BaseResponse.success(centerCancelOrderRes);
+		return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
 	}
 
 	private Integer changecredentialType(int guestsCredentialType){
