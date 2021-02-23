@@ -88,9 +88,10 @@ public class RecommendTask {
                 productPO.setPriceCalendar(priceSinglePO);
                 return r;
             }).filter(r -> r != null).collect(Collectors.toList());
+            int size = ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE);
             recommends.stream().collect(Collectors.groupingBy(RecommendProductPO::getPosition)).forEach((k, v) -> {
-                if(v.size() > 3){
-                    v = v.subList(0, ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE));
+                if(v.size() > size){
+                    v = v.subList(0, size);
                 }
                 List<String> ids = v.stream().map(r -> r.getId()).collect(Collectors.toList());
                 productDao.updateRecommendDisplay(ids, Constants.RECOMMEND_DISPLAY_YES);

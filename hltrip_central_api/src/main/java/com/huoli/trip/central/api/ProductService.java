@@ -81,4 +81,11 @@ public interface ProductService {
      * @return
      */
     List<Product> getFlagRecommendProducts(Integer productType, int size);
+
+    /**
+     * 获取推荐产品列表
+     * @param request
+     * @return
+     */
+    BaseResponse<RecommendResult> recommendListV2(RecommendRequest request);
 }
