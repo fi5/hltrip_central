@@ -24,12 +24,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
+import static com.huoli.trip.central.web.constant.CentralConstants.*;
 
 /**
  * 描述：<br/>
@@ -87,35 +88,16 @@ public class RecommendTask {
                 productPO.setPriceCalendar(priceSinglePO);
                 return r;
             }).filter(r -> r != null).collect(Collectors.toList());
-            // todo 推荐流程需要确定，优先级、推荐位置、产品类型这些维度的组合，如果实时查的话，流程需要重新定，现有的流程是否需要兼容
-            recommends.stream().collect(Collectors.groupingBy(RecommendProductPO::getProductType)).forEach((k, v) -> {
-                v.stream().collect(Collectors.groupingBy(RecommendProductPO::getPosition)).forEach((k1, v1) -> {
-                    String key = String.join("_", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, k.toString(), k1.toString());
-                });
+            recommends.stream().collect(Collectors.groupingBy(RecommendProductPO::getPosition)).forEach((k, v) -> {
+                if(v.size() > 3){
+                    v = v.subList(0, ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE));
+                }
+                String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, k.toString());
+                redisService.set(key,
+                        JSON.toJSONString(v), 1, TimeUnit.DAYS);
             });
         } else {
-            List<Integer> all = Arrays.asList(ProductType.values()).stream().map(t -> t.getCode())
-                    .filter(t -> t != ProductType.UN_LIMIT.getCode()).collect(Collectors.toList());
-            for (Integer t : all) {
-                String key = String.join("", RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX, t.toString());
-                Integer size = ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE);
-                List<ProductPO> productPOs = productDao.getFlagRecommendResult_(t, size == null ? 3 : size);
-                if (ListUtils.isNotEmpty(productPOs)) {
-                    // 先把当前类型所有都置为不展示
-//                productDao.updateRecommendDisplay(null, Constants.RECOMMEND_DISPLAY_NO, t);
-//                // 把查出来的设置成展示
-//                productDao.updateRecommendDisplay(productPOs.stream().map(ProductPO::getCode).collect(Collectors.toList()),
-//                        Constants.RECOMMEND_DISPLAY_YES, t);
-                    log.info("类型{}有。。", t);
-                    redisService.set(key,
-                            JSON.toJSONString(ProductConverter.convertToProducts(productPOs, 0)), 1, TimeUnit.DAYS);
-                } else {
-                    log.info("类型{}没有。。", t);
-                    jedisTemplate.delete(key);
-                }
-            }
+            log.error("没有可用推荐产品了。");
         }
-
     }
-
 }

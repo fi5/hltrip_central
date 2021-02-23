@@ -19,4 +19,9 @@ public class CentralConstants {
      * 标记推荐列表前缀
      */
     public static final String RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX = "RECOMMEND_LIST_FLAG_TYPE_";
+
+    /**
+     * 推荐产品前缀
+     */
+    public static final String RECOMMEND_LIST_POSITION_KEY_PREFIX = "RECOMMEND_LIST_POSITION";
 }

@@ -160,7 +160,7 @@ public class ProductServiceImpl implements ProductService {
                     productPOs = productDao.getSalesRecommendList(request.getProductCodes());
                 } else { // 最后用推荐标记查询
                     getFlagRecommend(products, t);
-//                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
+                    productPOs = productDao.getFlagRecommendResult(t, request.getPageSize());
                 }
             } else if(request.getPosition() == Constants.RECOMMEND_POSITION_TRIP_MAIN){  // 旅游首页推荐
                 // 优先销量推荐
