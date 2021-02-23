@@ -135,10 +135,16 @@ public interface ProductDao {
 
     /**
      * 设置展示状态
-     * @param codes
+     * @param ids
      * @param display
      */
-    void updateRecommendDisplay(List<String> codes, int display, int type);
+    void updateRecommendDisplay(List<String> ids, int display);
+
+    /**
+     * 设置不展示
+     * @param ids 排除的id
+     */
+    void updateRecommendNotDisplay(List<String> ids);
 
     /**
      * 推荐产品

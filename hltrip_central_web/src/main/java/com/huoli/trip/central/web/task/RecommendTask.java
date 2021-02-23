@@ -92,6 +92,9 @@ public class RecommendTask {
                 if(v.size() > 3){
                     v = v.subList(0, ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE));
                 }
+                List<String> ids = v.stream().map(r -> r.getId()).collect(Collectors.toList());
+                productDao.updateRecommendDisplay(ids, Constants.RECOMMEND_DISPLAY_YES);
+                productDao.updateRecommendNotDisplay(ids);
                 String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, k.toString());
                 redisService.set(key,
                         JSON.toJSONString(v), 1, TimeUnit.DAYS);

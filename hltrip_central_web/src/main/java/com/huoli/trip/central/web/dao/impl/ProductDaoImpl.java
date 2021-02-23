@@ -211,14 +211,15 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public void updateRecommendDisplay(List<String> codes, int display, int type){
-        Criteria criteria = new Criteria();
-        if(ListUtils.isNotEmpty(codes)){
-            criteria.and("code").in(codes);
-        }
-        criteria.and("productType").is(type);
-        mongoTemplate.updateMulti(new Query(criteria),
-                Update.update("recommendProduct.display", display), ProductPO.class);
+    public void updateRecommendDisplay(List<String> ids, int display){
+        mongoTemplate.updateMulti(new Query(Criteria.where("_id").in(ids)),
+                Update.update("display", display), RecommendProductPO.class);
+    }
+
+    @Override
+    public void updateRecommendNotDisplay(List<String> ids){
+        mongoTemplate.updateMulti(new Query(Criteria.where("_id").nin(ids)),
+                Update.update("display", Constants.RECOMMEND_DISPLAY_NO), RecommendProductPO.class);
     }
 
     @Override
