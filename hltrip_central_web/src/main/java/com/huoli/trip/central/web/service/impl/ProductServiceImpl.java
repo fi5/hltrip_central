@@ -523,6 +523,16 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
+    @Override
+    public List<Product> getFlagRecommendProducts(Integer productType, int size){
+        List<ProductPO> productPOs = productDao.getFlagRecommendResult_(productType, size);
+        return productPOs.stream().map(p -> {
+            Product product = new Product();
+            BeanUtils.copyProperties(p, product);
+            return product;
+        }).collect(Collectors.toList());
+    }
+
     /**
      * 加价计算
      * @param priceInfos
