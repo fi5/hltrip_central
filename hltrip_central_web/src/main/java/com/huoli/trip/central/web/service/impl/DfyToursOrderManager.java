@@ -324,7 +324,7 @@ public class DfyToursOrderManager extends OrderManager {
 	 */
 	public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
 		CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
-		centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+		centerCancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());
 		return BaseResponse.success(centerCancelOrderRes);
 
 	}
