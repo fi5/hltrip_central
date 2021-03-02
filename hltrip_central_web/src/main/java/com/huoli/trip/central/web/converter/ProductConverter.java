@@ -164,7 +164,6 @@ public class ProductConverter {
             coordinate.setLatitude(coordinateArr[1]);
             productItem.setCoordinate(coordinate);
         }
-        // todo 主题需要转换，看主题的字典接口提供在哪儿能不能调到
         return productItem;
     }
 
