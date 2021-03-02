@@ -702,7 +702,7 @@ public class ProductServiceImpl implements ProductService {
             throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR.getCode(), msg);
         }
         if (priceInfoPO.getStock() < (quantityTotal + chdQuantityTotal)) {
-            String msg = String.format("库存不足，%s剩余库存=%s, 购买份数=%s", dateStr, priceInfoPO.getStock(), quantityTotal);
+            String msg = String.format("库存不足，%s剩余库存=%s, 购买份数=%s", dateStr, priceInfoPO.getStock(), quantityTotal + chdQuantityTotal);
             log.error(msg);
             // 库存不足要返回具体库存
             result.setMinStock(priceInfoPO.getStock());
