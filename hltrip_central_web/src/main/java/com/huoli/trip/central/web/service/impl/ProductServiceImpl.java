@@ -632,31 +632,37 @@ public class ProductServiceImpl implements ProductService {
                     refundDesc.setContent(product.getRefundDesc());
                     bookDescList.add(refundDesc);
                 }
-                if(StringUtils.isNotBlank(product.getRefundDesc())) {
+                if(StringUtils.isNotBlank(product.getBookDesc())) {
                     Description bookDesc = new Description();
                     bookDesc.setTitle("预订须知");
                     bookDesc.setContent(product.getBookDesc());
                     bookDescList.add(bookDesc);
                 }
-                if(StringUtils.isNotBlank(product.getRefundDesc())) {
+                if(StringUtils.isNotBlank(product.getIncludeDesc())) {
                     Description feeInclude = new Description();
                     feeInclude.setTitle("费用包含");
-                    feeInclude.setContent(product.getRefundDesc());
+                    feeInclude.setContent(product.getIncludeDesc());
                     bookDescList.add(feeInclude);
                 }
-                if(StringUtils.isNotBlank(product.getRefundDesc())) {
+                if(StringUtils.isNotBlank(product.getExcludeDesc())) {
                     Description feeExclude = new Description();
                     feeExclude.setTitle("自理费用");
                     feeExclude.setContent(product.getExcludeDesc());
                     bookDescList.add(feeExclude);
                 }
-                if(StringUtils.isNotBlank(product.getRefundDesc())) {
+                if(StringUtils.isNotBlank(product.getDiffPriceDesc())) {
+                    Description feeExclude = new Description();
+                    feeExclude.setTitle("差价说明");
+                    feeExclude.setContent(product.getDiffPriceDesc());
+                    bookDescList.add(feeExclude);
+                }
+                if(StringUtils.isNotBlank(product.getSuitDesc())) {
                     Description suitDesc = new Description();
                     suitDesc.setTitle("适用条件");
                     suitDesc.setContent(product.getSuitDesc());
                     bookDescList.add(suitDesc);
                 }
-                if(StringUtils.isNotBlank(product.getRefundDesc())) {
+                if(StringUtils.isNotBlank(product.getRemark())) {
                     Description remark = new Description();
                     remark.setTitle("其他说明");
                     remark.setContent(product.getRemark());
