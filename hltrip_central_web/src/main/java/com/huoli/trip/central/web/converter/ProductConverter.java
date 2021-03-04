@@ -111,12 +111,8 @@ public class ProductConverter {
         if(product.getPriceInfo() != null){
             product.setSalePrice(product.getPriceInfo().getSalePrice());
         }
-        if(ListUtils.isEmpty(product.getImages())){
-            if(ListUtils.isNotEmpty(product.getMainItem().getMainImages())){
-                product.setImages(product.getMainItem().getMainImages());
-            } else if(ListUtils.isNotEmpty(product.getMainItem().getImages())){
-                product.setImages(Lists.newArrayList(product.getMainItem().getImages().get(0)));
-            }
+        if(ListUtils.isEmpty(product.getImages()) && ListUtils.isNotEmpty(product.getMainItem().getMainImages())){
+            product.setImages(product.getMainItem().getMainImages());
         }
         return product;
     }

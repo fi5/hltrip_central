@@ -241,6 +241,7 @@ public class ProductDaoImpl implements ProductDao {
                 .include("oriCity")
                 .include("city")
                 .include("mainImages")
+                .include("images")
                 .include("supplierId")
                 .include("product.code")
                 .include("product.name")
