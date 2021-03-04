@@ -197,16 +197,16 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductItemPO> getPageListForItem(String oriCity, String desCity, Integer type, String keyWord, int page, int size){
+    public List<ProductItemPO> getPageListForItem(String oriCity, String desCity, Integer type, String keyWord, String appFrom, int page, int size){
         long rows = (page - 1) * size;
-        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord);
+        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord, appFrom);
         query.skip(rows).limit(size);
         return mongoTemplate.find(query, ProductItemPO.class);
     }
 
     @Override
-    public long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord){
-        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord);
+    public long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord, String appFrom){
+        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord, appFrom);
         return mongoTemplate.count(query, ProductItemPO.class);
     }
 
@@ -236,14 +236,19 @@ public class ProductDaoImpl implements ProductDao {
                 RecommendProductPO.class);
     }
 
-    private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord){
+    private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord, String appFrom){
         Criteria criteria = new Criteria();
         Criteria criteriaOriCity = new Criteria();
         Criteria criteriaKeyWord = new Criteria();
         Date date = new Date();
-        criteria.and("product.productType").is(type).and("product.status").is(1)
+        criteria.and("product.productType").is(type)
+                .and("product.status").is(Constants.PRODUCT_STATUS_VALID)
+                .and("product.supplierStatus").is(Constants.SUPPLIER_STATUS_OPEN)
+                .and("product.verifyStatus").is(Constants.VERIFY_STATUS_PASSING)
+                .and("product.appFrom").is(appFrom)
                 .and("product.validTime").lte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
-                .and("product.invalidTime").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)));
+                .and("product.invalidTime").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
+                .and("auditStatus").is(1);
         if(StringUtils.isNotBlank(desCity)){
             criteria.and("city").regex(desCity);
         }
