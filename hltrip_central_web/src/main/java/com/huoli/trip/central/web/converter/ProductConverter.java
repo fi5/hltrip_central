@@ -111,8 +111,8 @@ public class ProductConverter {
         if(product.getPriceInfo() != null){
             product.setSalePrice(product.getPriceInfo().getSalePrice());
         }
-        if(ListUtils.isEmpty(product.getImages()) && ListUtils.isNotEmpty(po.getMainImages())){
-            product.setImages(po.getMainImages().stream().map(i -> convertToImageBase(i)).collect(Collectors.toList()));
+        if(ListUtils.isEmpty(product.getImages()) && ListUtils.isNotEmpty(product.getMainItem().getMainImages())){
+            product.setImages(product.getMainItem().getMainImages());
         }
         return product;
     }
@@ -157,6 +157,9 @@ public class ProductConverter {
             return null;
         }
         ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
+        if(ListUtils.isEmpty(productItem.getMainImages()) && ListUtils.isNotEmpty(productItem.getImages())){
+            productItem.setMainImages(Lists.newArrayList(productItem.getImages().get(0)));
+        }
         Double[] coordinateArr = productItemPO.getItemCoordinate();
         if(coordinateArr != null && coordinateArr.length == 2){
             Coordinate coordinate = new Coordinate();

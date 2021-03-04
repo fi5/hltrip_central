@@ -642,16 +642,6 @@ public class ProductServiceImpl implements ProductService {
                 if (result.getMainItem() == null) {
                     ProductItem productItem = JSON.parseObject(JSON.toJSONString(product.getMainItem()), ProductItem.class);
                     if(productItem != null){
-                        List<ImageBase> imageBases = productItem.getImageDetails();
-                        List<ImageBase> imageBases1 =  productItem.getImages();
-                        if(ListUtils.isNotEmpty(imageBases)){
-                            if(imageBases1 == null){
-                                productItem.setImages(imageBases);
-                            }else{
-                                imageBases1.addAll(imageBases);
-                                productItem.setImages(imageBases1);
-                            }
-                        }
                         result.setMainItem(productItem);
                         if(StringUtils.isBlank(productItem.getAppMainTitle())){
                             productItem.setAppMainTitle(product.getName());
@@ -744,7 +734,7 @@ public class ProductServiceImpl implements ProductService {
             throw new HlCentralException(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR.getCode(), msg);
         }
         if (priceInfoPO.getStock() < (quantityTotal + chdQuantityTotal)) {
-            String msg = String.format("库存不足，%s剩余库存=%s, 购买份数=%s", dateStr, priceInfoPO.getStock(), quantityTotal);
+            String msg = String.format("库存不足，%s剩余库存=%s, 购买份数=%s", dateStr, priceInfoPO.getStock(), quantityTotal + chdQuantityTotal);
             log.error(msg);
             // 库存不足要返回具体库存
             result.setMinStock(priceInfoPO.getStock());

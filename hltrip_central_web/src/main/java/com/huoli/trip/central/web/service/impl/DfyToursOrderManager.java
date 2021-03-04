@@ -324,7 +324,7 @@ public class DfyToursOrderManager extends OrderManager {
 	 */
 	public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
 		CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
-		centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+		centerCancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());
 		return BaseResponse.success(centerCancelOrderRes);
 
 	}
@@ -352,6 +352,7 @@ public class DfyToursOrderManager extends OrderManager {
 		centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
 		//return BaseResponse.success(centerCancelOrderRes);
 		return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
+
 	}
 
 	private Integer changecredentialType(int guestsCredentialType){
