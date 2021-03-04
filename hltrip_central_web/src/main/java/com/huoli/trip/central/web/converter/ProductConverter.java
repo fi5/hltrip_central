@@ -157,6 +157,9 @@ public class ProductConverter {
             return null;
         }
         ProductItem productItem = JSON.parseObject(JSON.toJSONString(productItemPO), ProductItem.class);
+        if(ListUtils.isEmpty(productItem.getMainImages()) && ListUtils.isNotEmpty(productItem.getImages())){
+            productItem.setMainImages(Lists.newArrayList(productItem.getImages().get(0)));
+        }
         Double[] coordinateArr = productItemPO.getItemCoordinate();
         if(coordinateArr != null && coordinateArr.length == 2){
             Coordinate coordinate = new Coordinate();
