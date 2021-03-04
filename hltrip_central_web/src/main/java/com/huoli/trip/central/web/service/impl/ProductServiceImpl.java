@@ -664,7 +664,10 @@ public class ProductServiceImpl implements ProductService {
                 }
                 bookDescList.addAll(product.getBookDescList());
                 product.setBookDescList(bookDescList);
-                // todo 供应商后台同步的时候要增加供应商状态、审核状态，把一部分预定须知放到booknoticelist
+                if(ListUtils.isNotEmpty(product.getBookNoticeList())){
+                    product.getBookNoticeList().removeIf(b ->
+                            StringUtils.isBlank(b.getContent()));
+                }
                 HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
                 if(hodometerPO != null){
                     product.setHodometer(hodometerPO);
