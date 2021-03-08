@@ -567,6 +567,11 @@ public class ProductServiceImpl implements ProductService {
         }).collect(Collectors.toList());
     }
 
+    @Override
+    public List<Product> getFlagRecommendProducts(int size){
+        return getFlagRecommendProducts(null, size);
+    }
+
     /**
      * 加价计算
      * @param priceInfos
