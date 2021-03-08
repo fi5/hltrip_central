@@ -82,6 +82,8 @@ public interface ProductService {
      */
     List<Product> getFlagRecommendProducts(Integer productType, int size);
 
+    List<Product> getFlagRecommendProducts(int size);
+
     /**
      * 获取推荐产品列表
      * @param request
