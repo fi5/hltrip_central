@@ -110,8 +110,8 @@ public class ProductServiceImpl implements ProductService {
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
         for (Integer t : types) {
-            long total = productDao.getPageListForItemTotal(request.getOriCity(), request.getCity(), t, request.getKeyWord());
-            List<ProductItemPO> productItemPOs = productDao.getPageListForItem(request.getOriCity(), request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
+            long total = productDao.getPageListForItemTotal(request.getOriCity(), request.getCity(), t, request.getKeyWord(), request.getAppFrom());
+            List<ProductItemPO> productItemPOs = productDao.getPageListForItem(request.getOriCity(), request.getCity(), t, request.getKeyWord(), request.getAppFrom(), request.getPageIndex(), request.getPageSize());
             if (ListUtils.isNotEmpty(productItemPOs)) {
                 products.addAll(convertToProductsByItem(productItemPOs, (int)total));
             }
@@ -604,9 +604,68 @@ public class ProductServiceImpl implements ProductService {
                         if(StringUtils.isBlank(productItem.getAppMainTitle())){
                             productItem.setAppMainTitle(product.getName());
                         }
+                        if(ListUtils.isNotEmpty(productItem.getImageDetails())){
+                            if(ListUtils.isNotEmpty(productItem.getFeatures())){
+                                productItem.getFeatures().removeIf(f -> f.getType() == 3);
+                            }
+                        }
                     }
                 }
                 product.setMainItem(null);
+                if(ListUtils.isNotEmpty(product.getDescriptions())){
+                    product.setDescription(null);
+                }
+                List<Description> bookDescList = Lists.newArrayList();
+                if(StringUtils.isNotBlank(product.getRefundDesc())){
+                    Description refundDesc = new Description();
+                    refundDesc.setTitle("退改说明");
+                    refundDesc.setContent(product.getRefundDesc());
+                    bookDescList.add(refundDesc);
+                }
+                if(StringUtils.isNotBlank(product.getBookDesc())) {
+                    Description bookDesc = new Description();
+                    bookDesc.setTitle("预订须知");
+                    bookDesc.setContent(product.getBookDesc());
+                    bookDescList.add(bookDesc);
+                }
+                if(StringUtils.isNotBlank(product.getIncludeDesc())) {
+                    Description feeInclude = new Description();
+                    feeInclude.setTitle("费用包含");
+                    feeInclude.setContent(product.getIncludeDesc());
+                    bookDescList.add(feeInclude);
+                }
+                if(StringUtils.isNotBlank(product.getExcludeDesc())) {
+                    Description feeExclude = new Description();
+                    feeExclude.setTitle("自理费用");
+                    feeExclude.setContent(product.getExcludeDesc());
+                    bookDescList.add(feeExclude);
+                }
+                if(StringUtils.isNotBlank(product.getDiffPriceDesc())) {
+                    Description feeExclude = new Description();
+                    feeExclude.setTitle("差价说明");
+                    feeExclude.setContent(product.getDiffPriceDesc());
+                    bookDescList.add(feeExclude);
+                }
+                if(StringUtils.isNotBlank(product.getSuitDesc())) {
+                    Description suitDesc = new Description();
+                    suitDesc.setTitle("适用条件");
+                    suitDesc.setContent(product.getSuitDesc());
+                    bookDescList.add(suitDesc);
+                }
+                if(StringUtils.isNotBlank(product.getRemark())) {
+                    Description remark = new Description();
+                    remark.setTitle("其他说明");
+                    remark.setContent(product.getRemark());
+                    bookDescList.add(remark);
+                }
+                if(ListUtils.isNotEmpty(product.getBookDescList())){
+                    bookDescList.addAll(product.getBookDescList());
+                }
+                product.setBookDescList(bookDescList);
+                if(ListUtils.isNotEmpty(product.getBookNoticeList())){
+                    product.getBookNoticeList().removeIf(b ->
+                            StringUtils.isBlank(b.getContent()));
+                }
                 HodometerPO hodometerPO = hodometerDao.getHodometerByProductCode(po.getCode());
                 if(hodometerPO != null){
                     product.setHodometer(hodometerPO);

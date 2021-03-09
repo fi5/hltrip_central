@@ -113,7 +113,7 @@ public interface ProductDao {
      * @param size
      * @return
      */
-    List<ProductItemPO> getPageListForItem(String oriCity, String desCity,  Integer type, String keyWord, int page, int size);
+    List<ProductItemPO> getPageListForItem(String oriCity, String desCity,  Integer type, String keyWord, String appFrom, int page, int size);
 
     /**
      * 查总数
@@ -123,7 +123,7 @@ public interface ProductDao {
      * @param keyWord
      * @return
      */
-    long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord);
+    long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord, String appFrom);
 
 	/**
      *
