@@ -245,7 +245,7 @@ public class ProductDaoImpl implements ProductDao {
                 .and("product.status").is(Constants.PRODUCT_STATUS_VALID)
                 .and("product.supplierStatus").is(Constants.SUPPLIER_STATUS_OPEN)
                 .and("product.auditStatus").is(Constants.VERIFY_STATUS_PASSING)
-                .and("product.appFrom").is(appFrom)
+                .and("product.appFrom").in(appFrom)
                 .and("product.validTime").lte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
                 .and("product.invalidTime").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
                 .and("auditStatus").is(1);
