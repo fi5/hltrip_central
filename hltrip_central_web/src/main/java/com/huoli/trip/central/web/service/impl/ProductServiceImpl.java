@@ -668,7 +668,9 @@ public class ProductServiceImpl implements ProductService {
                     remark.setContent(product.getRemark());
                     bookDescList.add(remark);
                 }
-                bookDescList.addAll(product.getBookDescList());
+                if(ListUtils.isNotEmpty(product.getBookDescList())){
+                    bookDescList.addAll(product.getBookDescList());
+                }
                 product.setBookDescList(bookDescList);
                 if(ListUtils.isNotEmpty(product.getBookNoticeList())){
                     product.getBookNoticeList().removeIf(b ->
