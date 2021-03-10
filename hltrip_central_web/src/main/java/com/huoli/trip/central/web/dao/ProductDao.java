@@ -138,13 +138,13 @@ public interface ProductDao {
      * @param ids
      * @param display
      */
-    void updateRecommendDisplay(List<String> ids, int display);
+    void updateRecommendDisplay(List<String> ids, int display, int position);
 
     /**
      * 设置不展示
      * @param ids 排除的id
      */
-    void updateRecommendNotDisplay(List<String> ids);
+    void updateRecommendNotDisplay(List<String> ids, int position);
 
     /**
      * 推荐产品

@@ -85,7 +85,7 @@ public class RecommendTask {
                      return null;
                 }
                 PriceSinglePO priceSinglePO = priceDao.selectByProductCode(productPO.getCode());
-                productPO.setPriceCalendar(priceSinglePO);
+                r.setPriceInfo(priceSinglePO.getPriceInfos());
                 return r;
             }).filter(r -> r != null).collect(Collectors.toList());
             int size = ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE);
@@ -94,8 +94,8 @@ public class RecommendTask {
                     v = v.subList(0, size);
                 }
                 List<String> ids = v.stream().map(r -> r.getId()).collect(Collectors.toList());
-                productDao.updateRecommendDisplay(ids, Constants.RECOMMEND_DISPLAY_YES);
-                productDao.updateRecommendNotDisplay(ids);
+                productDao.updateRecommendDisplay(ids, Constants.RECOMMEND_DISPLAY_YES, k);
+                productDao.updateRecommendNotDisplay(ids, k);
                 String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, k.toString());
                 redisService.set(key,
                         JSON.toJSONString(v), 1, TimeUnit.DAYS);
