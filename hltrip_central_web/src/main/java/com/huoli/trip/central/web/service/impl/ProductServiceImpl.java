@@ -200,6 +200,10 @@ public class ProductServiceImpl implements ProductService {
                 newList = list.stream().map(recommendProductPO -> {
                     RecommendProduct recommendProduct = new RecommendProduct();
                     BeanUtils.copyProperties(recommendProductPO, recommendProduct);
+                    if(recommendProductPO.getMainImages() != null){
+                        recommendProduct.setMainImages(recommendProductPO.getMainImages().stream().map(m ->
+                           ProductConverter.convertToImageBase(m)).collect(Collectors.toList()));
+                    }
                     if(recommendProductPO.getPriceInfo() != null){
                         PriceInfo priceInfo = new PriceInfo();
                         BeanUtils.copyProperties(recommendProductPO.getPriceInfo(), priceInfo);
