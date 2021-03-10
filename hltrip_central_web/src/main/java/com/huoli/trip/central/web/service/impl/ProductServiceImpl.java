@@ -194,8 +194,22 @@ public class ProductServiceImpl implements ProductService {
         RecommendResult result = new RecommendResult();
         String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, request.getPosition().toString());
         if(jedisTemplate.hasKey(key)){
-            List<RecommendProduct> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), RecommendProduct.class);
-            result.setRecommendProducts(list);
+            List<RecommendProductPO> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), RecommendProductPO.class);
+            List<RecommendProduct> newList = Lists.newArrayList();
+            if(ListUtils.isNotEmpty(list)){
+                newList = list.stream().map(recommendProductPO -> {
+                    RecommendProduct recommendProduct = new RecommendProduct();
+                    BeanUtils.copyProperties(recommendProductPO, recommendProduct);
+                    if(recommendProductPO.getPriceInfo() != null){
+                        PriceInfo priceInfo = new PriceInfo();
+                        BeanUtils.copyProperties(recommendProductPO.getPriceInfo(), priceInfo);
+                        priceInfo.setSaleDate(DateTimeUtil.formatDate(recommendProductPO.getPriceInfo().getSaleDate()));
+                        recommendProduct.setPriceInfo(priceInfo);
+                    }
+                    return recommendProduct;
+                }).collect(Collectors.toList());
+            }
+            result.setRecommendProducts(newList);
             return BaseResponse.withSuccess(result);
         }
         recommendTask.refreshRecommendList(1);
