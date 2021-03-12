@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.dao.impl;
 
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductItemDao;
+import com.huoli.trip.common.entity.BackupProductItemPO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.vo.Coordinate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,5 +66,11 @@ public class ProductItemDaoImpl implements ProductItemDao {
         int itemType = ProductConverter.getItemType(productType);
         Query query = new Query(Criteria.where("itemType").is(itemType).and("city").is(city));
         return mongoTemplate.find(query, ProductItemPO.class);
+    }
+
+    @Override
+    public BackupProductItemPO getBackupProductByCode(String code){
+        Query query = new Query(Criteria.where("code").is(code));
+        return mongoTemplate.findOne(query, BackupProductItemPO.class);
     }
 }
