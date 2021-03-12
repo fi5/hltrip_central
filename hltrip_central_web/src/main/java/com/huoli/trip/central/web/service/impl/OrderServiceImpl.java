@@ -66,7 +66,7 @@ public class OrderServiceImpl implements OrderService {
             try{
                 productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
             }catch (Exception ex){
-                log.error("调用下线本地数据接口失败");
+                log.error("调用下线本地数据接口失败",ex);
             }
         }
         return checkRes;
