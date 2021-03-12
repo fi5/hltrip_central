@@ -197,16 +197,16 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductItemPO> getPageListForItem(String oriCity, String desCity, Integer type, String keyWord, int page, int size){
+    public List<ProductItemPO> getPageListForItem(String oriCity, String desCity, Integer type, String keyWord, String appFrom, int page, int size){
         long rows = (page - 1) * size;
-        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord);
+        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord, appFrom);
         query.skip(rows).limit(size);
         return mongoTemplate.find(query, ProductItemPO.class);
     }
 
     @Override
-    public long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord){
-        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord);
+    public long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord, String appFrom){
+        Query query = pageListForItemQuery(oriCity, desCity, type, keyWord, appFrom);
         return mongoTemplate.count(query, ProductItemPO.class);
     }
 
@@ -237,21 +237,34 @@ public class ProductDaoImpl implements ProductDao {
                 RecommendProductPO.class);
     }
 
-    private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord){
+    private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord, String appFrom){
         Criteria criteria = new Criteria();
-        if(StringUtils.isNotBlank(oriCity)){
-            criteria.and("oriCity").regex(oriCity);
+        Criteria criteriaOriCity = new Criteria();
+        Criteria criteriaKeyWord = new Criteria();
+        Date date = new Date();
+        criteria.and("product.productType").is(type)
+                .and("product.status").is(Constants.PRODUCT_STATUS_VALID)
+                .and("product.supplierStatus").is(Constants.SUPPLIER_STATUS_OPEN)
+                .and("product.auditStatus").is(Constants.VERIFY_STATUS_PASSING)
+                .and("product.validTime").lte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
+                .and("product.invalidTime").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
+                .and("auditStatus").is(1);
+        if(StringUtils.isNotBlank(appFrom)){
+            criteria.and("product.appFrom").in(appFrom);
         }
         if(StringUtils.isNotBlank(desCity)){
             criteria.and("city").regex(desCity);
         }
-        Date date = new Date();
-        criteria.and("product.productType").is(type).and("product.status").is(1)
-                .and("product.validTime").lte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)))
-                .and("product.invalidTime").gte(MongoDateUtils.handleTimezoneInput(DateTimeUtil.trancateToDate(date)));
-        if(StringUtils.isNotBlank(keyWord)){
-            criteria.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
+        // 只有旅游产品会查出发地
+        if(Constants.TRIP_PRODUCT_LIST.contains(type)){
+            if(StringUtils.isNotBlank(oriCity)){
+                criteriaOriCity.orOperator(Criteria.where("oriCity").regex(oriCity), Criteria.where("oriCity").regex("全国"));
+            }
         }
+        if(StringUtils.isNotBlank(keyWord)){
+            criteriaKeyWord.orOperator(Criteria.where("city").regex(keyWord), Criteria.where("name").regex(keyWord));
+        }
+        criteria.andOperator(criteriaOriCity, criteriaKeyWord);
         Query query = new Query(criteria);
         query.fields().include("code")
                 .include("name")
@@ -260,6 +273,7 @@ public class ProductDaoImpl implements ProductDao {
                 .include("oriCity")
                 .include("city")
                 .include("mainImages")
+                .include("images")
                 .include("supplierId")
                 .include("product.code")
                 .include("product.name")

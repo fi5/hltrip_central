@@ -7,17 +7,16 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.service.impl.YcfOrderManger;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.CityReq;
+import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPageResult;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 描述: <br> 可预订查询
@@ -176,5 +175,11 @@ public class Test {
             log.error("reloadCity 异常了",e);
         }
         return "ok";
+    }
+
+    @PostMapping(value = "pageList")
+    public BaseResponse<ProductPageResult> reloadCity(@RequestBody ProductPageRequest request) {
+        return  BaseResponse.withSuccess(productService.pageList(request));
+
     }
 }
