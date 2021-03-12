@@ -58,7 +58,15 @@ public class OrderServiceImpl implements OrderService {
         //校验manager处理
         checkManger(orderManager);
         //封装中台返回
-        BaseResponse<CenterBookCheck> checkRes = orderManager.getCenterCheckInfos(req);;
+        BaseResponse<CenterBookCheck> checkRes = orderManager.getCenterCheckInfos(req);
+        if(checkRes != null && checkRes.getCode() != 0) {
+            log.info("预订前校验失败,唤起本地更新产品为下线状态");
+            try{
+                productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
+            }catch (Exception ex){
+                log.error("调用下线本地数据接口失败");
+            }
+        }
         return checkRes;
     }
 
@@ -126,7 +134,15 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);;
+        BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);
+        if(result != null && result.getCode() != 0) {
+            log.info("预订前校验失败,唤起本地更新产品为下线状态");
+            try{
+                productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
+            }catch (Exception ex){
+                log.error("调用下线本地数据接口失败");
+            }
+        }
         return result;
     }
 
@@ -135,7 +151,7 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
-        BaseResponse<CenterPayOrderRes> result = orderManager.getCenterPayOrder(req);;
+        BaseResponse<CenterPayOrderRes> result = orderManager.getCenterPayOrder(req);
         return result;
     }
 
