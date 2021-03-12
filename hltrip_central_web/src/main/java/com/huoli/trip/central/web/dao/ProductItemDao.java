@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.dao;
 
+import com.huoli.trip.common.entity.BackupProductItemPO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.vo.Coordinate;
 
@@ -53,4 +54,11 @@ public interface ProductItemDao {
      * @return
      */
     List<ProductItemPO> getByCity(int productType, String city);
+
+    /**
+     * 查询备份item
+     * @param code
+     * @return
+     */
+    BackupProductItemPO getBackupProductByCode(String code);
 }

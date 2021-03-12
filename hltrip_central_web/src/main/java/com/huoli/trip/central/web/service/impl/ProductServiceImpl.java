@@ -200,6 +200,10 @@ public class ProductServiceImpl implements ProductService {
                 newList = list.stream().map(recommendProductPO -> {
                     RecommendProduct recommendProduct = new RecommendProduct();
                     BeanUtils.copyProperties(recommendProductPO, recommendProduct);
+                    if(recommendProductPO.getMainImages() != null){
+                        recommendProduct.setMainImages(recommendProductPO.getMainImages().stream().map(m ->
+                           ProductConverter.convertToImageBase(m)).collect(Collectors.toList()));
+                    }
                     if(recommendProductPO.getPriceInfo() != null){
                         PriceInfo priceInfo = new PriceInfo();
                         BeanUtils.copyProperties(recommendProductPO.getPriceInfo(), priceInfo);
@@ -665,10 +669,41 @@ public class ProductServiceImpl implements ProductService {
                         if(StringUtils.isBlank(productItem.getAppMainTitle())){
                             productItem.setAppMainTitle(product.getName());
                         }
+                        // todo 临时方案，后面有人审核这里要去掉
+                        if(ListUtils.isEmpty(productItem.getFeatures())){
+                            BackupProductItemPO backupProductItemPO = productItemDao.getBackupProductByCode(productItem.getCode());
+                            if(backupProductItemPO != null){
+                                ProductItemPO backupItem = JSON.parseObject(backupProductItemPO.getData(), ProductItemPO.class);
+                                if(ListUtils.isNotEmpty(backupItem.getFeatures())){
+                                    productItem.setFeatures(backupItem.getFeatures().stream().map(f -> {
+                                        ItemFeature itemFeature = new ItemFeature();
+                                        itemFeature.setDetail(f.getDetail());
+                                        itemFeature.setName(f.getName());
+                                        itemFeature.setType(f.getType());
+                                        return itemFeature;
+                                    }).collect(Collectors.toList()));
+                                }
+                            }
+                        }
                         if(ListUtils.isNotEmpty(productItem.getImageDetails())){
                             if(ListUtils.isNotEmpty(productItem.getFeatures())){
                                 productItem.getFeatures().removeIf(f -> f.getType() == 3);
                             }
+                        }
+                        if(ListUtils.isNotEmpty(productItem.getFeatures())){
+                            productItem.getFeatures().forEach(f -> {
+                                if(f.getType() == 1){
+                                    f.setName("购买须知");
+                                } else if(f.getType() == 2){
+                                    f.setName("交通指南");
+                                } else if(f.getType() == 3){
+                                    f.setName("图文详情");
+                                }else if(f.getType() == 4){
+                                    f.setName("重要条款");
+                                }else if(f.getType() == 5){
+                                    f.setName("游玩须知");
+                                }
+                            });
                         }
                     }
                 }
