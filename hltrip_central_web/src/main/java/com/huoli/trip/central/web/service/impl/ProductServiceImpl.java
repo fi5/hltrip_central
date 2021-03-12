@@ -625,6 +625,21 @@ public class ProductServiceImpl implements ProductService {
                                 productItem.getFeatures().removeIf(f -> f.getType() == 3);
                             }
                         }
+                        if(ListUtils.isNotEmpty(productItem.getFeatures())){
+                            productItem.getFeatures().forEach(f -> {
+                                if(f.getType() == 1){
+                                    f.setName("购买须知");
+                                } else if(f.getType() == 2){
+                                    f.setName("交通指南");
+                                } else if(f.getType() == 3){
+                                    f.setName("图文详情");
+                                }else if(f.getType() == 4){
+                                    f.setName("重要条款");
+                                }else if(f.getType() == 5){
+                                    f.setName("游玩须知");
+                                }
+                            });
+                        }
                     }
                 }
                 product.setMainItem(null);
