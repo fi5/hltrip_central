@@ -669,6 +669,22 @@ public class ProductServiceImpl implements ProductService {
                         if(StringUtils.isBlank(productItem.getAppMainTitle())){
                             productItem.setAppMainTitle(product.getName());
                         }
+                        // todo 临时方案，后面有人审核这里要去掉
+                        if(ListUtils.isEmpty(productItem.getFeatures())){
+                            BackupProductItemPO backupProductItemPO = productItemDao.getBackupProductByCode(productItem.getCode());
+                            if(backupProductItemPO != null){
+                                ProductItemPO backupItem = JSON.parseObject(backupProductItemPO.getData(), ProductItemPO.class);
+                                if(ListUtils.isNotEmpty(backupItem.getFeatures())){
+                                    productItem.setFeatures(backupItem.getFeatures().stream().map(f -> {
+                                        ItemFeature itemFeature = new ItemFeature();
+                                        itemFeature.setDetail(f.getDetail());
+                                        itemFeature.setName(f.getName());
+                                        itemFeature.setType(f.getType());
+                                        return itemFeature;
+                                    }).collect(Collectors.toList()));
+                                }
+                            }
+                        }
                         if(ListUtils.isNotEmpty(productItem.getImageDetails())){
                             if(ListUtils.isNotEmpty(productItem.getFeatures())){
                                 productItem.getFeatures().removeIf(f -> f.getType() == 3);
