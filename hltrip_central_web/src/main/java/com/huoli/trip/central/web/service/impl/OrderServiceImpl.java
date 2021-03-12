@@ -13,6 +13,7 @@ import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
 import com.huoli.trip.common.vo.request.central.RefundKafka;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
+import com.huoli.trip.supplier.api.ProductService;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Reference;
@@ -34,7 +35,8 @@ import org.springframework.util.concurrent.ListenableFuture;
 @Slf4j
 @Service(timeout = 10000,group = "hltrip")
 public class OrderServiceImpl implements OrderService {
-
+    @Reference(group = "hltrip",timeout = 30000,check=false,retries = 3)
+    ProductService productService;
     @Reference(timeout = 10000,group = "hltrip")
     private YcfOrderService ycfOrderService;
     @Autowired
