@@ -34,12 +34,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.huoli.trip.central.web.constant.Constants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
+import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
+import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_POSITION_KEY_PREFIX;
 
 /**
  * 描述：<br/>
@@ -187,6 +187,56 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
         }
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<RecommendResult> recommendListV2(RecommendRequest request) {
+        RecommendResult result = new RecommendResult();
+        String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, request.getPosition().toString());
+        if(jedisTemplate.hasKey(key)){
+            List<RecommendProductPO> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), RecommendProductPO.class);
+            List<RecommendProduct> newList = Lists.newArrayList();
+            if(ListUtils.isNotEmpty(list)){
+                newList = list.stream().map(recommendProductPO -> {
+                    RecommendProduct recommendProduct = new RecommendProduct();
+                    BeanUtils.copyProperties(recommendProductPO, recommendProduct);
+                    if(recommendProductPO.getMainImages() != null){
+                        recommendProduct.setMainImages(recommendProductPO.getMainImages().stream().map(m ->
+                           ProductConverter.convertToImageBase(m)).collect(Collectors.toList()));
+                    }
+                    if(recommendProductPO.getPriceInfo() != null){
+                        PriceInfo priceInfo = new PriceInfo();
+                        BeanUtils.copyProperties(recommendProductPO.getPriceInfo(), priceInfo);
+                        priceInfo.setSaleDate(DateTimeUtil.formatDate(recommendProductPO.getPriceInfo().getSaleDate()));
+                        recommendProduct.setPriceInfo(priceInfo);
+                    }
+                    return recommendProduct;
+                }).collect(Collectors.toList());
+            }
+            result.setRecommendProducts(newList);
+            return BaseResponse.withSuccess(result);
+        }
+        recommendTask.refreshRecommendList(1);
+        ProductPageRequest productPageRequest = new ProductPageRequest();
+        productPageRequest.setType(ProductType.FREE_TRIP.getCode());
+        productPageRequest.setPageSize(4);
+        BaseResponse<ProductPageResult> response = pageList(productPageRequest);
+        if(response.getData() != null && response.getData().getProducts() != null){
+            return BaseResponse.withSuccess(response.getData().getProducts().stream().map(p -> {
+                RecommendProduct recommendProduct = new RecommendProduct();
+                recommendProduct.setPriceInfo(p.getPriceInfo());
+                recommendProduct.setProductCode(p.getCode());
+                recommendProduct.setProductName(p.getName());
+                recommendProduct.setProductStatus(p.getStatus());
+                recommendProduct.setProductType(p.getProductType());
+                recommendProduct.setSupplierId(p.getSupplierId());
+                recommendProduct.setSupplierName(p.getSupplierName());
+                recommendProduct.setCity(p.getCity());
+                recommendProduct.setMainImages(p.getMainItem().getMainImages());
+                return recommendProduct;
+            }).collect(Collectors.toList()));
+        }
+        return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
     }
 
     @Override
@@ -523,6 +573,21 @@ public class ProductServiceImpl implements ProductService {
             checkPrice(pricePO.getPriceInfos(), request.getStartDate(), quantity, result);
         }
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public List<Product> getFlagRecommendProducts(Integer productType, int size){
+        List<ProductPO> productPOs = productDao.getFlagRecommendResult_(productType, size);
+        return productPOs.stream().map(p -> {
+            Product product = new Product();
+            BeanUtils.copyProperties(p, product);
+            return product;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Product> getFlagRecommendProducts(int size){
+        return getFlagRecommendProducts(null, size);
     }
 
     /**
