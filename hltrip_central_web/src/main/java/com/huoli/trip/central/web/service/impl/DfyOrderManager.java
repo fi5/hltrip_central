@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
@@ -25,12 +26,13 @@ import com.huoli.trip.supplier.self.difengyun.vo.Contact;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
 import com.huoli.trip.supplier.self.difengyun.vo.Tourist;
 import com.huoli.trip.supplier.self.difengyun.vo.request.*;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.*;
 import com.huoli.trip.supplier.self.hllx.vo.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfOrderStatusResult;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfVouchersResult;
-import com.huoli.trip.supplier.self.yaochufa.vo.basevo.YcfBaseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -358,7 +360,7 @@ public class DfyOrderManager extends OrderManager {
         request.setTraceId(req.getTraceId());
         request.setChannelCode(req.getChannelCode());
         request.setChannelOrderId(req.getChannelOrderId());
-        request.setPrice(String.valueOf(req.getPrice()));
+        request.setPrice(String.valueOf(req.getPrice().intValue()));
         DfyBaseResult dfyBaseResult = dfyOrderService.payOrder(request);
         if(dfyBaseResult != null && dfyBaseResult.isSuccess()){
             CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
@@ -380,10 +382,10 @@ public class DfyOrderManager extends OrderManager {
         DfyCancelOrderRequest dfyCancelOrderRequest = new DfyCancelOrderRequest();
         dfyCancelOrderRequest.setOrderId(req.getOutOrderId());
         String remark = req.getRemark();
-        if(StringUtils.isEmpty(remark)){
-            remark = "发生意外,无法出行！";
+        if(StringUtils.isEmpty(remark)) {
+            remark = "行程变更";
+            dfyCancelOrderRequest.setRemark(remark);
         }
-        dfyCancelOrderRequest.setRemark(remark);
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
             traceId = TraceIdUtils.getTraceId();

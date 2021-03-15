@@ -4,10 +4,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
-import com.huoli.trip.common.entity.CityPO;
-import com.huoli.trip.common.entity.PricePO;
-import com.huoli.trip.common.entity.ProductItemPO;
-import com.huoli.trip.common.entity.ProductPO;
+import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
@@ -25,6 +22,7 @@ import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.geo.Sphere;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -210,6 +208,33 @@ public class ProductDaoImpl implements ProductDao {
     public long getPageListForItemTotal(String oriCity, String desCity, Integer type, String keyWord, String appFrom){
         Query query = pageListForItemQuery(oriCity, desCity, type, keyWord, appFrom);
         return mongoTemplate.count(query, ProductItemPO.class);
+    }
+
+    @Override
+    public void updateRecommendDisplay(List<String> ids, int display, int position){
+        mongoTemplate.updateMulti(new Query(Criteria.where("position").is(position).and("_id").in(ids)),
+                Update.update("display", display), RecommendProductPO.class);
+    }
+
+    @Override
+    public void updateRecommendNotDisplay(List<String> ids, int position){
+        mongoTemplate.updateMulti(new Query(Criteria.where("position").is(position).and("_id").nin(ids)),
+                Update.update("display", Constants.RECOMMEND_DISPLAY_NO), RecommendProductPO.class);
+    }
+
+    @Override
+    public List<RecommendProductPO> getRecommendProducts(){
+        return mongoTemplate.find(
+                new Query(Criteria.where("status").is(Constants.RECOMMEND_STATUS_VALID)
+                .and("productStatus").is(Constants.PRODUCT_STATUS_VALID)), RecommendProductPO.class);
+    }
+
+    @Override
+    public void updateRecommendProductStatus(String productCode, Integer productStatus){
+        mongoTemplate.updateFirst(new Query(Criteria.where("productCode").is(productCode)),
+                Update.update("status", Constants.RECOMMEND_STATUS_INVALID)
+                .set("productStatus", productStatus),
+                RecommendProductPO.class);
     }
 
     private Query pageListForItemQuery(String oriCity, String desCity, Integer type, String keyWord, String appFrom){

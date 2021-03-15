@@ -1,6 +1,7 @@
 package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.vo.ImageBase;
+import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
@@ -73,4 +74,20 @@ public interface ProductService {
      * @return
      */
     BaseResponse<CategoryDetailResult> previewDetail(PreviewDetailRequest request);
+
+    /**
+     * 获取推荐产品
+     * @param size
+     * @return
+     */
+    List<Product> getFlagRecommendProducts(Integer productType, int size);
+
+    List<Product> getFlagRecommendProducts(int size);
+
+    /**
+     * 获取推荐产品列表
+     * @param request
+     * @return
+     */
+    BaseResponse<RecommendResult> recommendListV2(RecommendRequest request);
 }
