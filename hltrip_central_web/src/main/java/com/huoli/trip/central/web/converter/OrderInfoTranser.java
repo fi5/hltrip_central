@@ -176,6 +176,42 @@ public class OrderInfoTranser {
 					rtnStatus = Integer.parseInt(orderStatus);
 					break;
 			}
+		}else if (type == 5) {//驴妈妈
+			/**
+			 * 订单状态:
+
+			 订单状态：待确认，待付款，已确认，已完成，已取消
+			 */
+			switch (orderStatus) {
+				case "待确认":
+					rtnStatus = OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode();//0,"支付待确认"
+					break;
+				case "待付款":
+					rtnStatus = OrderStatus.TO_BE_PAID.getCode();//1,"待支付",
+					break;
+				case "已确认":
+					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();//待确认 10已经支付了的,这个应该转待出行,20,"待出行",
+					break;
+				case "出游中":
+				case "出游归来":
+					rtnStatus = OrderStatus.CONSUMED.getCode();//30已消费
+					break;
+				case "已完成":
+					rtnStatus = OrderStatus.CONSUMED.getCode();//30已消费
+					break;
+				case "申请退款中":
+					rtnStatus = OrderStatus.APPLYING_FOR_REFUND.getCode();//21,"申请退款中",
+					break;
+				case "已取消":
+					rtnStatus = OrderStatus.CANCELLED.getCode();//40
+					break;
+				case "已退款":
+					rtnStatus = OrderStatus.REFUNDED.getCode();//50
+					break;
+				default:
+					rtnStatus = Integer.parseInt(orderStatus);
+					break;
+			}
 		}
 		return rtnStatus;
 	}
