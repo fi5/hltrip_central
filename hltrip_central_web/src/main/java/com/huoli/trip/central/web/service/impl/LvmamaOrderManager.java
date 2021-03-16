@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
+import com.huoli.trip.central.web.converter.CreateOrderConverter;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
 import com.huoli.trip.central.web.util.TraceIdUtils;
@@ -17,6 +18,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.DfyOrderService;
+import com.huoli.trip.supplier.api.LvmamaOrderService;
 import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyToursOrderDetail;
@@ -26,6 +28,9 @@ import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.ToursTourist;
+import com.huoli.trip.supplier.self.lvmama.vo.OrderPaymentInfo;
+import com.huoli.trip.supplier.self.lvmama.vo.request.*;
+import com.huoli.trip.supplier.self.lvmama.vo.response.OrderResponse;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -33,15 +38,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import sun.security.krb5.internal.PAData;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author :zhouwenbin
- * @time   :2021/1/28
- * @comment:
- **/
+
 @Component
 @Slf4j
 public class LvmamaOrderManager extends OrderManager {
@@ -51,6 +53,11 @@ public class LvmamaOrderManager extends OrderManager {
 	@Reference(timeout = 10000,group = "hltrip", check = false)
 	private DfyOrderService dfyOrderService;
 
+	@Reference(timeout = 10000,group = "hltrip", check = false)
+	private LvmamaOrderService lvmamaOrderService;
+
+	@Autowired
+	private CreateOrderConverter createOrderConverter;
 
 
 	public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_LMM;
@@ -141,6 +148,76 @@ public class LvmamaOrderManager extends OrderManager {
 			return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
 		}
 	}
+
+	public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
+		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
+
+		final com.huoli.trip.supplier.self.lvmama.vo.response.BaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
+		if(!"1000".equals(checkInfos.getState().getCode())){
+			return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
+		}
+		return BaseResponse.withSuccess();
+	}
+	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
+		CreateOrderRequest request = new CreateOrderRequest();
+		createOrderConverter.convertLvmamaCreateOrderRequest(request,req);
+		OrderResponse response = lvmamaOrderService.createOrder(request);
+		if(response != null && "1000".equals(response.getState().getCode())){
+			CenterCreateOrderRes centerCreateOrderRes = new CenterCreateOrderRes();
+			centerCreateOrderRes.setOrderId(response.getOrder().getOrderId());
+			//订单状态需要转换
+			final String paymentStatus = response.getOrder().getStatus();
+			final int i = OrderInfoTranser.genCommonOrderStringStatus(paymentStatus, 5);
+			centerCreateOrderRes.setOrderStatus(i);
+			return BaseResponse.withSuccess(centerCreateOrderRes);
+		}
+		return BaseResponse.fail(CentralError.ERROR_ORDER_CREATE_SUPPLIER);
+	}
+
+	public BaseResponse<CenterPayOrderRes> getCenterPayOrder(PayOrderReq req){
+		OrderPaymentRequest orderPaymentRequest = new OrderPaymentRequest();
+		OrderPaymentInfo orderPaymentInfo = new OrderPaymentInfo();
+		orderPaymentRequest.setOrder(orderPaymentInfo);
+		orderPaymentInfo.setOrderId(req.getChannelOrderId());
+		orderPaymentInfo.setPartnerOrderNo(req.getPartnerOrderId());
+		orderPaymentInfo.setSerialNum(req.getPaySerialNumber());
+		final OrderResponse orderResponse = lvmamaOrderService.payOrder(orderPaymentRequest);
+		if(orderResponse != null && "1000".equals(orderResponse.getState().getCode())){
+			CenterPayOrderRes centerCreateOrderRes = new CenterPayOrderRes();
+			centerCreateOrderRes.setChannelOrderId(req.getChannelOrderId());
+			centerCreateOrderRes.setLocalOrderId(req.getPartnerOrderId());
+			//订单状态需要转换
+			final String paymentStatus = orderResponse.getOrder().getPaymentStatus();
+			final int i = OrderInfoTranser.genCommonOrderStringStatus(paymentStatus, 5);
+			centerCreateOrderRes.setOrderStatus(i);
+			return BaseResponse.withSuccess(centerCreateOrderRes);
+		}
+		return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+	}
+
+	public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
+		OrderUnpaidCancelRequest request = new OrderUnpaidCancelRequest(req.getPartnerOrderId(),req.getOutOrderId());
+		final OrderResponse orderResponse = lvmamaOrderService.cancelOrder(request);
+		if(orderResponse != null && "1000".equals(orderResponse.getState().getCode())){
+
+			return BaseResponse.withSuccess();
+		}
+		return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
+	}
+
+	public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
+		return BaseResponse.withSuccess();
+	}
+
+	public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
+		OrderCancelRequest request = new OrderCancelRequest(req.getPartnerOrderId(),req.getOutOrderId());
+		final com.huoli.trip.supplier.self.lvmama.vo.response.BaseResponse baseResponse = lvmamaOrderService.rufundTicket(request);
+		if(baseResponse != null && "1000".equals(baseResponse.getState().getCode())){
+			return BaseResponse.withSuccess();
+		}
+		return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
+	}
+
 
 
 }

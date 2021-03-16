@@ -183,13 +183,13 @@ public class OrderInfoTranser {
 			 订单状态：待确认，待付款，已确认，已完成，已取消
 			 */
 			switch (orderStatus) {
-				case "待确认":
+				case "NORMAL":
 					rtnStatus = OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode();//0,"支付待确认"
 					break;
-				case "待付款":
+				case "UNPAY":
 					rtnStatus = OrderStatus.TO_BE_PAID.getCode();//1,"待支付",
 					break;
-				case "已确认":
+				case "PAYED":
 					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();//待确认 10已经支付了的,这个应该转待出行,20,"待出行",
 					break;
 				case "出游中":
@@ -202,7 +202,7 @@ public class OrderInfoTranser {
 				case "申请退款中":
 					rtnStatus = OrderStatus.APPLYING_FOR_REFUND.getCode();//21,"申请退款中",
 					break;
-				case "已取消":
+				case "CANCEL":
 					rtnStatus = OrderStatus.CANCELLED.getCode();//40
 					break;
 				case "已退款":
