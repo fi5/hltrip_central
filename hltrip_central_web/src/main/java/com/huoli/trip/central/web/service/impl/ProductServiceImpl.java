@@ -195,6 +195,7 @@ public class ProductServiceImpl implements ProductService {
         String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, request.getPosition().toString());
         if(jedisTemplate.hasKey(key)){
             List<RecommendProductPO> list = JSONArray.parseArray(jedisTemplate.opsForValue().get(key).toString(), RecommendProductPO.class);
+            log.info("{}缓存的推荐产品{}", key, JSON.toJSONString(list));
             List<RecommendProduct> newList = Lists.newArrayList();
             if(ListUtils.isNotEmpty(list)){
                 newList = list.stream().map(recommendProductPO -> {
@@ -209,6 +210,7 @@ public class ProductServiceImpl implements ProductService {
                         BeanUtils.copyProperties(recommendProductPO.getPriceInfo(), priceInfo);
                         priceInfo.setSaleDate(DateTimeUtil.formatDate(recommendProductPO.getPriceInfo().getSaleDate()));
                         recommendProduct.setPriceInfo(priceInfo);
+                        log.info("{}的价格{}", recommendProduct.getProductCode(), JSON.toJSONString(priceInfo));
                     }
                     return recommendProduct;
                 }).collect(Collectors.toList());
