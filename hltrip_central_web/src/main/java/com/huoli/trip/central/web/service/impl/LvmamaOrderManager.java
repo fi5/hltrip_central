@@ -1,37 +1,20 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
-import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
-import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
-import com.huoli.trip.common.constant.OrderStatus;
-import com.huoli.trip.common.exception.HlCentralException;
-import com.huoli.trip.common.util.DateTimeUtil;
-import com.huoli.trip.common.util.ListUtils;
-import com.huoli.trip.common.vo.request.*;
-import com.huoli.trip.common.vo.request.central.PriceCalcRequest;
+import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.central.PriceCalcResult;
-import com.huoli.trip.common.vo.response.order.*;
-import com.huoli.trip.supplier.api.DfyOrderService;
-import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
-import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
+import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import com.huoli.trip.supplier.api.LvmamaOrderService;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyToursOrderDetail;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyBookCheckRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyCreateToursOrderRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.ToursTourist;
+import com.huoli.trip.supplier.self.lvmama.vo.LvOrderDetail;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -49,7 +32,7 @@ public class LvmamaOrderManager extends OrderManager {
 
 
 	@Reference(timeout = 10000,group = "hltrip", check = false)
-	private DfyOrderService dfyOrderService;
+	private LvmamaOrderService lmmOrderService;
 
 
 
@@ -68,20 +51,20 @@ public class LvmamaOrderManager extends OrderManager {
 		baseOrderRequest.setOrderId(req.getOrderId());
 		baseOrderRequest.setTraceId(req.getTraceId());
 		baseOrderRequest.setSupplierOrderId(req.getSupplierOrderId());
-		BaseResponse<DfyToursOrderDetail> order = dfyOrderService.toursOrderDetail(baseOrderRequest);
+		BaseResponse<LvOrderDetail> order = lmmOrderService.orderDetail(baseOrderRequest);
 		if(order==null)
 			return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
 		try {
 			log.info("中台dfy跟团拿到的订单数据:"+ JSONObject.toJSONString(order));
-			DfyToursOrderDetail dfyOrderDetail = order.getData();
+			LvOrderDetail lmmOrderDetail = order.getData();
 			//如果数据为空,直接返回错
 			if( !order.isSuccess())
 				return BaseResponse.fail(CentralError.ERROR_NO_ORDER);//异常消息以供应商返回的
 			OrderDetailRep rep=new OrderDetailRep();
-			rep.setOrderId(dfyOrderDetail.getOrderId());
+			rep.setOrderId(lmmOrderDetail.getOrderId());
 			//转换成consumer统一的订单状态
-			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(),5));
-			rep.setVochers(genVouchers(dfyOrderDetail));
+			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(lmmOrderDetail.getGjStatus(),5));
+			rep.setVochers(genVouchers(lmmOrderDetail));
 			return BaseResponse.success(rep);
 		} catch (Exception e) {
 			log.error("中台dfy跟团报错:"+JSONObject.toJSONString(req),e);
@@ -90,22 +73,43 @@ public class LvmamaOrderManager extends OrderManager {
 
 	}
 
-	private List<OrderDetailRep.Voucher> genVouchers(DfyToursOrderDetail orderDetail) {
+	private List<OrderDetailRep.Voucher> genVouchers(LvOrderDetail detail) {
+		if (CollectionUtils.isNotEmpty(detail.getCredentials())) {
+			List<OrderDetailRep.Voucher> vochers = new ArrayList<>();
+			try {
+				for (LvOrderDetail.Credential oneInfo : detail.getCredentials()) {
 
-		try {
-			if (CollectionUtils.isNotEmpty(orderDetail.getAttachments())) {
-				List<OrderDetailRep.Voucher> vochers = new ArrayList<>();
-				for (DfyToursOrderDetail.OrderAttachment oneInfo : orderDetail.getAttachments()) {
-					//凭证类型   1.纯文本  2.二维码 3.PDF
-					OrderDetailRep.Voucher oneVoucher = new OrderDetailRep.Voucher();
-					oneVoucher.setVocherUrl(oneInfo.getUrl());
-					oneVoucher.setType(3);
-					vochers.add(oneVoucher);
+					if (StringUtils.isNotBlank(oneInfo.getQRcode())) {
+						OrderDetailRep.Voucher oneVoucher = new OrderDetailRep.Voucher();
+						oneVoucher.setVocherUrl(oneInfo.getQRcode());
+						oneVoucher.setType(2);
+						vochers.add(oneVoucher);
+					}
+					if (StringUtils.isNotBlank(oneInfo.getVoucherUrl())) {
+						OrderDetailRep.Voucher oneVoucher = new OrderDetailRep.Voucher();
+						oneVoucher.setVocherUrl(oneInfo.getVoucherUrl());
+						oneVoucher.setType(2);
+						vochers.add(oneVoucher);
+					}
+					if (StringUtils.isNotBlank(oneInfo.getSerialCode())) {
+						OrderDetailRep.Voucher oneVoucher = new OrderDetailRep.Voucher();
+						oneVoucher.setVocherNo(oneInfo.getSerialCode());
+						oneVoucher.setType(1);
+						vochers.add(oneVoucher);
+					}
+					if (StringUtils.isNotBlank(oneInfo.getAdditional())) {
+						OrderDetailRep.Voucher oneVoucher = new OrderDetailRep.Voucher();
+						oneVoucher.setVocherNo(oneInfo.getAdditional());
+						oneVoucher.setType(1);
+						vochers.add(oneVoucher);
+					}
+
 				}
 				return vochers;
+
+			} catch (Exception e) {
+				log.error("genVouchers错", e);
 			}
-		} catch (Exception e) {
-			log.error("genToursVouchers错", e);
 		}
 		return null;
 	}
@@ -119,19 +123,19 @@ public class LvmamaOrderManager extends OrderManager {
 			baseOrderRequest.setTraceId(req.getTraceId());
 
 
-			BaseResponse<DfyToursOrderDetail> order = dfyOrderService.toursOrderDetail(baseOrderRequest);
+			BaseResponse<LvOrderDetail> order = lmmOrderService.orderDetail(baseOrderRequest);
 			if (order == null)
 				return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
 			log.info("getVochers中台dfy跟团拿到的订单数据:" + JSONObject.toJSONString(order));
-			DfyToursOrderDetail dfyOrderDetail = order.getData();
+			LvOrderDetail lmmOrderDetail = order.getData();
 			//如果数据为空,直接返回错
 			if (!order.isSuccess())
 				return BaseResponse.fail(CentralError.ERROR_NO_ORDER);//异常消息以供应商返回的
 			OrderDetailRep rep = new OrderDetailRep();
-			rep.setOrderId(dfyOrderDetail.getOrderId());
+			rep.setOrderId(lmmOrderDetail.getOrderId());
 			//转换成consumer统一的订单状态
-			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(dfyOrderDetail.getOrderStatus(), 5));
-			rep.setVochers(genVouchers(dfyOrderDetail));
+			rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(lmmOrderDetail.getGjStatus(), 5));
+			rep.setVochers(genVouchers(lmmOrderDetail));
 
 			return BaseResponse.success(rep);
 
