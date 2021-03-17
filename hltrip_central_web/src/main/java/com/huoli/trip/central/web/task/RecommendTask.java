@@ -107,14 +107,18 @@ public class RecommendTask {
         log.info("执行刷新推荐列表任务。。。");
         List<RecommendProductPO> recommendProductPOs = productDao.getRecommendProducts();
         if(ListUtils.isNotEmpty(recommendProductPOs)){
+            log.info("数据库的推荐产品={}", JSON.toJSONString(recommendProductPOs));
             List<RecommendProductPO> recommends = recommendProductPOs.stream().map(r -> {
+                log.info("检查产品{}", r.getProductCode());
                 ProductPO productPO = productDao.getTripProductByCode(r.getProductCode());
                 if(productPO.getStatus() != Constants.PRODUCT_STATUS_VALID){
+                    log.info("产品{}非上线状态{}，跳过。", productPO.getCode(), productPO.getStatus());
                      productDao.updateRecommendProductStatus(productPO.getCode(), productPO.getStatus());
                      return null;
                 }
                 PriceSinglePO priceSinglePO = priceDao.selectByProductCode(productPO.getCode());
                 r.setPriceInfo(priceSinglePO.getPriceInfos());
+                log.info("产品{}最新价格={}", productPO.getCode(), JSON.toJSONString(r.getPriceInfo()));
                 return r;
             }).filter(r -> r != null).collect(Collectors.toList());
             int size = ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE);
@@ -128,6 +132,7 @@ public class RecommendTask {
                 String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, k.toString());
                 redisService.set(key,
                         JSON.toJSONString(v), 1, TimeUnit.DAYS);
+                log.info("缓存{}的产品{}", key, JSON.toJSONString(v));
             });
         } else {
             log.error("没有可用推荐产品了。");
