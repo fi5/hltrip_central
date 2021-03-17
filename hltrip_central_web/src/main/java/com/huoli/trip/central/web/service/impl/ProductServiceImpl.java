@@ -217,12 +217,13 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         }
         recommendTask.refreshRecommendList(1);
+        recommendTask.refreshRecommendListV2(1);
         ProductPageRequest productPageRequest = new ProductPageRequest();
         productPageRequest.setType(ProductType.FREE_TRIP.getCode());
         productPageRequest.setPageSize(4);
         BaseResponse<ProductPageResult> response = pageList(productPageRequest);
         if(response.getData() != null && response.getData().getProducts() != null){
-            return BaseResponse.withSuccess(response.getData().getProducts().stream().map(p -> {
+            List<RecommendProduct> recommendProducts = response.getData().getProducts().stream().map(p -> {
                 RecommendProduct recommendProduct = new RecommendProduct();
                 recommendProduct.setPriceInfo(p.getPriceInfo());
                 recommendProduct.setProductCode(p.getCode());
@@ -234,7 +235,9 @@ public class ProductServiceImpl implements ProductService {
                 recommendProduct.setCity(p.getCity());
                 recommendProduct.setMainImages(p.getMainItem().getMainImages());
                 return recommendProduct;
-            }).collect(Collectors.toList()));
+            }).collect(Collectors.toList());
+            result.setRecommendProducts(recommendProducts);
+            return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
     }

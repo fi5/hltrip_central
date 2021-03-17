@@ -61,10 +61,18 @@ public class RecommendTask {
 
     @Async
     @PostConstruct
-    @Scheduled(cron = "0 0/15 * * * ?")
+    @Scheduled(cron = "0 0/25 * * * ?")
     public void refreshRecommendList(){
         refreshRecommendList(0);
     }
+
+    @Async
+    @PostConstruct
+    @Scheduled(cron = "0 0/15 * * * ?")
+    public void refreshRecommendListV2(){
+        refreshRecommendListV2(0);
+    }
+
 
     @Async
     public void refreshRecommendList(int force) {
