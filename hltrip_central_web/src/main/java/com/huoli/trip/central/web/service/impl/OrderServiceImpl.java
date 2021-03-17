@@ -18,6 +18,7 @@ import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
+import org.apache.velocity.app.event.implement.EscapeXmlReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -44,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     OrderFactory orderFactory;
 
+
     @Override
     public Object getOrderStatus(OrderStatusRequest request) {
         return null;
@@ -66,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
             try{
                 productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
             }catch (Exception ex){
-                log.error("调用下线本地数据接口失败",ex);
+                log.error("调用下线本地数据接口失败");
             }
         }
         return checkRes;
@@ -136,9 +138,10 @@ public class OrderServiceImpl implements OrderService {
         OrderManager orderManager = orderFactory.getOrderManager(req.getChannelCode());
         //校验manager处理
         checkManger(orderManager);
+
         BaseResponse<CenterCreateOrderRes> result = orderManager.getCenterCreateOrder(req);
         if(result != null && result.getCode() != 0) {
-            log.info("预订前校验失败,唤起本地更新产品为下线状态");
+            log.info("供应商创建订单失败,唤起本地更新产品为下线状态");
             try{
                 productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
             }catch (Exception ex){

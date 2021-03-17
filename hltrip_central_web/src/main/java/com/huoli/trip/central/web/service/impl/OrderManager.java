@@ -75,4 +75,5 @@ public abstract class OrderManager {
     public void syncPrice(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
         return;
     }
+
 }
