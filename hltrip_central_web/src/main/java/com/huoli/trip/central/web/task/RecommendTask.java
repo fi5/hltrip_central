@@ -13,9 +13,13 @@ import com.huoli.trip.common.entity.PriceSinglePO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.entity.RecommendProductPO;
 import com.huoli.trip.common.util.ConfigGetter;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.vo.PriceInfo;
+import com.huoli.trip.common.vo.RecommendProduct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -132,9 +136,24 @@ public class RecommendTask {
                 productDao.updateRecommendDisplay(ids, Constants.RECOMMEND_DISPLAY_YES, k);
                 productDao.updateRecommendNotDisplay(ids, k);
                 String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, k.toString());
+                List<RecommendProduct> recommendProducts = v.stream().map(p -> {
+                    RecommendProduct recommendProduct = new RecommendProduct();
+                    BeanUtils.copyProperties(p, recommendProduct);
+                    if(ListUtils.isNotEmpty(p.getMainImages())){
+                        recommendProduct.setMainImages(p.getMainImages().stream().map(i ->
+                                ProductConverter.convertToImageBase(i)).collect(Collectors.toList()));
+                    }
+                    if(p.getPriceInfo() != null){
+                        PriceInfo priceInfo = new PriceInfo();
+                        BeanUtils.copyProperties(p.getPriceInfo(), priceInfo);
+                        priceInfo.setSaleDate(DateTimeUtil.formatDate(p.getPriceInfo().getSaleDate()));
+                        recommendProduct.setPriceInfo(priceInfo);
+                    }
+                    return recommendProduct;
+                }).collect(Collectors.toList());
                 redisService.set(key,
-                        JSON.toJSONString(v), 1, TimeUnit.DAYS);
-                log.info("缓存{}的产品{}", key, JSON.toJSONString(v));
+                        JSON.toJSONString(recommendProducts), 1, TimeUnit.DAYS);
+                log.info("缓存{}的产品{}", key, JSON.toJSONString(recommendProducts));
             });
         } else {
             log.error("没有可用推荐产品了。");
