@@ -1,44 +1,26 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.CreateOrderConverter;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
-import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
-import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
-import com.huoli.trip.common.constant.OrderStatus;
-import com.huoli.trip.common.exception.HlCentralException;
-import com.huoli.trip.common.util.DateTimeUtil;
-import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.*;
-import com.huoli.trip.common.vo.request.central.PriceCalcRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.api.LvmamaOrderService;
-import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
-import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyToursOrderDetail;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyBookCheckRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyCreateToursOrderRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.ToursTourist;
 import com.huoli.trip.supplier.self.lvmama.vo.OrderPaymentInfo;
 import com.huoli.trip.supplier.self.lvmama.vo.request.*;
+import com.huoli.trip.supplier.self.lvmama.vo.response.LmmBaseResponse;
 import com.huoli.trip.supplier.self.lvmama.vo.response.OrderResponse;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import sun.security.krb5.internal.PAData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,7 +134,7 @@ public class LvmamaOrderManager extends OrderManager {
 	public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
 		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
 
-		final com.huoli.trip.supplier.self.lvmama.vo.response.BaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
+		LmmBaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
 		if(!"1000".equals(checkInfos.getState().getCode())){
 			return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
 		}
@@ -211,7 +193,7 @@ public class LvmamaOrderManager extends OrderManager {
 
 	public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
 		OrderCancelRequest request = new OrderCancelRequest(req.getPartnerOrderId(),req.getOutOrderId());
-		final com.huoli.trip.supplier.self.lvmama.vo.response.BaseResponse baseResponse = lvmamaOrderService.rufundTicket(request);
+		LmmBaseResponse baseResponse = lvmamaOrderService.rufundTicket(request);
 		if(baseResponse != null && "1000".equals(baseResponse.getState().getCode())){
 			return BaseResponse.withSuccess();
 		}
