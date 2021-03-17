@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -68,7 +69,7 @@ public class RecommendTask {
 
     @Async
     @PostConstruct
-    @Scheduled(cron = "0 0/15 * * * ?")
+    @Scheduled(cron = "0 0/3 * * * ?")
     public void refreshRecommendListV2(){
         refreshRecommendListV2(0);
     }
@@ -123,6 +124,7 @@ public class RecommendTask {
             }).filter(r -> r != null).collect(Collectors.toList());
             int size = ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE);
             recommends.stream().collect(Collectors.groupingBy(RecommendProductPO::getPosition)).forEach((k, v) -> {
+                v.sort(Comparator.comparing(p -> p.getLevel(), Integer::compareTo));
                 if(v.size() > size){
                     v = v.subList(0, size);
                 }
