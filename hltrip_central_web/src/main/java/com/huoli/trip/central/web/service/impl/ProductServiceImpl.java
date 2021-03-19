@@ -125,7 +125,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<CategoryDetailResult> categoryDetail(CategoryDetailRequest request) {
         CategoryDetailResult result = new CategoryDetailResult();
-        List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId(), request.getSaleDate());
+        List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId(), request.getSaleDate(), request.getAppFrom());
         convertToCategoryDetailResult(productPOs, result);
         return BaseResponse.success(result);
     }

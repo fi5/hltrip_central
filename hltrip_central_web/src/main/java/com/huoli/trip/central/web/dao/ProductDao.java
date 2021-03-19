@@ -25,7 +25,7 @@ public interface ProductDao {
      * @param itemId
      * @return
      */
-    List<ProductPO> getProductListByItemId(String itemId, Date saleDate);
+    List<ProductPO> getProductListByItemId(String itemId, Date saleDate, String appFrom);
 
     /**
      * 列表页
