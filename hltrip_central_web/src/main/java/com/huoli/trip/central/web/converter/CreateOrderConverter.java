@@ -143,4 +143,20 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
                 return "";
         }
     }
+
+    public int convertLvmamaOrderStatus(String status){
+        switch (status){
+            case "NORMAL": //下单成功 和 待支付都是待支付状态
+            case "UNPAY":
+                return OrderStatus.TO_BE_PAID.getCode();
+            case "CANCEL":
+                return OrderStatus.CANCELLED.getCode();
+            case "PAYED":
+                return OrderStatus.WAITING_TO_TRAVEL.getCode();
+            case "PARTPAY":
+            return OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode();
+            default:
+                return -1;
+        }
+    }
 }

@@ -176,7 +176,8 @@ public class LvmamaOrderManager extends OrderManager {
 			centerCreateOrderRes.setOrderId(response.getOrder().getOrderId());
 			//订单状态需要转换
 			final String paymentStatus = response.getOrder().getStatus();
-			final int i = OrderInfoTranser.genCommonOrderStringStatus(paymentStatus, 5);
+			final int i = createOrderConverter.convertLvmamaOrderStatus(paymentStatus);
+			//final int i = OrderInfoTranser.genCommonOrderStringStatus(paymentStatus, 5);
 			centerCreateOrderRes.setOrderStatus(i);
 			return BaseResponse.withSuccess(centerCreateOrderRes);
 		}
@@ -197,7 +198,8 @@ public class LvmamaOrderManager extends OrderManager {
 			centerCreateOrderRes.setLocalOrderId(req.getPartnerOrderId());
 			//订单状态需要转换
 			final String paymentStatus = orderResponse.getOrder().getPaymentStatus();
-			final int i = OrderInfoTranser.genCommonOrderStringStatus(paymentStatus, 5);
+			final int i = createOrderConverter.convertLvmamaOrderStatus(paymentStatus);
+			//final int i = OrderInfoTranser.genCommonOrderStringStatus(paymentStatus, 5);
 			centerCreateOrderRes.setOrderStatus(i);
 			return BaseResponse.withSuccess(centerCreateOrderRes);
 		}
