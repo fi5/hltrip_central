@@ -192,6 +192,7 @@ public class OrderInfoTranser {
 				case "已发送":
 				case "未发送":
 				case "未使用":
+				case "待出行":
 					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();//待确认 10已经支付了的,这个应该转待出行,20,"待出行",
 					break;
 				case "已消费":
