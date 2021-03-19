@@ -45,7 +45,7 @@ public class ProductDaoImpl implements ProductDao {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public List<ProductPO> getProductListByItemId(String itemId, Date saleDate){
+    public List<ProductPO> getProductListByItemId(String itemId, Date saleDate, String appFrom){
         // 连价格日历表
         LookupOperation priceLookup = LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR)
                 .localField("code")
@@ -62,6 +62,9 @@ public class ProductDaoImpl implements ProductDao {
                 .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))
                 .and("priceCalendar.priceInfos.stock").gt(0)
                 .and("priceCalendar.priceInfos.salePrice").gt(0);
+        if(StringUtils.isNotBlank(appFrom)){
+            criteria.and("appFrom").in(appFrom);
+        }
         MatchOperation matchOperation = Aggregation.match(criteria);
         // 指定字段
         ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
