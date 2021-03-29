@@ -127,6 +127,7 @@ public class ProductServiceImpl implements ProductService {
         CategoryDetailResult result = new CategoryDetailResult();
         List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId(), request.getSaleDate(), request.getAppFrom());
         convertToCategoryDetailResult(productPOs, result);
+//        result.getProducts().stream().collect(Collectors.groupingBy(p -> p.getPriceInfo().getSaleDate()))
         return BaseResponse.success(result);
     }
 
