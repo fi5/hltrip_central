@@ -247,10 +247,15 @@ public class ProductServiceImpl implements ProductService {
                         continue;
 
                 }
-                if(StringUtils.isNotBlank(productPriceReq.getEndDate())){
-                    if(saleDate.compareTo(productPriceReq.getEndDate())>0)
-                        continue;
+                // 日期小于今天的不返回
+                if(entry.getSaleDate().getTime() < DateTimeUtil.trancateToDate(new Date()).getTime()){
+                    continue;
                 }
+                // 兼容中石化
+//                if(StringUtils.isNotBlank(productPriceReq.getEndDate())){
+//                    if(saleDate.compareTo(productPriceReq.getEndDate())>0)
+//                        continue;
+//                }
                 PriceInfo target = new PriceInfo();
                 target.setSaleDate(saleDate);
 
