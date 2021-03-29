@@ -36,6 +36,7 @@ import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -127,6 +128,9 @@ public class ProductServiceImpl implements ProductService {
         CategoryDetailResult result = new CategoryDetailResult();
         List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId(), request.getSaleDate(), request.getAppFrom());
         convertToCategoryDetailResult(productPOs, result);
+        Map<String, List<Product>> products = result.getProducts().stream().collect(Collectors.groupingBy(p -> p.getPriceInfo().getSaleDate()));
+        List<String> dates = products.keySet().stream().sorted().collect(Collectors.toList());
+        result.setProducts(products.get(dates.get(0)));
         return BaseResponse.success(result);
     }
 
