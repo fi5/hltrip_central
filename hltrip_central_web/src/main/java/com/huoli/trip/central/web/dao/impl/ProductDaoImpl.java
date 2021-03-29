@@ -59,6 +59,7 @@ public class ProductDaoImpl implements ProductDao {
         // 查询条件
         Criteria criteria = Criteria.where("mainItemCode").is(itemId)
                 .and("status").is(1)
+                // 兼容中石化
 //                .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))
                 .and("priceCalendar.priceInfos.stock").gt(0)
                 .and("priceCalendar.priceInfos.salePrice").gt(0);
