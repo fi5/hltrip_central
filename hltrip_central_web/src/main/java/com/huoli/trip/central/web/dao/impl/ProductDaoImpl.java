@@ -63,9 +63,9 @@ public class ProductDaoImpl implements ProductDao {
 //                .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))
                 .and("priceCalendar.priceInfos.stock").gt(0)
                 .and("priceCalendar.priceInfos.salePrice").gt(0);
-        if(StringUtils.isNotBlank(appFrom)){
-            criteria.and("appFrom").in(appFrom);
-        }
+//        if(StringUtils.isNotBlank(appFrom)){
+//            criteria.and("appFrom").in(appFrom);
+//        }
         MatchOperation matchOperation = Aggregation.match(criteria);
         // 指定字段
         ProjectionOperation projectionOperation = Aggregation.project(ProductPO.class).andExclude("_id");
