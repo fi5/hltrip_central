@@ -95,6 +95,7 @@ public class ProductServiceImpl implements ProductService {
         List<Integer> types = ProductConverter.getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
+        StopWatch stopWatch = new StopWatch();
         for (Integer t : types) {
             int total = productDao.getPageListTotal(request.getCity(), t, request.getKeyWord());
             List<ProductPO> productPOs = productDao.getPageListProduct(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
@@ -102,6 +103,7 @@ public class ProductServiceImpl implements ProductService {
                 products.addAll(convertToProducts(productPOs, total));
             }
         }
+        log.info("耗时统计：{}", stopWatch.prettyPrint());
         if(ListUtils.isEmpty(products)){
             return BaseResponse.withFail(CentralError.NO_RESULT_PRODUCT_LIST_ERROR);
         }
