@@ -25,10 +25,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 描述：<br/>
@@ -44,8 +43,8 @@ public class ProductDaoImpl implements ProductDao {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Override
-    public List<ProductPO> getProductListByItemId(String itemId, Date saleDate, String appFrom){
+
+    public List<ProductPO> getProductListByItemId_(String itemId, Date saleDate, String appFrom){
         // 连价格日历表
         LookupOperation priceLookup = LookupOperation.newLookup().from(Constants.COLLECTION_NAME_TRIP_PRICE_CALENDAR)
                 .localField("code")
@@ -60,7 +59,7 @@ public class ProductDaoImpl implements ProductDao {
         Criteria criteria = Criteria.where("mainItemCode").is(itemId)
                 .and("status").is(1)
                 // 兼容中石化
-//                .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))
+                .and("priceCalendar.priceInfos.saleDate").is(MongoDateUtils.handleTimezoneInput(saleDate))
                 .and("priceCalendar.priceInfos.stock").gt(0)
                 .and("priceCalendar.priceInfos.salePrice").gt(0);
         if(StringUtils.isNotBlank(appFrom)){
@@ -79,6 +78,42 @@ public class ProductDaoImpl implements ProductDao {
         Aggregation aggregation = Aggregation.newAggregation(aggregations);
         AggregationResults<ProductPO> output = mongoTemplate.aggregate(aggregation, Constants.COLLECTION_NAME_TRIP_PRODUCT, ProductPO.class);
         return output.getMappedResults();
+    }
+
+    @Override
+    public List<ProductPO> getProductListByItemId(String itemId, Date saleDate, String appFrom){
+        Criteria criteria = Criteria.where("mainItemCode").is(itemId)
+                .and("status").is(1);
+        if(StringUtils.isNotBlank(appFrom)){
+            criteria.and("appFrom").in(appFrom);
+        }
+        Query query = new Query(criteria);
+        query.fields().include("code").exclude("_id");
+        List<String> codes = mongoTemplate.find(query, String.class);
+        if(ListUtils.isEmpty(codes)){
+            return null;
+        }
+        List<PricePO> pricePOs = mongoTemplate.find(new Query(Criteria.where("productCode").in(codes)), PricePO.class);
+        if(ListUtils.isEmpty(pricePOs)){
+            return null;
+        }
+        pricePOs.stream().forEach(price ->
+                price.getPriceInfos().removeIf(p ->
+                        p.getSaleDate().getTime() < DateTimeUtil.trancateToDate(new Date()).getTime()
+                                || p.getStock() == null || p.getStock() <= 0
+                                || p.getSalePrice() == null || p.getSalePrice().compareTo(BigDecimal.valueOf(0)) < 1));
+        pricePOs.removeIf(price -> ListUtils.isEmpty(price.getPriceInfos()));
+        if(ListUtils.isEmpty(pricePOs)){
+            return null;
+        }
+        return pricePOs.stream().map(price -> {
+            ProductPO productPO = mongoTemplate.findOne(new Query(Criteria.where("code").is(price.getProductCode())), ProductPO.class);
+            PriceInfoPO priceInfoPO = price.getPriceInfos().stream().sorted(Comparator.comparing(PriceInfoPO::getSalePrice)).collect(Collectors.toList()).get(0);
+            PriceSinglePO priceSinglePO = new PriceSinglePO();
+            priceSinglePO.setPriceInfos(priceInfoPO);
+            productPO.setPriceCalendar(priceSinglePO);
+            return productPO;
+        }).collect(Collectors.toList());
     }
 
     @Override

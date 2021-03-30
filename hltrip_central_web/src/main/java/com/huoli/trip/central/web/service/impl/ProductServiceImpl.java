@@ -29,11 +29,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -128,9 +131,9 @@ public class ProductServiceImpl implements ProductService {
         CategoryDetailResult result = new CategoryDetailResult();
         List<ProductPO> productPOs = productDao.getProductListByItemId(request.getProductItemId(), request.getSaleDate(), request.getAppFrom());
         convertToCategoryDetailResult(productPOs, result);
-        Map<String, List<Product>> products = result.getProducts().stream().collect(Collectors.groupingBy(p -> p.getPriceInfo().getSaleDate()));
-        List<String> dates = products.keySet().stream().sorted().collect(Collectors.toList());
-        result.setProducts(products.get(dates.get(0)));
+//        Map<String, List<Product>> products = result.getProducts().stream().collect(Collectors.groupingBy(p -> p.getPriceInfo().getSaleDate()));
+//        List<String> dates = products.keySet().stream().sorted().collect(Collectors.toList());
+//        result.setProducts(products.get(dates.get(0)));
         return BaseResponse.success(result);
     }
 
