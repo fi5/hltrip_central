@@ -248,6 +248,7 @@ public class ProductDaoImpl implements ProductDao {
         long rows = (page - 1) * size;
         Query query = pageListForItemQuery(oriCity, desCity, type, keyWord, appFrom);
         query.skip(rows).limit(size);
+        query.with(Sort.by(Sort.Order.asc("seq")));
         return mongoTemplate.find(query, ProductItemPO.class);
     }
 
