@@ -88,4 +88,8 @@ public class PriceDaoImpl implements PriceDao {
         return output.getMappedResults();
     }
 
+    @Override
+    public PricePO selectPricePOByProductCode(String productCode){
+        return mongoTemplate.findOne(new Query(Criteria.where("productCode").is(productCode)), PricePO.class);
+    }
 }

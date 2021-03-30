@@ -808,9 +808,27 @@ public class ProductServiceImpl implements ProductService {
                                 po.getSupplierId(), po.getProduct().getCode(), po.getProduct().getPrice());
                     }
                     Product product = ProductConverter.convertToProductByItem(po, total);
-                    List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
-                    if(ListUtils.isNotEmpty(prices)){
-                        product.setGroupDates(prices.stream().map(p ->
+//                    List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
+//                    if(ListUtils.isNotEmpty(prices)){
+//                        product.setGroupDates(prices.stream().map(p ->
+//                                DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
+//                    }
+                    PricePO pricePO = priceDao.selectPricePOByProductCode(po.getProduct().getCode());
+                    if(pricePO != null && ListUtils.isNotEmpty(pricePO.getPriceInfos())) {
+                        pricePO.getPriceInfos().removeIf(p ->
+                                p.getSaleDate().getTime() < DateTimeUtil.trancateToDate(new Date()).getTime()
+                                        || p.getStock() == null || p.getStock() <= 0
+                                        || p.getSalePrice() == null || p.getSalePrice().compareTo(BigDecimal.valueOf(0)) < 1);
+                        List<PriceInfoPO> newPriceInfos = pricePO.getPriceInfos().stream().sorted(Comparator.comparing(PriceInfoPO::getSaleDate)).collect(Collectors.toList());
+                        if(newPriceInfos.size() > 3){
+                            newPriceInfos = newPriceInfos.subList(0, 3);
+                        }
+                        List<PriceSinglePO> priceSinglePOs = newPriceInfos.stream().map(p -> {
+                            PriceSinglePO priceSinglePO = new PriceSinglePO();
+                            priceSinglePO.setPriceInfos(p);
+                            return priceSinglePO;
+                        }).collect(Collectors.toList());
+                        product.setGroupDates(priceSinglePOs.stream().map(p ->
                                 DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
                     }
                     return product;
