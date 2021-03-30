@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.StopWatch;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -94,6 +95,7 @@ public class ProductServiceImpl implements ProductService {
         List<Integer> types = ProductConverter.getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
+        StopWatch stopWatch = new StopWatch();
         for (Integer t : types) {
             int total = productDao.getPageListTotal(request.getCity(), t, request.getKeyWord());
             List<ProductPO> productPOs = productDao.getPageListProduct(request.getCity(), t, request.getKeyWord(), request.getPageIndex(), request.getPageSize());
@@ -101,6 +103,7 @@ public class ProductServiceImpl implements ProductService {
                 products.addAll(convertToProducts(productPOs, total));
             }
         }
+        log.info("耗时统计：{}", stopWatch.prettyPrint());
         if(ListUtils.isEmpty(products)){
             return BaseResponse.withFail(CentralError.NO_RESULT_PRODUCT_LIST_ERROR);
         }
@@ -113,13 +116,21 @@ public class ProductServiceImpl implements ProductService {
         List<Integer> types = ProductConverter.getTypes(request.getType());
         List<Product> products = Lists.newArrayList();
         result.setProducts(products);
+        StopWatch stopWatch = new StopWatch();
         for (Integer t : types) {
+            stopWatch.start("查总数type=" + t);
             long total = productDao.getPageListForItemTotal(request.getOriCity(), request.getCity(), t, request.getKeyWord(), request.getAppFrom());
+            stopWatch.stop();
+            stopWatch.start("查数据type=" + t);
             List<ProductItemPO> productItemPOs = productDao.getPageListForItem(request.getOriCity(), request.getCity(), t, request.getKeyWord(), request.getAppFrom(), request.getPageIndex(), request.getPageSize());
+            stopWatch.stop();
+            stopWatch.start("转换数据type=" + t);
             if (ListUtils.isNotEmpty(productItemPOs)) {
                 products.addAll(convertToProductsByItem(productItemPOs, (int)total));
             }
+            stopWatch.stop();
         }
+        log.info("耗时统计：{}", stopWatch.prettyPrint());
         if(ListUtils.isEmpty(products)){
             return BaseResponse.withFail(CentralError.NO_RESULT_PRODUCT_LIST_ERROR);
         }
@@ -802,10 +813,13 @@ public class ProductServiceImpl implements ProductService {
         return productItemPOs.stream().map(po -> {
             try {
                 if(po.getProduct() != null){
+                    StopWatch stopWatch = new StopWatch();
                     if(po.getProduct() != null && po.getProduct().getPriceCalendar() != null
                             && po.getProduct().getPriceCalendar().getPriceInfos() != null){
+                        stopWatch.start("计算加价");
                         increasePrice(Lists.newArrayList(po.getProduct().getPriceCalendar().getPriceInfos()),
                                 po.getSupplierId(), po.getProduct().getCode(), po.getProduct().getPrice());
+                        stopWatch.stop();
                     }
                     Product product = ProductConverter.convertToProductByItem(po, total);
 //                    List<PriceSinglePO> prices = priceDao.selectByProductCode(po.getProduct().getCode(), 3);
@@ -813,6 +827,7 @@ public class ProductServiceImpl implements ProductService {
 //                        product.setGroupDates(prices.stream().map(p ->
 //                                DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
 //                    }
+                    stopWatch.start("设置团期");
                     PricePO pricePO = priceDao.selectPricePOByProductCode(po.getProduct().getCode());
                     if(pricePO != null && ListUtils.isNotEmpty(pricePO.getPriceInfos())) {
                         pricePO.getPriceInfos().removeIf(p ->
@@ -831,6 +846,8 @@ public class ProductServiceImpl implements ProductService {
                         product.setGroupDates(priceSinglePOs.stream().map(p ->
                                 DateTimeUtil.format(p.getPriceInfos().getSaleDate(), "MM-dd")).collect(Collectors.toList()));
                     }
+                    stopWatch.stop();
+                    log.info("耗时统计：{}", stopWatch.prettyPrint());
                     return product;
                 }
                 return null;
