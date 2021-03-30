@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.dao.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
@@ -11,6 +12,7 @@ import com.huoli.trip.common.util.MongoDateUtils;
 import com.huoli.trip.common.vo.Coordinate;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.MongoCursor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
  * 创建日期：2020/6/28<br>
  */
 @Repository
+@Slf4j
 public class ProductDaoImpl implements ProductDao {
 
     @Autowired
@@ -89,11 +92,14 @@ public class ProductDaoImpl implements ProductDao {
         }
         Query query = new Query(criteria);
         query.fields().include("code").exclude("_id");
-        List<String> codes = mongoTemplate.find(query, String.class);
-        if(ListUtils.isEmpty(codes)){
+        List<ProductPO> productPOs = mongoTemplate.find(query, ProductPO.class);
+        if(ListUtils.isEmpty(productPOs)){
             return null;
         }
+        List<String> codes = productPOs.stream().map(ProductPO::getCode).collect(Collectors.toList());
+        log.info("产品码们。。。。。{}", JSON.toJSONString(productPOs));
         List<PricePO> pricePOs = mongoTemplate.find(new Query(Criteria.where("productCode").in(codes)), PricePO.class);
+        log.info("价格们。。。。。。{}", JSON.toJSONString(pricePOs));
         if(ListUtils.isEmpty(pricePOs)){
             return null;
         }
@@ -103,6 +109,7 @@ public class ProductDaoImpl implements ProductDao {
                                 || p.getStock() == null || p.getStock() <= 0
                                 || p.getSalePrice() == null || p.getSalePrice().compareTo(BigDecimal.valueOf(0)) < 1));
         pricePOs.removeIf(price -> ListUtils.isEmpty(price.getPriceInfos()));
+        log.info("过滤完的价格们。。。。。。{}", JSON.toJSONString(pricePOs));
         if(ListUtils.isEmpty(pricePOs)){
             return null;
         }
