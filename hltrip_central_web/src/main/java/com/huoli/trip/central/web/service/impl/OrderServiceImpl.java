@@ -8,6 +8,7 @@ import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
+import com.huoli.trip.common.vo.TripNotice;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
 import com.huoli.trip.common.vo.request.central.RefundKafka;
@@ -196,6 +197,20 @@ public class OrderServiceImpl implements OrderService {
                     });
         } catch (Exception e) {
             log.error("订单状态推送kafka失败 发送的 json:{} 失败原因:{}",JSONObject.toJSONString(req),e);
+        }
+    }
+
+    @Override
+    public void tripNotice(TripNotice tripNotice) {
+        try {
+            String topic = Constants.HLTRIP_ORDER_TRIP_NOTICE;
+            //订单状态转换下推送
+            ListenableFuture<SendResult<String, String>> listenableFuture = kafkaTemplate.send(topic, JSONObject.toJSONString(tripNotice));
+            listenableFuture.addCallback(
+                    result -> log.info("出团通知推送kafka成功, params : {}", JSONObject.toJSONString(tripNotice)),
+                    ex -> log.info("出团通知推送kafka失败, error message:{}", ex));
+        } catch (Exception e) {
+            log.error("出团通知推送kafka失败 发送的 json:{} 失败原因:{}",JSONObject.toJSONString(tripNotice), e);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.huoli.trip.central.api;
 
+import com.huoli.trip.common.vo.TripNotice;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
@@ -89,6 +90,12 @@ public interface OrderService {
      * 创建日期：2020/7/7<br>
      */
     void orderStatusNotice(PushOrderStatusReq req) ;
+
+    /**
+     * 出团通知
+     * @param tripNotice
+     */
+    void tripNotice(TripNotice tripNotice);
 
     /**
      * 描述: <br> 支付前校验
