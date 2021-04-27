@@ -8,4 +8,5 @@ package com.huoli.trip.central.api;
  * @date 2021/4/2615:37
  */
 public interface ProductV2Service {
+
 }
