@@ -41,6 +41,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         criteria.and("isDel").is(0);
         criteria.and("type").is(0);
         query.fields().include("_id").include("productId").include("productName").include("scenicSpotId");
+        mongoTemplate.find(query,ProductListMPO.class);
         return null;
     }
 
@@ -50,7 +51,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     }
 
     @Override
-    public List<ScenicSpotProductMPO> querySpotProduct(String scenicSpotId, String date) {
+    public List<ScenicSpotProductMPO> querySpotProduct(String scenicSpotId) {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("scenicSpotId").is(scenicSpotId);

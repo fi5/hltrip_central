@@ -2,6 +2,7 @@ package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.vo.v2.ScenicSpotBase;
 import com.huoli.trip.common.vo.request.ScenicSpotRequest;
+import com.huoli.trip.common.vo.v2.ScenicSpotProductBase;
 
 /**
  * @author lunatic
@@ -13,5 +14,7 @@ import com.huoli.trip.common.vo.request.ScenicSpotRequest;
 public interface ProductV2Service {
 
     ScenicSpotBase querycScenicSpotBase(ScenicSpotRequest request);
+
+    ScenicSpotProductBase queryScenicSpotProduct(ScenicSpotRequest request);
 
 }

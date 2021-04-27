@@ -5,6 +5,7 @@ import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotMPO;
 import com.huoli.trip.common.vo.v2.ScenicSpotBase;
 import com.huoli.trip.common.vo.request.ScenicSpotRequest;
+import com.huoli.trip.common.vo.v2.ScenicSpotProductBase;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
@@ -31,6 +32,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             BeanUtils.copyProperties(scenicSpotMPO,scenicSpotBase);
         }
         return scenicSpotBase;
+    }
+
+    @Override
+    public ScenicSpotProductBase queryScenicSpotProduct(ScenicSpotRequest request) {
+        scenicSpotDao.querySpotProduct(request.getScenicSpotId());
+        return null;
     }
 
 
