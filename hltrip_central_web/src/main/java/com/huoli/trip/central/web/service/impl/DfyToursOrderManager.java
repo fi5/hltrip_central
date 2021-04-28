@@ -304,7 +304,7 @@ public class DfyToursOrderManager extends OrderManager {
 		request.setTraceId(req.getTraceId());
 		request.setChannelCode(req.getChannelCode());
 		request.setChannelOrderId(req.getChannelOrderId());
-		request.setPrice(String.valueOf(req.getPrice()));*/
+		request.setPrice(String.valueOf(req.getPrice()));*//*
 		//DfyBaseResult dfyBaseResult = dfyOrderService.payOrder(request);
 		//if(dfyBaseResult != null && dfyBaseResult.isSuccess()){
 			CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
@@ -312,8 +312,8 @@ public class DfyToursOrderManager extends OrderManager {
 			payOrderRes.setLocalOrderId(req.getPartnerOrderId());
 			payOrderRes.setOrderStatus(10);
 			return BaseResponse.success(payOrderRes);
-		//}
-		//return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+		//}*/
+		return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
 	}
 
 
