@@ -180,27 +180,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     }
 
 
-    private static List<ScenicSpotProductPriceMPO> removeDuplicateOrder(List<ScenicSpotProductPriceMPO> orderList) {
-        Set<ScenicSpotProductPriceMPO> set = new TreeSet<ScenicSpotProductPriceMPO>(new Comparator<ScenicSpotProductPriceMPO>() {
-            @Override
-            public int compare(ScenicSpotProductPriceMPO a, ScenicSpotProductPriceMPO b) {
-                // 字符串则按照asicc码升序排列
-                return a.getStartDate().compareTo(b.getScenicSpotRuleId());
-            }
-        });
-
-        set.addAll(orderList);
-        return new ArrayList<ScenicSpotProductPriceMPO>(set);
-    }
-
-
-
     /**
      * 根据日期 找到对应日期的 星期
      */
      private static String getDayOfWeekByDate(String date) {
         String dayOfweek = "0";
-        String [] weekNum ={"Monday","Tuesday ","Wednesday ","Thursday","Friday","Saturday","Sunday"};
+        String [] weekNum ={"星期一","星期二 ","星期三","星期四","星期五","星期六","星期日"};
          List<String> list = Arrays.asList(weekNum);
          try {
             SimpleDateFormat myFormatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -208,7 +193,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             SimpleDateFormat formatter = new SimpleDateFormat("E");
             String str = formatter.format(myDate);
             if(list.contains(str)){
-                dayOfweek = String.valueOf(list.indexOf(str));
+                dayOfweek = String.valueOf(list.indexOf(str)+1);
             }
             } catch (Exception e) {
 
