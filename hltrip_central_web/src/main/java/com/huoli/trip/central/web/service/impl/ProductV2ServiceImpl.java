@@ -116,8 +116,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         String startDate = request.getStartDate();
         String productId = request.getProductId();
         String endDate = request.getEndDate();
+        List<BasePrice> basePrices = null;
+        List<ScenicSpotProductPriceMPO> effective = new ArrayList<>();
         if(StringUtils.isEmpty(productId)){
-            List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId());
+            List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(scenicSpotId);
             if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
                 for(ScenicSpotProductMPO productMPO : scenicSpotProductMPOS){
                     String productMPOId = productMPO.getId();
@@ -125,17 +127,70 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     //普通库存是一段时间 需要拆分
                     if(sellType == 0){
                         List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,null,null);
+                        for(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
+                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate);
+                            if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
+                                effective.addAll(scenicSpotProductPriceMPOS1);
+                            }
+                        }
 
                     }else{
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,startDate,endDate);
-
+                        effective = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,startDate,endDate);
                     }
 
                 }
             }
 
+        }else {
+            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
+            if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
+                for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
+                    String startDate1 = s.getStartDate();
+                    String endDate1 = s.getEndDate();
+                    if (!StringUtils.equals(startDate1, endDate1)) {
+                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(s, startDate, endDate);
+                        if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS1)) {
+                            effective.addAll(scenicSpotProductPriceMPOS1);
+                        }
+                    } else {
+                        effective.add(s);
+                    }
+                }
+            }
         }
-        return null;
+
+        if(ListUtils.isNotEmpty(effective)){
+            List<ScenicSpotProductPriceMPO>  fe = new ArrayList<>(effective.size());
+            for (ScenicSpotProductPriceMPO  ss: effective) {
+                String startDate1 = ss.getStartDate();
+                String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
+                if(ss.getWeekDay().contains(dayOfWeekByDate)){
+                    fe.add(ss);
+                }
+
+            }
+            effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO :: getStartDate)).collect(Collectors.toList());
+            basePrices = effective.stream().map(p->{
+                BasePrice basePrice = new BasePrice();
+                BeanUtils.copyProperties(p,basePrice);
+                return basePrice;
+            }).collect(Collectors.toList());
+        }
+        return basePrices;
+    }
+
+
+    private static List<ScenicSpotProductPriceMPO> removeDuplicateOrder(List<ScenicSpotProductPriceMPO> orderList) {
+        Set<ScenicSpotProductPriceMPO> set = new TreeSet<ScenicSpotProductPriceMPO>(new Comparator<ScenicSpotProductPriceMPO>() {
+            @Override
+            public int compare(ScenicSpotProductPriceMPO a, ScenicSpotProductPriceMPO b) {
+                // 字符串则按照asicc码升序排列
+                return a.getStartDate().compareTo(b.getScenicSpotRuleId());
+            }
+        });
+
+        set.addAll(orderList);
+        return new ArrayList<ScenicSpotProductPriceMPO>(set);
     }
 
 
@@ -161,5 +216,55 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             return dayOfweek;
      }
 
+     private List<ScenicSpotProductPriceMPO> splitCalendar(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO,String startDate,String endDate) {
+         List<ScenicSpotProductPriceMPO> list = null;
+         try {
+             String sdate = scenicSpotProductPriceMPO.getStartDate();
+             String edate = scenicSpotProductPriceMPO.getEndDate();
+             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+             Date dBegin = simpleDateFormat.parse(sdate);// 定义起始日期
+             Date dEnd = simpleDateFormat.parse(edate);// 定义结束日期
+
+             List<ScenicSpotProductPriceMPO> lDate = new ArrayList();
+             ScenicSpotProductPriceMPO st = new ScenicSpotProductPriceMPO();
+             BeanUtils.copyProperties(scenicSpotProductPriceMPO,st,"startDate","endDate");
+             st.setStartDate(startDate);
+             st.setEndDate(startDate);
+             lDate.add(st);
+
+             Calendar calBegin = Calendar.getInstance();
+             // 使用给定的 Date 设置此 Calendar 的时间
+             calBegin.setTime(dBegin);
+             Calendar calEnd = Calendar.getInstance();
+             // 使用给定的 Date 设置此 Calendar 的时间
+             calEnd.setTime(dEnd);
+             // 测试此日期是否在指定日期之后
+             while (dEnd.after(calBegin.getTime())) {
+                 // 根据日历的规则，为给定的日历字段添加或减去指定的时间量
+                 calBegin.add(Calendar.DAY_OF_MONTH, 1);
+                 ScenicSpotProductPriceMPO st1 = new ScenicSpotProductPriceMPO();
+                 BeanUtils.copyProperties(scenicSpotProductPriceMPO,st1,"startDate","endDate");
+                 st1.setStartDate(simpleDateFormat.format(calBegin.getTime()));
+                 st1.setEndDate(simpleDateFormat.format(calBegin.getTime()));
+                 lDate.add(st1);
+             }
+
+             if(ListUtils.isNotEmpty(lDate)) {
+                 if (StringUtils.isNotEmpty(startDate) && StringUtils.isNotEmpty(endDate)) {
+                     list = lDate.stream().filter(p -> p.getStartDate().compareTo(startDate) >= 0 && p.getStartDate().compareTo(endDate) <= 0).collect(Collectors.toList());
+                 } else {
+                     if (StringUtils.isNotEmpty(startDate)) {
+                         list = lDate.stream().filter(p -> p.getStartDate().compareTo(startDate) >= 0).collect(Collectors.toList());
+                     }
+                     if (StringUtils.isNotEmpty(endDate)) {
+                         list = lDate.stream().filter(p -> p.getStartDate().compareTo(startDate) <= 0).collect(Collectors.toList());
+                     }
+                 }
+             }
+         } catch (Exception e) {
+
+         }
+         return list;
+     }
 
 }
