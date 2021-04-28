@@ -126,8 +126,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     if(sellType == 0){
                         List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,null,null);
 
-
-
                     }else{
                         List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,startDate,endDate);
 
