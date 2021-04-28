@@ -23,4 +23,8 @@ public interface ScenicSpotDao {
 
 	List<ScenicSpotProductPriceMPO> queryProductPrice(String scenicSpotProductId,String startDate,String endDate);
 
+	List<ScenicSpotProductPriceMPO> queryProductPriceByProductId(String scenicSpotProductId);
+
+	List<ScenicSpotProductPriceMPO> queryPriceByProductIdAndDate(String scenicSpotProductId,String startDate,String endDate);
+	ScenicSpotRuleMPO queryRuleById(String ruleId);
 }
