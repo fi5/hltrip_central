@@ -1,6 +1,9 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.SupplierPolicyPO;
+import com.huoli.trip.common.vo.IncreasePrice;
+
+import java.util.List;
 
 /**
  * 描述：<br/>
@@ -17,4 +20,11 @@ public interface SupplierPolicyDao {
      * @return
      */
     SupplierPolicyPO getSupplierPolicyBySupplierId(String supplierId);
+
+    /**
+     * 多条件查配置
+     * @param increasePrice
+     * @return
+     */
+    List<SupplierPolicyPO> getSupplierPolicy(IncreasePrice increasePrice);
 }
