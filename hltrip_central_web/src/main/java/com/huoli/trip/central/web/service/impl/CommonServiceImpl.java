@@ -65,7 +65,7 @@ public class CommonServiceImpl implements CommonService {
                     }
                 }
                 return Double.MAX_VALUE;
-            }, Double::compareTo)).findFirst().orElse(null);
+            }, Double::compareTo)).findFirst().get();
             log.info("找到合适的加价配置，使用这条配置加价，配置={}", JSON.toJSONString(supplierPolicy));
             ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
             for (IncreasePriceCalendar price : increasePrice.getPrices()) {
