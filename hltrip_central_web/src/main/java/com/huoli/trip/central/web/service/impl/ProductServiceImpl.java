@@ -49,6 +49,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -689,6 +691,7 @@ public class ProductServiceImpl implements ProductService {
             log.error("加价计算失败，不影响主流程，channel = {}, productCode = {}", channelCode, productCode, e);
         }
     }
+
     /**
      * 构建商品详情结果
      * @param productPOs
