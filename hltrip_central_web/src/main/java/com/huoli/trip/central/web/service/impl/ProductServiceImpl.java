@@ -14,6 +14,7 @@ import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.*;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -21,8 +22,15 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
+import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
+import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.goods.GroupTourListItem;
+import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
+import com.huoli.trip.common.vo.response.goods.ScenicTicketListItem;
+import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -241,6 +249,33 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+    }
+
+    @Override
+    public ScenicTicketListResult scenicTicketList(ScenicTicketListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req);
+        ScenicTicketListResult result=new ScenicTicketListResult();
+        List<ScenicTicketListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),ScenicTicketListItem.class);
+        result.setItems(items);
+        return result;
+    }
+
+    @Override
+    public GroupTourListResult groupTourList(GroupTourListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.groupTourList(req);
+        GroupTourListResult result=new GroupTourListResult();
+        List<GroupTourListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),GroupTourListItem.class);
+        result.setItems(items);
+        return result;
+    }
+
+    @Override
+        public ScenicTicketListResult hotelScenicList(HotelScenicListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
+        ScenicTicketListResult result=new ScenicTicketListResult();
+        List<ScenicTicketListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),ScenicTicketListItem.class);
+        result.setItems(items);
+        return result;
     }
 
     @Override
