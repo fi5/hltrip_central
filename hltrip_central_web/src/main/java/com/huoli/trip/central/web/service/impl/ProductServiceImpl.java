@@ -10,10 +10,7 @@ import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
-import com.huoli.trip.common.constant.CentralError;
-import com.huoli.trip.common.constant.Constants;
-import com.huoli.trip.common.constant.ProductStatus;
-import com.huoli.trip.common.constant.ProductType;
+import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
@@ -254,7 +251,7 @@ public class ProductServiceImpl implements ProductService {
             if(StringUtils.isNotBlank(request.getTag())){
                 result = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
                             if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
-                                return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getPoiStatus() == 1;
+                                return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
                             } else {
                                 return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
                             }
@@ -262,7 +259,8 @@ public class ProductServiceImpl implements ProductService {
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
             } else {
                 result = recommendMPO.getRecommendBaseInfos().stream().filter(rb ->
-                        StringUtils.equals(rb.getCategory(), "ss_ticket") ? rb.getPoiStatus() == 1 : rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).map(rb ->
+                        StringUtils.equals(rb.getCategory(), "ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).map(rb ->
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
             }
         }
