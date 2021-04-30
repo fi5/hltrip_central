@@ -12,8 +12,11 @@ import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
+import com.huoli.trip.common.constant.ProductStatus;
 import com.huoli.trip.common.constant.ProductType;
 import com.huoli.trip.common.entity.*;
+import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
+import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -29,8 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StopWatch;
 
@@ -40,7 +41,6 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -88,6 +88,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private SupplierPolicyDao supplierPolicyDao;
+
+    @Autowired
+    private RecommendDao recommendDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -241,6 +244,32 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+    }
+
+    @Override
+    public BaseResponse<List<RecommendProductV2>> recommendListV3(RecommendRequestV2 request) {
+        List<RecommendProductV2> result = Lists.newArrayList();
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        if(recommendMPO != null && ListUtils.isNotEmpty(recommendMPO.getRecommendBaseInfos())){
+            if(StringUtils.isNotBlank(request.getTag())){
+                result = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
+                            if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
+                                return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getPoiStatus() == 1;
+                            } else {
+                                return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
+                            }
+                        }).map(rb ->
+                        convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
+            } else {
+                result = recommendMPO.getRecommendBaseInfos().stream().filter(rb ->
+                        StringUtils.equals(rb.getCategory(), "ss_ticket") ? rb.getPoiStatus() == 1 : rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).map(rb ->
+                        convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
+            }
+        }
+        if(result.size() > request.getPageSize()){
+            result = result.subList(0, request.getPageSize());
+        }
+        return BaseResponse.withSuccess(result);
     }
 
     @Override
@@ -961,5 +990,22 @@ public class ProductServiceImpl implements ProductService {
         } catch (Exception e) {
             log.error("获取标记推荐列表异常", e);
         }
+    }
+
+    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, RecommendMPO recommendMPO){
+        RecommendProductV2 recommendProduct = new RecommendProductV2();
+        if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
+            recommendProduct.setProductCode(rb.getPoiId());
+            recommendProduct.setProductName(rb.getPoiName());
+        } else {
+            recommendProduct.setProductCode(rb.getProductId());
+            recommendProduct.setProductName(rb.getProductName());
+        }
+        recommendProduct.setChannel(rb.getChannel());
+        recommendProduct.setChannelName(rb.getChannelName());
+        recommendProduct.setPrice(rb.getApiSellPrice());
+        recommendProduct.setImage(rb.getMainImage());
+        recommendProduct.setPosition(Integer.valueOf(recommendMPO.getPosition()));
+        return recommendProduct;
     }
 }

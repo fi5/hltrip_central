@@ -2,6 +2,7 @@ package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.vo.RecommendProductV2;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
@@ -90,4 +91,11 @@ public interface ProductService {
      * @return
      */
     BaseResponse<RecommendResult> recommendListV2(RecommendRequest request);
+
+    /**
+     * 推荐列表
+     * @param request
+     * @return
+     */
+    BaseResponse<List<RecommendProductV2>> recommendListV3(RecommendRequestV2 request);
 }
