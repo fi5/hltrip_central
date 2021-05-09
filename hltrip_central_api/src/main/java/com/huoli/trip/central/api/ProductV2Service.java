@@ -1,11 +1,8 @@
 package com.huoli.trip.central.api;
 
-import com.huoli.trip.common.vo.request.v2.CalendarRequest;
-import com.huoli.trip.common.vo.request.v2.ScenicSpotProductRequest;
-import com.huoli.trip.common.vo.v2.BasePrice;
-import com.huoli.trip.common.vo.v2.ScenicSpotBase;
-import com.huoli.trip.common.vo.request.v2.ScenicSpotRequest;
-import com.huoli.trip.common.vo.v2.ScenicSpotProductBase;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
+import com.huoli.trip.common.vo.request.v2.*;
+import com.huoli.trip.common.vo.v2.*;
 
 import java.util.List;
 
@@ -20,8 +17,13 @@ public interface ProductV2Service {
 
     ScenicSpotBase querycScenicSpotBase(ScenicSpotRequest request);
 
+    GroupTourBody queryGroupTourById(GroupTourRequest request);
+    GroupMealsBody groupMealsBody(GroupTourMealsRequest request);
+
     List<ScenicSpotProductBase> queryScenicSpotProduct(ScenicSpotProductRequest request);
 
     List<BasePrice> queryCalendar(CalendarRequest request);
+
+    List<GroupTourPrice> queryGroupTourPriceCalendar(CalendarRequest request);
 
 }

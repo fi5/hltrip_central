@@ -2,19 +2,21 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.huoli.trip.central.api.ProductV2Service;
+import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotRuleMPO;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
-import com.huoli.trip.common.vo.request.v2.CalendarRequest;
-import com.huoli.trip.common.vo.request.v2.ScenicSpotProductRequest;
-import com.huoli.trip.common.vo.v2.BasePrice;
-import com.huoli.trip.common.vo.v2.ScenicSpotBase;
-import com.huoli.trip.common.vo.request.v2.ScenicSpotRequest;
-import com.huoli.trip.common.vo.v2.ScenicSpotProductBase;
+import com.huoli.trip.common.vo.request.v2.*;
+import com.huoli.trip.common.vo.v2.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
@@ -36,6 +38,10 @@ import java.util.stream.Collectors;
 public class ProductV2ServiceImpl implements ProductV2Service {
     @Autowired
     ScenicSpotDao scenicSpotDao;
+
+    @Autowired
+    GroupTourDao groupTourDao;
+
     @Override
     public ScenicSpotBase querycScenicSpotBase(ScenicSpotRequest request) {
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
@@ -45,6 +51,42 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             BeanUtils.copyProperties(scenicSpotMPO,scenicSpotBase);
         }
         return scenicSpotBase;
+    }
+
+    @Override
+    public GroupTourBody queryGroupTourById(GroupTourRequest request) {
+        GroupTourBody groupTourProductBody = null;
+        final GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getGroupTourId());
+        final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId());
+        if(groupTourProductMPO != null){
+            groupTourProductBody = new GroupTourBody();
+            BeanUtils.copyProperties(groupTourProductMPO,groupTourProductBody);
+            groupTourProductBody.setCreateTime(DateTimeUtil.formatFullDate(groupTourProductMPO.getCreateTime()));
+            if(ListUtils.isNotEmpty(groupTourProductSetMealMPOS)){
+                List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p->{
+                    GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
+                    BeanUtils.copyProperties(p,groupTourProductSetMeal);
+                    return groupTourProductSetMeal;
+                }).collect(Collectors.toList());
+                groupTourProductBody.setSetMeals(meals);
+            }
+        }
+        return groupTourProductBody;
+    }
+
+    @Override
+    public GroupMealsBody groupMealsBody(GroupTourMealsRequest request) {
+        GroupMealsBody body = null;
+        List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(request.getGroupTourId());
+        if (CollectionUtils.isNotEmpty(groupTourProductSetMealMPOS)) {
+            List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p -> {
+                GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
+                BeanUtils.copyProperties(p, groupTourProductSetMeal);
+                return groupTourProductSetMeal;
+            }).collect(Collectors.toList());
+            body.setSetMeals(meals);
+        }
+        return body;
     }
 
     @Override
@@ -177,6 +219,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }).collect(Collectors.toList());
         }
         return basePrices;
+    }
+
+    @Override
+    public List<GroupTourPrice> queryGroupTourPriceCalendar(CalendarRequest request) {
+
+        GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
+        List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
+
+        if(ListUtils.isNotEmpty(groupTourPrices)){
+            return groupTourPrices;
+        }
+        return groupTourPrices;
     }
 
 
