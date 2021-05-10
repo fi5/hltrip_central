@@ -669,6 +669,9 @@ public class ProductServiceImpl implements ProductService {
                 if(po.getPriceCalendar() != null && po.getPriceCalendar().getPriceInfos() != null){
                     increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(),po.getPrice());
                 }
+                List<PriceInfoPO> priceInfos = Lists.newArrayList(po.getPriceCalendar().getPriceInfos());
+                increasePrice(priceInfos, po.getSupplierId(), po.getCode(), null);
+                po.getPriceCalendar().setPriceInfos(priceInfos.get(0));
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
