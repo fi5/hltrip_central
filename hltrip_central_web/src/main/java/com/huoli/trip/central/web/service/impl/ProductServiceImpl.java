@@ -40,6 +40,7 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -253,10 +254,13 @@ public class ProductServiceImpl implements ProductService {
         if(recommendMPO != null && ListUtils.isNotEmpty(recommendMPO.getRecommendBaseInfos())){
             if(StringUtils.isNotBlank(request.getTag())){
                 products = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
+                            // 用系统标签时就随便返回一些
                             if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
-                                return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
+                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals("为你精选", request.getTag()))
+                                        && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
                             } else {
-                                return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
+                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals("为你精选", request.getTag()))
+                                        && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
                             }
                         }).map(rb ->
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
@@ -269,7 +273,10 @@ public class ProductServiceImpl implements ProductService {
         }
         if(products.size() > request.getPageSize()){
             products = products.subList(0, request.getPageSize());
-            result.setMore(1);
+            // 系统标签没有更多
+            if(!StringUtils.equals("为你精选", request.getTag())){
+                result.setMore(1);
+            }
         }
         result.setProducts(products);
         return BaseResponse.withSuccess(result);
@@ -279,10 +286,19 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<List<String>> recommendTags(RecommendRequestV2 request){
         RecommendMPO recommendMPO = recommendDao.getList(request);
         List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
+        List<String> tags = Lists.newArrayList();
         if(ListUtils.isNotEmpty(baseInfos)){
-            return BaseResponse.withSuccess(baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle)).keySet().stream().collect(Collectors.toList()));
+            Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
+            map.forEach((k, v) -> {
+                if(v.size() >= request.getPageSize()){
+                    tags.add(k);
+                }
+            });
         }
-        return BaseResponse.withSuccess();
+        if(ListUtils.isEmpty(tags)){
+            tags.add("为你精选");
+        }
+        return BaseResponse.withSuccess(tags);
     }
 
     @Override
