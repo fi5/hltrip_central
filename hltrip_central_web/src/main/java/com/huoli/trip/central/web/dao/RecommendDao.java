@@ -4,6 +4,8 @@ package com.huoli.trip.central.web.dao;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
 import com.huoli.trip.common.vo.request.central.RecommendRequestV2;
 
+import java.util.List;
+
 /**
  * 描述：<br/>
  * 版权：Copyright (c) 2011-2020<br>
@@ -20,4 +22,11 @@ public interface RecommendDao {
      * @return
      */
     RecommendMPO getList(RecommendRequestV2 request);
+
+    /**
+     * 获取城市
+     * @param request
+     * @return
+     */
+    List<RecommendMPO> getCites(RecommendRequestV2 request);
 }

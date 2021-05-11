@@ -12,6 +12,7 @@ import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.entity.*;
+import com.huoli.trip.common.entity.mpo.AddressInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
 import com.huoli.trip.common.exception.HlCentralException;
@@ -268,6 +269,28 @@ public class ProductServiceImpl implements ProductService {
             result = result.subList(0, request.getPageSize());
         }
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<List<String>> recommendTags(RecommendRequestV2 request){
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
+        if(ListUtils.isNotEmpty(baseInfos)){
+            return BaseResponse.withSuccess(baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle)).keySet().stream().collect(Collectors.toList()));
+        }
+        return BaseResponse.withSuccess();
+    }
+
+    @Override
+    public BaseResponse<List<AddressInfo>> recommendCites(RecommendRequestV2 request){
+        List<RecommendMPO> recommendMPOs = recommendDao.getCites(request);
+        List<AddressInfo> addressInfos = recommendMPOs.stream().map(r -> {
+            AddressInfo addressInfo = new AddressInfo();
+            addressInfo.setCityCode(r.getCity());
+            addressInfo.setCityName(r.getCityName());
+            return addressInfo;
+        }).collect(Collectors.toList());
+        return BaseResponse.withSuccess(addressInfos);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.huoli.trip.central.api;
 
+import com.huoli.trip.common.entity.mpo.AddressInfo;
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.RecommendProductV2;
@@ -98,4 +99,18 @@ public interface ProductService {
      * @return
      */
     BaseResponse<List<RecommendProductV2>> recommendListV3(RecommendRequestV2 request);
+
+    /**
+     * 推荐标签
+     * @param request
+     * @return
+     */
+    BaseResponse<List<String>> recommendTags(RecommendRequestV2 request);
+
+    /**
+     * 热门城市
+     * @param request
+     * @return
+     */
+    BaseResponse<List<AddressInfo>> recommendCites(RecommendRequestV2 request);
 }
