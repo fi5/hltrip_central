@@ -24,6 +24,7 @@ import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -245,12 +246,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse<List<RecommendProductV2>> recommendListV3(RecommendRequestV2 request) {
-        List<RecommendProductV2> result = Lists.newArrayList();
+    public BaseResponse<RecommendResultV2> recommendListV3(RecommendRequestV2 request) {
+        RecommendResultV2 result = new RecommendResultV2();
+        List<RecommendProductV2> products = Lists.newArrayList();
         RecommendMPO recommendMPO = recommendDao.getList(request);
         if(recommendMPO != null && ListUtils.isNotEmpty(recommendMPO.getRecommendBaseInfos())){
             if(StringUtils.isNotBlank(request.getTag())){
-                result = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
+                products = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
                             if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
                                 return StringUtils.equals(rb.getTitle(), request.getTag()) && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
                             } else {
@@ -259,15 +261,17 @@ public class ProductServiceImpl implements ProductService {
                         }).map(rb ->
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
             } else {
-                result = recommendMPO.getRecommendBaseInfos().stream().filter(rb ->
+                products = recommendMPO.getRecommendBaseInfos().stream().filter(rb ->
                         StringUtils.equals(rb.getCategory(), "ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
                                 rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).map(rb ->
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
             }
         }
-        if(result.size() > request.getPageSize()){
-            result = result.subList(0, request.getPageSize());
+        if(products.size() > request.getPageSize()){
+            products = products.subList(0, request.getPageSize());
+            result.setMore(1);
         }
+        result.setProducts(products);
         return BaseResponse.withSuccess(result);
     }
 

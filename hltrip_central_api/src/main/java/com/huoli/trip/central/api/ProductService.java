@@ -7,6 +7,7 @@ import com.huoli.trip.common.vo.RecommendProductV2;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 
 import java.util.List;
 
@@ -98,7 +99,7 @@ public interface ProductService {
      * @param request
      * @return
      */
-    BaseResponse<List<RecommendProductV2>> recommendListV3(RecommendRequestV2 request);
+    BaseResponse<RecommendResultV2> recommendListV3(RecommendRequestV2 request);
 
     /**
      * 推荐标签
