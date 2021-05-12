@@ -9,6 +9,7 @@ import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
+import com.huoli.trip.common.vo.response.goods.HotelScenicListResult;
 import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
 
 import java.util.List;
@@ -100,5 +101,5 @@ public interface ProductService {
 
     GroupTourListResult groupTourList(GroupTourListReq req);
 
-    ScenicTicketListResult hotelScenicList(HotelScenicListReq req);
+    HotelScenicListResult hotelScenicList(HotelScenicListReq req);
 }

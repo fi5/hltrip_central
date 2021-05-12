@@ -27,10 +27,7 @@ import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
 import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
-import com.huoli.trip.common.vo.response.goods.GroupTourListItem;
-import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
-import com.huoli.trip.common.vo.response.goods.ScenicTicketListItem;
-import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
+import com.huoli.trip.common.vo.response.goods.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -272,10 +269,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-        public ScenicTicketListResult hotelScenicList(HotelScenicListReq req) {
+    public HotelScenicListResult hotelScenicList(HotelScenicListReq req) {
         List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
-        ScenicTicketListResult result=new ScenicTicketListResult();
-        List<ScenicTicketListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),ScenicTicketListItem.class);
+        HotelScenicListResult result=new HotelScenicListResult();
+        List<HotelScenicListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),HotelScenicListItem.class);
         result.setItems(items);
         return result;
     }

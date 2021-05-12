@@ -10,6 +10,7 @@ import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
 import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
+import com.huoli.trip.common.vo.response.goods.HotelScenicListResult;
 import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class GoodsController {
 
     @PostMapping("/hotelScenicList")
     public BaseResponse hotelScenicList(@RequestBody HotelScenicListReq req){
-        ScenicTicketListResult result= productService.hotelScenicList(req);
+        HotelScenicListResult result= productService.hotelScenicList(req);
         return BaseResponse.withSuccess(result);
     }
 }
