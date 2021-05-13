@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 描述：<br/>
@@ -70,20 +71,20 @@ public class CommonServiceImpl implements CommonService {
             ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
             for (IncreasePriceCalendar price : increasePrice.getPrices()) {
                 // 加价计算
-                if(price.getAdtSettlePrice() != null){
+                if(price.getAdtSellPrice() != null){
                     BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                            price.getAdtSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                            price.getAdtSellPrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
                     price.setAdtSellPrice(newPrice);
                 }
                 // 如果有儿童价也加价
-                if(price.getChdSettlePrice() != null){
+                if(price.getChdSellPrice() != null){
                     String formula = supplierPolicy.getPriceFormula();
                     // 如果儿童单独配置了加价规则就用儿童的
                     if(StringUtils.isNotBlank(supplierPolicy.getChdPriceFormula())){
                         formula = supplierPolicy.getChdPriceFormula();
                     }
                     BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(formula.replace("price",
-                            price.getChdSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);;
+                            price.getChdSellPrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);;
                     price.setChdSellPrice(newPrice);
                 }
             }
