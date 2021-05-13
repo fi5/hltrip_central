@@ -1053,6 +1053,9 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setPrice(rb.getApiSellPrice());
         recommendProduct.setImage(rb.getMainImage());
         recommendProduct.setPosition(Integer.valueOf(recommendMPO.getPosition()));
+        recommendProduct.setCategory(rb.getCategory());
+        recommendProduct.setBookDay(rb.getBookDay());
+        recommendProduct.setRecommendDesc(rb.getRecommendDesc());
         return recommendProduct;
     }
 }
