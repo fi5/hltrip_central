@@ -289,7 +289,7 @@ public class ProductServiceImpl implements ProductService {
             if(StringUtils.isNotBlank(request.getTag())){
                 products = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
                             // 用系统标签时就随便返回一些
-                            if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
+                            if(StringUtils.equals(rb.getCategory(), "d_ss_ticket")){
                                 return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals("为你精选", request.getTag()))
                                         && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
                             } else {
@@ -300,7 +300,7 @@ public class ProductServiceImpl implements ProductService {
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
             } else {
                 products = recommendMPO.getRecommendBaseInfos().stream().filter(rb ->
-                        StringUtils.equals(rb.getCategory(), "ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                        StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
                                 rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).map(rb ->
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
             }
