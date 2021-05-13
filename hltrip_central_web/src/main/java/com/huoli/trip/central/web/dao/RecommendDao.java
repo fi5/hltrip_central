@@ -29,4 +29,11 @@ public interface RecommendDao {
      * @return
      */
     List<RecommendMPO> getCites(RecommendRequestV2 request);
+
+    /**
+     * 根据位置查
+     * @param request
+     * @return
+     */
+    RecommendMPO getListByPosition(RecommendRequestV2 request);
 }

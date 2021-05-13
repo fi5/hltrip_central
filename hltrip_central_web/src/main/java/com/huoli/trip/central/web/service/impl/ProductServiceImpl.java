@@ -250,7 +250,7 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<RecommendResultV2> recommendListV3(RecommendRequestV2 request) {
         RecommendResultV2 result = new RecommendResultV2();
         List<RecommendProductV2> products = Lists.newArrayList();
-        RecommendMPO recommendMPO = recommendDao.getList(request);
+        RecommendMPO recommendMPO = getRecommendMPO(request);
         if(recommendMPO != null && ListUtils.isNotEmpty(recommendMPO.getRecommendBaseInfos())){
             if(StringUtils.isNotBlank(request.getTag())){
                 products = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
@@ -280,6 +280,15 @@ public class ProductServiceImpl implements ProductService {
         }
         result.setProducts(products);
         return BaseResponse.withSuccess(result);
+    }
+
+    private RecommendMPO getRecommendMPO(RecommendRequestV2 request){
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        if(recommendMPO == null){
+            // 如果带城市查不到就只按位置查
+            recommendMPO = recommendDao.getListByPosition(request);
+        }
+        return recommendMPO;
     }
 
     @Override
