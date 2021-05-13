@@ -30,14 +30,14 @@ public class RecommendDaoImpl implements RecommendDao {
 
     @Override
     public RecommendMPO getList(RecommendRequestV2 request){
-        Criteria criteria = Criteria.where("position").is(request.getPosition())
+        Criteria criteria = Criteria.where("position").is(request.getPosition().toString())
                 .and("city").is(StringUtils.isBlank(request.getCity()) ? "0" : request.getCity());
         return mongoTemplate.findOne(new Query(criteria), RecommendMPO.class);
     }
 
     @Override
     public List<RecommendMPO> getCites(RecommendRequestV2 request){
-        Criteria criteria = Criteria.where("position").is(request.getPosition());
+        Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
         MatchOperation matchOperation = Aggregation.match(criteria);
         GroupOperation groupOperation = Aggregation.group("city")
                 .first("city").as("city")
