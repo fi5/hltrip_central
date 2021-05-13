@@ -10,10 +10,11 @@ import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
-import com.huoli.trip.common.constant.CentralError;
-import com.huoli.trip.common.constant.Constants;
-import com.huoli.trip.common.constant.ProductType;
+import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.entity.*;
+import com.huoli.trip.common.entity.mpo.AddressInfo;
+import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
+import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -23,14 +24,13 @@ import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StopWatch;
 
@@ -88,6 +88,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private SupplierPolicyDao supplierPolicyDao;
+
+    @Autowired
+    private RecommendDao recommendDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -241,6 +244,73 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+    }
+
+    @Override
+    public BaseResponse<RecommendResultV2> recommendListV3(RecommendRequestV2 request) {
+        RecommendResultV2 result = new RecommendResultV2();
+        List<RecommendProductV2> products = Lists.newArrayList();
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        if(recommendMPO != null && ListUtils.isNotEmpty(recommendMPO.getRecommendBaseInfos())){
+            if(StringUtils.isNotBlank(request.getTag())){
+                products = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
+                            // 用系统标签时就随便返回一些
+                            if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
+                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals("为你精选", request.getTag()))
+                                        && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
+                            } else {
+                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals("为你精选", request.getTag()))
+                                        && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
+                            }
+                        }).map(rb ->
+                        convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
+            } else {
+                products = recommendMPO.getRecommendBaseInfos().stream().filter(rb ->
+                        StringUtils.equals(rb.getCategory(), "ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).map(rb ->
+                        convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
+            }
+        }
+        if(products.size() > request.getPageSize()){
+            products = products.subList(0, request.getPageSize());
+            // 系统标签没有更多
+            if(!StringUtils.equals("为你精选", request.getTag())){
+                result.setMore(1);
+            }
+        }
+        result.setProducts(products);
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<List<String>> recommendTags(RecommendRequestV2 request){
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
+        List<String> tags = Lists.newArrayList();
+        if(ListUtils.isNotEmpty(baseInfos)){
+            Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
+            map.forEach((k, v) -> {
+                if(v.size() >= request.getPageSize()){
+                    tags.add(k);
+                }
+            });
+        }
+        if(ListUtils.isEmpty(tags)){
+            tags.add("为你精选");
+        }
+        return BaseResponse.withSuccess(tags);
+    }
+
+    @Override
+    public BaseResponse<List<AddressInfo>> recommendCites(RecommendRequestV2 request){
+        List<RecommendMPO> recommendMPOs = recommendDao.getCites(request);
+        List<AddressInfo> addressInfos = recommendMPOs.stream().map(r -> {
+            AddressInfo addressInfo = new AddressInfo();
+            addressInfo.setCityCode(r.getCity());
+            addressInfo.setCityName(r.getCityName());
+            return addressInfo;
+        }).collect(Collectors.toList());
+        return BaseResponse.withSuccess(addressInfos);
     }
 
     @Override
@@ -961,5 +1031,22 @@ public class ProductServiceImpl implements ProductService {
         } catch (Exception e) {
             log.error("获取标记推荐列表异常", e);
         }
+    }
+
+    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, RecommendMPO recommendMPO){
+        RecommendProductV2 recommendProduct = new RecommendProductV2();
+        if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
+            recommendProduct.setProductCode(rb.getPoiId());
+            recommendProduct.setProductName(rb.getPoiName());
+        } else {
+            recommendProduct.setProductCode(rb.getProductId());
+            recommendProduct.setProductName(rb.getProductName());
+        }
+        recommendProduct.setChannel(rb.getChannel());
+        recommendProduct.setChannelName(rb.getChannelName());
+        recommendProduct.setPrice(rb.getApiSellPrice());
+        recommendProduct.setImage(rb.getMainImage());
+        recommendProduct.setPosition(Integer.valueOf(recommendMPO.getPosition()));
+        return recommendProduct;
     }
 }
