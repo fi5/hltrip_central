@@ -15,6 +15,7 @@ import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -22,8 +23,12 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
+import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
+import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.goods.*;
 import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -41,6 +46,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -244,6 +251,33 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+    }
+
+    @Override
+    public ScenicTicketListResult scenicTicketList(ScenicTicketListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req);
+        ScenicTicketListResult result=new ScenicTicketListResult();
+        List<ScenicTicketListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),ScenicTicketListItem.class);
+        result.setItems(items);
+        return result;
+    }
+
+    @Override
+    public GroupTourListResult groupTourList(GroupTourListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.groupTourList(req);
+        GroupTourListResult result=new GroupTourListResult();
+        List<GroupTourListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),GroupTourListItem.class);
+        result.setItems(items);
+        return result;
+    }
+
+    @Override
+    public HotelScenicListResult hotelScenicList(HotelScenicListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
+        HotelScenicListResult result=new HotelScenicListResult();
+        List<HotelScenicListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),HotelScenicListItem.class);
+        result.setItems(items);
+        return result;
     }
 
     @Override
@@ -724,6 +758,7 @@ public class ProductServiceImpl implements ProductService {
             log.error("加价计算失败，不影响主流程，channel = {}, productCode = {}", channelCode, productCode, e);
         }
     }
+
     /**
      * 构建商品详情结果
      * @param productPOs

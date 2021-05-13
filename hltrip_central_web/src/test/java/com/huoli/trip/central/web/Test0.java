@@ -26,6 +26,8 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +52,16 @@ public class Test0 {
     private ProductService productService;
     @Autowired
     private ChannelDao channelDao;
+
+    public static void main(String[] args){
+        Pattern pattern = Pattern.compile("(?<=price\\*\\(1\\+)\\d(\\.\\d{1,4})*(?=\\))");
+        Matcher matcher = pattern.matcher("  price    *  (  1  +   0.0008   )   ".replace(" ", ""));
+        if (matcher.find()){
+            System.out.println(matcher.group());
+        } else {
+            System.out.println("not found ..");
+        }
+    }
 
 //    @Test
     public void test(){

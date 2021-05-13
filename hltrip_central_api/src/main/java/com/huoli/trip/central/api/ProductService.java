@@ -5,8 +5,14 @@ import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.RecommendProductV2;
 import com.huoli.trip.common.vo.request.central.*;
+import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
+import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
+import com.huoli.trip.common.vo.response.goods.HotelScenicListResult;
+import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
 import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 
 import java.util.List;
@@ -93,6 +99,12 @@ public interface ProductService {
      * @return
      */
     BaseResponse<RecommendResult> recommendListV2(RecommendRequest request);
+
+    ScenicTicketListResult scenicTicketList(ScenicTicketListReq req);
+
+    GroupTourListResult groupTourList(GroupTourListReq req);
+
+    HotelScenicListResult hotelScenicList(HotelScenicListReq req);
 
     /**
      * 推荐列表
