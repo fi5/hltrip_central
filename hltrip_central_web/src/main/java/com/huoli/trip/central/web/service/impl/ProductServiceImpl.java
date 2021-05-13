@@ -1035,13 +1035,10 @@ public class ProductServiceImpl implements ProductService {
 
     private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, RecommendMPO recommendMPO){
         RecommendProductV2 recommendProduct = new RecommendProductV2();
-        if(StringUtils.equals(rb.getCategory(), "ss_ticket")){
-            recommendProduct.setProductCode(rb.getPoiId());
-            recommendProduct.setProductName(rb.getPoiName());
-        } else {
-            recommendProduct.setProductCode(rb.getProductId());
-            recommendProduct.setProductName(rb.getProductName());
-        }
+        recommendProduct.setPoiId(rb.getPoiId());
+        recommendProduct.setPoiName(rb.getPoiName());
+        recommendProduct.setProductId(rb.getProductId());
+        recommendProduct.setProductName(rb.getProductName());
         recommendProduct.setChannel(rb.getChannel());
         recommendProduct.setChannelName(rb.getChannelName());
         recommendProduct.setPrice(rb.getApiSellPrice());
