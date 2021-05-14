@@ -50,9 +50,6 @@ public class RecommendDaoImpl implements RecommendDao {
     @Override
     public List<RecommendMPO> getCites(RecommendRequestV2 request){
         Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
-        if(StringUtils.isNotBlank(request.getAppSource())){
-            criteria.and("recommendBaseInfos.appSource").is(request.getAppSource());
-        }
         MatchOperation matchOperation = Aggregation.match(criteria);
         GroupOperation groupOperation = Aggregation.group("city")
                 .first("city").as("city")

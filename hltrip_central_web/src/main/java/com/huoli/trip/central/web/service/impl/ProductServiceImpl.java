@@ -263,12 +263,12 @@ public class ProductServiceImpl implements ProductService {
             // 只有首页当地推荐需要补充逻辑
             if(request.getPosition() == 2){
                 recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> {
-                        boolean b = (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals(sysTag, request.getTag())) && rb.getAppSource().contains(request.getAppSource());
+                        boolean b = (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals(sysTag, request.getTag()));
                         // 用系统标签时就随便返回一些
                         if(StringUtils.equals(rb.getCategory(), "d_ss_ticket")){
                             return b && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
                         } else {
-                            return b && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
+                            return b && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode() && rb.getAppSource().contains(request.getAppSource());
                         }
                     }).collect(Collectors.toList());
                 // 如果当前标签产品数量不够就用其它城市相同标签凑（这个理论上是能凑够的，因为之前获取标签的时候已经查过一遍了，但是不排除这段时间产品有变化导致数量不足的可能）
