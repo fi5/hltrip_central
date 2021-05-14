@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
+import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.*;
@@ -42,12 +43,7 @@ import org.springframework.util.StopWatch;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -95,6 +91,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private SupplierPolicyDao supplierPolicyDao;
+
+    @Autowired
+    private CommonService commonService;
 
     @Autowired
     private RecommendDao recommendDao;
@@ -253,31 +252,109 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
     }
 
+    /**
+     * @author: wangying
+     * @date 5/13/21 3:10 PM
+     * 门票产品列表
+     * [req]
+     * @return {@link ScenicTicketListResult}
+     * @throws
+     */
     @Override
-    public ScenicTicketListResult scenicTicketList(ScenicTicketListReq req) {
+    public BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req) {
         List<ProductListMPO> productListMPOS = productDao.scenicTickets(req);
         ScenicTicketListResult result=new ScenicTicketListResult();
-        List<ScenicTicketListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),ScenicTicketListItem.class);
+        List<ScenicTicketListItem> items = Lists.newArrayList();
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
+                BeanUtils.copyProperties(item, scenicTicketListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                scenicTicketListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(scenicTicketListItem);
+            });
+        }
         result.setItems(items);
-        return result;
+        return BaseResponse.withSuccess(result);
     }
 
+    /**
+     * @author: wangying
+     * @date 5/13/21 4:16 PM
+     * 跟团游产品列表
+     * [req]
+     * @return {@link GroupTourListResult}
+     * @throws
+     */
     @Override
-    public GroupTourListResult groupTourList(GroupTourListReq req) {
+    public BaseResponse<GroupTourListResult> groupTourList(GroupTourListReq req) {
         List<ProductListMPO> productListMPOS = productDao.groupTourList(req);
         GroupTourListResult result=new GroupTourListResult();
-        List<GroupTourListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),GroupTourListItem.class);
+        List<GroupTourListItem> items = Lists.newArrayList();
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                GroupTourListItem groupTourListItem = new GroupTourListItem();
+                BeanUtils.copyProperties(item, groupTourListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                groupTourListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(groupTourListItem);
+            });
+        }
         result.setItems(items);
-        return result;
+        return BaseResponse.withSuccess(result);
     }
 
+    /**
+     * @author: wangying
+     * @date 5/13/21 4:16 PM
+     * 酒景产品列表
+     * [req]
+     * @return {@link HotelScenicListResult}
+     * @throws
+     */
     @Override
-    public HotelScenicListResult hotelScenicList(HotelScenicListReq req) {
+    public BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req) {
         List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
         HotelScenicListResult result=new HotelScenicListResult();
-        List<HotelScenicListItem> items=JSONArray.parseArray(JSON.toJSONString(productListMPOS),HotelScenicListItem.class);
+        List<HotelScenicListItem> items = Lists.newArrayList();
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                HotelScenicListItem hotelScenicListItem = new HotelScenicListItem();
+                BeanUtils.copyProperties(item, hotelScenicListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                hotelScenicListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(hotelScenicListItem);
+            });
+        }
         result.setItems(items);
-        return result;
+        return BaseResponse.withSuccess(result);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/13/21 4:21 PM
+     * 组装参数调用加价计算
+     * [productListMPO, app]
+     * @return {@link IncreasePrice}
+     * @throws
+     */
+    private IncreasePrice increasePrice(ProductListMPO productListMPO, String app){
+        IncreasePrice increasePrice = new IncreasePrice();
+        increasePrice.setChannelCode(productListMPO.getChannel());
+        increasePrice.setProductCode(productListMPO.getProductId());
+        increasePrice.setProductCategory(productListMPO.getCategory());
+        increasePrice.setAppSource(app);
+        IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+        priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
+        increasePrice.setPrices(Arrays.asList(priceCalendar));
+        commonService.increasePrice(increasePrice);
+        return increasePrice;
     }
 
     @Override

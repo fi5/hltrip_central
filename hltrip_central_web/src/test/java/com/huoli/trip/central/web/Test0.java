@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.dao.ChannelDao;
@@ -13,6 +14,9 @@ import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.Coordinate;
 import com.huoli.trip.common.vo.request.central.*;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
+import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
@@ -327,5 +331,12 @@ public class Test0 {
 //            System.out.println("看看结果集"+channel.getName());
 //        }
 //    }
+
+    @Test
+    public void testScenicList(){
+        ScenicTicketListReq req = new ScenicTicketListReq();
+        BaseResponse<ScenicTicketListResult> scenicTicketListResult = productService.scenicTicketList(req);
+        System.out.println("查询结果："+ JSONObject.toJSONString(scenicTicketListResult));
+    }
 
 }
