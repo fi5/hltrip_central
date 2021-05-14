@@ -1,9 +1,12 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductV2Service;
 import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
@@ -13,7 +16,12 @@ import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceM
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotRuleMPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.vo.IncreasePrice;
+import com.huoli.trip.common.vo.IncreasePriceCalendar;
+import com.huoli.trip.common.vo.PriceInfo;
 import com.huoli.trip.common.vo.request.v2.*;
+import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.v2.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -42,6 +50,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     @Autowired
     GroupTourDao groupTourDao;
 
+    @Autowired
+    private CommonService commonService;
+
     @Override
     public ScenicSpotBase querycScenicSpotBase(ScenicSpotRequest request) {
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
@@ -57,7 +68,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     public GroupTourBody queryGroupTourById(GroupTourRequest request) {
         GroupTourBody groupTourProductBody = null;
         final GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getGroupTourId());
-        final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId());
+        List<String> depCodes = Lists.newArrayList();
+        String cityCode = request.getCityCode();
+        if(CollectionUtils.isNotEmpty(groupTourProductMPO.getDepInfos())){
+            groupTourProductMPO.getDepInfos().stream().forEach(item -> {
+                if(StringUtils.equalsIgnoreCase(cityCode, item.getCityCode())
+                    ||StringUtils.equalsIgnoreCase(cityCode, item.getProvinceCode())
+                    ||StringUtils.equalsIgnoreCase(cityCode, item.getDestinationCode())){
+                    depCodes.add(item.getDestinationCode());
+                }
+            });
+        }
+        final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId(), depCodes);
         if(groupTourProductMPO != null){
             groupTourProductBody = new GroupTourBody();
             BeanUtils.copyProperties(groupTourProductMPO,groupTourProductBody);
@@ -77,7 +99,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     @Override
     public GroupMealsBody groupMealsBody(GroupTourMealsRequest request) {
         GroupMealsBody body = null;
-        List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(request.getGroupTourId());
+        List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(request.getGroupTourId(), null);
         if (CollectionUtils.isNotEmpty(groupTourProductSetMealMPOS)) {
             List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p -> {
                 GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
@@ -221,19 +243,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         return basePrices;
     }
 
-    @Override
-    public List<GroupTourPrice> queryGroupTourPriceCalendar(CalendarRequest request) {
-
-        GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
-        List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
-
-        if(ListUtils.isNotEmpty(groupTourPrices)){
-            return groupTourPrices;
-        }
-        return groupTourPrices;
-    }
-
-
     /**
      * 根据日期 找到对应日期的 星期
      */
@@ -305,5 +314,82 @@ public class ProductV2ServiceImpl implements ProductV2Service {
          }
          return list;
      }
+
+
+     /**
+      * @author: wangying
+      * @date 5/14/21 11:52 AM
+      * 跟团游价格日历
+      * [request]
+      * @return {@link BaseResponse< ProductPriceCalendarResult>}
+      * @throws
+      */
+    @Override
+    public BaseResponse<ProductPriceCalendarResult> queryGroupTourPriceCalendar(CalendarRequest request) {
+
+        ProductPriceCalendarResult result = new ProductPriceCalendarResult();
+
+        GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
+        List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
+        Date startDate = new Date();
+        if(StringUtils.isNotBlank(request.getStartDate())
+                && DateTimeUtil.getDateDiffDays(new Date(request.getStartDate()), startDate) > 0){
+            startDate = DateTimeUtil.parse(request.getStartDate(), DateTimeUtil.YYYYMMDD);
+        }
+        Date endDate = null;
+        if(StringUtils.isNotBlank(request.getEndDate())
+                && DateTimeUtil.getDateDiffDays(new Date(request.getEndDate()), startDate)> 0){
+            endDate = DateTimeUtil.parse(request.getEndDate(), DateTimeUtil.YYYYMMDD);
+        }
+        final Date searchStartDate = startDate;
+        final Date searchEndDate = endDate;
+        groupTourPrices = groupTourPrices.stream().filter(item -> {
+            Date saleDate = DateTimeUtil.parse(item.getDate(), DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(saleDate, searchStartDate) >= 0){
+                if(searchEndDate == null || (searchEndDate != null && DateTimeUtil.getDateDiffDays(saleDate, searchEndDate) <= 0)){
+                    return true;
+                }else{
+                    return false;
+                }
+            }else{
+                return false;
+            }
+        }).collect(Collectors.toList());
+        GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getProductId());
+        if(CollectionUtils.isNotEmpty(groupTourPrices)){
+            //价格计算
+            IncreasePrice increasePrice = new IncreasePrice();
+            increasePrice.setChannelCode(groupTourProductMPO.getChannel());
+            increasePrice.setProductCode(groupTourProductMPO.getId());
+            increasePrice.setAppSource(request.getFrom());
+            increasePrice.setProductCategory(groupTourProductMPO.getCategory());
+            List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
+               IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+               priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
+               priceCalendar.setChdSellPrice(item.getChdSellPrice());
+               return priceCalendar;
+            }).collect(Collectors.toList());
+            increasePrice.setPrices(priceCalendars);
+            commonService.increasePrice(increasePrice);
+
+            Map<String, GroupTourPrice> priceMap = Maps.uniqueIndex(groupTourPrices, a -> a.getDate());
+
+            List<PriceInfo> resultPrices = increasePrice.getPrices().stream().map(item -> {
+                PriceInfo priceInfo = new PriceInfo();
+                GroupTourPrice groupTourPrice = priceMap.get(item.getDate());
+                priceInfo.setProductCode(request.getProductId());
+                priceInfo.setSaleDate(item.getDate());
+                priceInfo.setSalePrice(item.getAdtSellPrice());
+                priceInfo.setSettlePrice(groupTourPrice.getAdtPrice());
+                priceInfo.setStock(groupTourPrice.getAdtStock());
+                priceInfo.setChdSalePrice(item.getChdSellPrice());
+                priceInfo.setChdSettlePrice(groupTourPrice.getChdPrice());
+                return priceInfo;
+            }).collect(Collectors.toList());
+            result.setPriceInfos(resultPrices);
+        }
+
+        return BaseResponse.withSuccess(result);
+    }
 
 }

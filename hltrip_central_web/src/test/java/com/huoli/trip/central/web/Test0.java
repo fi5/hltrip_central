@@ -15,6 +15,7 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.Coordinate;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
+import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -334,7 +335,7 @@ public class Test0 {
     @Test
     public void testScenicList(){
         ScenicTicketListReq req = new ScenicTicketListReq();
-        ScenicTicketListResult scenicTicketListResult = productService.scenicTicketList(req);
+        BaseResponse<ScenicTicketListResult> scenicTicketListResult = productService.scenicTicketList(req);
         System.out.println("查询结果："+ JSONObject.toJSONString(scenicTicketListResult));
     }
 

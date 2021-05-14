@@ -261,21 +261,23 @@ public class ProductServiceImpl implements ProductService {
      * @throws
      */
     @Override
-    public ScenicTicketListResult scenicTicketList(ScenicTicketListReq req) {
+    public BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req) {
         List<ProductListMPO> productListMPOS = productDao.scenicTickets(req);
         ScenicTicketListResult result=new ScenicTicketListResult();
         List<ScenicTicketListItem> items = Lists.newArrayList();
-        productListMPOS.stream().forEach(item -> {
-            ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
-            BeanUtils.copyProperties(item, scenicTicketListItem);
-            //加价计算
-            IncreasePrice increasePrice = increasePrice(item, req.getApp());
-            // 设置价格
-            scenicTicketListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
-            items.add(scenicTicketListItem);
-        });
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
+                BeanUtils.copyProperties(item, scenicTicketListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                scenicTicketListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(scenicTicketListItem);
+            });
+        }
         result.setItems(items);
-        return result;
+        return BaseResponse.withSuccess(result);
     }
 
     /**
@@ -287,21 +289,23 @@ public class ProductServiceImpl implements ProductService {
      * @throws
      */
     @Override
-    public GroupTourListResult groupTourList(GroupTourListReq req) {
+    public BaseResponse<GroupTourListResult> groupTourList(GroupTourListReq req) {
         List<ProductListMPO> productListMPOS = productDao.groupTourList(req);
         GroupTourListResult result=new GroupTourListResult();
         List<GroupTourListItem> items = Lists.newArrayList();
-        productListMPOS.stream().forEach(item -> {
-            GroupTourListItem groupTourListItem = new GroupTourListItem();
-            BeanUtils.copyProperties(item, groupTourListItem);
-            //加价计算
-            IncreasePrice increasePrice = increasePrice(item, req.getApp());
-            // 设置价格
-            groupTourListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
-            items.add(groupTourListItem);
-        });
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                GroupTourListItem groupTourListItem = new GroupTourListItem();
+                BeanUtils.copyProperties(item, groupTourListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                groupTourListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(groupTourListItem);
+            });
+        }
         result.setItems(items);
-        return result;
+        return BaseResponse.withSuccess(result);
     }
 
     /**
@@ -313,21 +317,23 @@ public class ProductServiceImpl implements ProductService {
      * @throws
      */
     @Override
-    public HotelScenicListResult hotelScenicList(HotelScenicListReq req) {
+    public BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req) {
         List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
         HotelScenicListResult result=new HotelScenicListResult();
         List<HotelScenicListItem> items = Lists.newArrayList();
-        productListMPOS.stream().forEach(item -> {
-            HotelScenicListItem hotelScenicListItem = new HotelScenicListItem();
-            BeanUtils.copyProperties(item, hotelScenicListItem);
-            //加价计算
-            IncreasePrice increasePrice = increasePrice(item, req.getApp());
-            // 设置价格
-            hotelScenicListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
-            items.add(hotelScenicListItem);
-        });
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                HotelScenicListItem hotelScenicListItem = new HotelScenicListItem();
+                BeanUtils.copyProperties(item, hotelScenicListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                hotelScenicListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(hotelScenicListItem);
+            });
+        }
         result.setItems(items);
-        return result;
+        return BaseResponse.withSuccess(result);
     }
 
     /**

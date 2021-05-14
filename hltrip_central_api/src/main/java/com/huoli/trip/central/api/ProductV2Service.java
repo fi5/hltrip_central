@@ -2,6 +2,8 @@ package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.vo.request.v2.*;
+import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.v2.*;
 
 import java.util.List;
@@ -24,6 +26,6 @@ public interface ProductV2Service {
 
     List<BasePrice> queryCalendar(CalendarRequest request);
 
-    List<GroupTourPrice> queryGroupTourPriceCalendar(CalendarRequest request);
+    BaseResponse<ProductPriceCalendarResult> queryGroupTourPriceCalendar(CalendarRequest request);
 
 }
