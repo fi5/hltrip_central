@@ -282,6 +282,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<RecommendResultV2> recommendListV3(RecommendRequestV2 request) {
+        String sysTag = "为你精选";
         RecommendResultV2 result = new RecommendResultV2();
         List<RecommendProductV2> products = Lists.newArrayList();
         RecommendMPO recommendMPO = getRecommendMPO(request);
@@ -290,10 +291,10 @@ public class ProductServiceImpl implements ProductService {
                 products = recommendMPO.getRecommendBaseInfos().stream().filter(rb -> {
                             // 用系统标签时就随便返回一些
                             if(StringUtils.equals(rb.getCategory(), "d_ss_ticket")){
-                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals("为你精选", request.getTag()))
+                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals(sysTag, request.getTag()))
                                         && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
                             } else {
-                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals("为你精选", request.getTag()))
+                                return (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals(sysTag, request.getTag()))
                                         && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
                             }
                         }).map(rb ->
@@ -305,10 +306,21 @@ public class ProductServiceImpl implements ProductService {
                         convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
             }
         }
+        // 如果当前标签产品数量不够就用其它城市相同标签凑（这个理论上是能凑够的，因为之前获取标签的时候已经查过一遍了，但是不排除这段时间产品有变化导致数量不足的可能）
+        if(products.size() < request.getPageSize() && !StringUtils.equals(sysTag, request.getTag())){
+            List<RecommendMPO> recommendMPOs = recommendDao.getListByTag(request.getPosition().toString(), Lists.newArrayList(request.getTag()));
+            List<RecommendProductV2> newProducts = recommendMPOs.stream().filter(r -> !StringUtils.equals(r.getCity(), request.getCity())).flatMap(r -> r.getRecommendBaseInfos().stream()).filter(rb ->
+                    StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                            rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).map(rb ->
+                    convertToRecommendProductV2(rb, recommendMPO)).collect(Collectors.toList());
+            if(newProducts.size() >= (request.getPageSize() - products.size())){
+                products.addAll(newProducts);
+            }
+        }
         if(products.size() > request.getPageSize()){
             products = products.subList(0, request.getPageSize());
             // 系统标签没有更多
-            if(!StringUtils.equals("为你精选", request.getTag())){
+            if(!StringUtils.equals(sysTag, request.getTag())){
                 result.setMore(1);
             }
         }
@@ -332,12 +344,28 @@ public class ProductServiceImpl implements ProductService {
         List<String> tags = Lists.newArrayList();
         if(ListUtils.isNotEmpty(baseInfos)){
             Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
+            List<String> shortTags = Lists.newArrayList();
             map.forEach((k, v) -> {
                 if(v.size() >= request.getPageSize()){
                     tags.add(k);
+                } else {
+                    shortTags.add(k);
                 }
             });
+            // 如果当前城市的标签内容数量不够就用其它城市凑，够数就算；
+            if(ListUtils.isNotEmpty(shortTags)){
+                List<RecommendMPO> recommendMPOs = recommendDao.getListByTag(request.getPosition().toString(), shortTags);
+                Map<String, List<RecommendBaseInfo>> shortMap = recommendMPOs.stream().flatMap(r ->
+                        r.getRecommendBaseInfos().stream()).filter(rb ->
+                        shortTags.contains(rb.getTitle())).collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
+                shortMap.forEach((k, v) -> {
+                    if(v.size() >= request.getPageSize()){
+                        tags.add(k);
+                    }
+                });
+            }
         }
+        // 实在没有就返回这个
         if(ListUtils.isEmpty(tags)){
             tags.add("为你精选");
         }

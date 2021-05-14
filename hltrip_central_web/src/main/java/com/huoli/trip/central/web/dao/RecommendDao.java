@@ -36,4 +36,11 @@ public interface RecommendDao {
      * @return
      */
     RecommendMPO getListByPosition(RecommendRequestV2 request);
+
+    /**
+     * 根据标签查询
+     * @param tags
+     * @return
+     */
+    List<RecommendMPO> getListByTag(String position, List<String> tags);
 }
