@@ -42,5 +42,5 @@ public interface RecommendDao {
      * @param tags
      * @return
      */
-    List<RecommendMPO> getListByTag(String position, List<String> tags, String appSource);
+    List<RecommendMPO> getListByTag(String position, List<String> tags);
 }

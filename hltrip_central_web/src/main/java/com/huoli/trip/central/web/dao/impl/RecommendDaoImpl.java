@@ -42,11 +42,8 @@ public class RecommendDaoImpl implements RecommendDao {
     }
 
     @Override
-    public List<RecommendMPO> getListByTag(String position, List<String> tags, String appSource){
+    public List<RecommendMPO> getListByTag(String position, List<String> tags){
         Criteria criteria = Criteria.where("position").is(position).and("recommendBaseInfos.title").in(tags);
-        if(StringUtils.isNotBlank(appSource)){
-            criteria.and("recommendBaseInfos.appSource").is(appSource);
-        }
         return mongoTemplate.find(new Query(criteria), RecommendMPO.class);
     }
 
