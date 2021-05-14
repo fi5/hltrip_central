@@ -19,7 +19,7 @@ public interface ProductV2Service {
 
     ScenicSpotBase querycScenicSpotBase(ScenicSpotRequest request);
 
-    GroupTourBody queryGroupTourById(GroupTourRequest request);
+    BaseResponse<GroupTourBody> queryGroupTourById(GroupTourRequest request);
     GroupMealsBody groupMealsBody(GroupTourMealsRequest request);
 
     List<ScenicSpotProductBase> queryScenicSpotProduct(ScenicSpotProductRequest request);
