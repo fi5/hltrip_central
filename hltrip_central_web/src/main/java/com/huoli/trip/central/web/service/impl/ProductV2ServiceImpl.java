@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductV2Service;
@@ -65,12 +66,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     }
 
     @Override
-    public GroupTourBody queryGroupTourById(GroupTourRequest request) {
+    public BaseResponse<GroupTourBody> queryGroupTourById(GroupTourRequest request) {
         GroupTourBody groupTourProductBody = null;
         final GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getGroupTourId());
         List<String> depCodes = Lists.newArrayList();
         String cityCode = request.getCityCode();
-        if(CollectionUtils.isNotEmpty(groupTourProductMPO.getDepInfos())){
+        if(CollectionUtils.isNotEmpty(groupTourProductMPO.getDepInfos()) && StringUtils.isNotBlank(cityCode)){
             groupTourProductMPO.getDepInfos().stream().forEach(item -> {
                 if(StringUtils.equalsIgnoreCase(cityCode, item.getCityCode())
                     ||StringUtils.equalsIgnoreCase(cityCode, item.getProvinceCode())
@@ -80,6 +81,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             });
         }
         final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId(), depCodes);
+        log.info("查询到的套餐列表：{}", JSONObject.toJSONString(groupTourProductSetMealMPOS));
         if(groupTourProductMPO != null){
             groupTourProductBody = new GroupTourBody();
             BeanUtils.copyProperties(groupTourProductMPO,groupTourProductBody);
@@ -93,7 +95,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 groupTourProductBody.setSetMeals(meals);
             }
         }
-        return groupTourProductBody;
+        return BaseResponse.withSuccess(groupTourProductBody);
     }
 
     @Override
@@ -367,6 +369,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
                priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
                priceCalendar.setChdSellPrice(item.getChdSellPrice());
+               priceCalendar.setDate(item.getDate());
                return priceCalendar;
             }).collect(Collectors.toList());
             increasePrice.setPrices(priceCalendars);
