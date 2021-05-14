@@ -36,20 +36,26 @@ public class RecommendDaoImpl implements RecommendDao {
     }
 
     @Override
-    public RecommendMPO getListByPosition(RecommendRequestV2 request){
+    public List<RecommendMPO> getListByPosition(RecommendRequestV2 request){
         Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
-        return mongoTemplate.findOne(new Query(criteria), RecommendMPO.class);
+        return mongoTemplate.find(new Query(criteria), RecommendMPO.class);
     }
 
     @Override
-    public List<RecommendMPO> getListByTag(String position, List<String> tags){
+    public List<RecommendMPO> getListByTag(String position, List<String> tags, String appSource){
         Criteria criteria = Criteria.where("position").is(position).and("recommendBaseInfos.title").in(tags);
+        if(StringUtils.isNotBlank(appSource)){
+            criteria.and("recommendBaseInfos.appSource").is(appSource);
+        }
         return mongoTemplate.find(new Query(criteria), RecommendMPO.class);
     }
 
     @Override
     public List<RecommendMPO> getCites(RecommendRequestV2 request){
         Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
+        if(StringUtils.isNotBlank(request.getAppSource())){
+            criteria.and("recommendBaseInfos.appSource").is(request.getAppSource());
+        }
         MatchOperation matchOperation = Aggregation.match(criteria);
         GroupOperation groupOperation = Aggregation.group("city")
                 .first("city").as("city")
