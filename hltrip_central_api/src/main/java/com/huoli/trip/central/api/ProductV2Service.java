@@ -17,14 +17,14 @@ import java.util.List;
  */
 public interface ProductV2Service {
 
-    ScenicSpotBase querycScenicSpotBase(ScenicSpotRequest request);
+    BaseResponse<ScenicSpotBase> querycScenicSpotBase(ScenicSpotRequest request);
 
     BaseResponse<GroupTourBody> queryGroupTourById(GroupTourRequest request);
     GroupMealsBody groupMealsBody(GroupTourMealsRequest request);
 
-    List<ScenicSpotProductBase> queryScenicSpotProduct(ScenicSpotProductRequest request);
+    BaseResponse<List<ScenicSpotProductBase>> queryScenicSpotProduct(ScenicSpotProductRequest request);
 
-    List<BasePrice> queryCalendar(CalendarRequest request);
+    BaseResponse<List<BasePrice>> queryCalendar(CalendarRequest request);
 
     BaseResponse<ProductPriceCalendarResult> queryGroupTourPriceCalendar(CalendarRequest request);
 

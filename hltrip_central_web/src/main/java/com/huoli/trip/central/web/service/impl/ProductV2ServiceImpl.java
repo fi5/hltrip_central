@@ -55,14 +55,14 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     private CommonService commonService;
 
     @Override
-    public ScenicSpotBase querycScenicSpotBase(ScenicSpotRequest request) {
+    public BaseResponse<ScenicSpotBase> querycScenicSpotBase(ScenicSpotRequest request) {
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
         ScenicSpotBase scenicSpotBase = null;
         if(scenicSpotMPO != null){
             scenicSpotBase = new ScenicSpotBase();
             BeanUtils.copyProperties(scenicSpotMPO,scenicSpotBase);
         }
-        return scenicSpotBase;
+        return BaseResponse.withSuccess(scenicSpotBase);
     }
 
     @Override
@@ -114,7 +114,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     }
 
     @Override
-    public List<ScenicSpotProductBase> queryScenicSpotProduct(ScenicSpotProductRequest request) {
+    public BaseResponse<List<ScenicSpotProductBase>> queryScenicSpotProduct(ScenicSpotProductRequest request) {
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId());
         String date = request.getDate();
         List<ScenicSpotProductBase> productBases = null;
@@ -143,7 +143,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
             }
         }
-        return productBases;
+        return BaseResponse.withSuccess(productBases);
     }
 
     private ScenicSpotProductPriceMPO filterPrice(List<ScenicSpotProductPriceMPO> list,String date){
@@ -177,7 +177,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
 
     @Override
-    public List<BasePrice> queryCalendar(CalendarRequest request) {
+    public BaseResponse<List<BasePrice>> queryCalendar(CalendarRequest request) {
         String scenicSpotId = request.getScenicSpotId();
         String startDate = request.getStartDate();
         String productId = request.getProductId();
@@ -242,7 +242,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 return basePrice;
             }).collect(Collectors.toList());
         }
-        return basePrices;
+        return BaseResponse.withSuccess(basePrices);
     }
 
     /**
