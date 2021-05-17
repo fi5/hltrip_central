@@ -541,9 +541,6 @@ public class ProductDaoImpl implements ProductDao {
                 criteria.and("themeName").regex(themeName);
             }
         }
-        if (StringUtils.isNotBlank(req.getDepCity())) {
-            criteria.and("depCity").regex(req.getDepCity());
-        }
         if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrCity").regex(req.getArrCity());
         }

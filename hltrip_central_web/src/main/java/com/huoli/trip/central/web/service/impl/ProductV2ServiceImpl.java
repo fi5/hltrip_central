@@ -65,6 +65,14 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         return BaseResponse.withSuccess(scenicSpotBase);
     }
 
+    /**
+     * @author: wangying
+     * @date 5/17/21 4:39 PM
+     * 跟团游产品详情
+     * [request]
+     * @return {@link BaseResponse< GroupTourBody>}
+     * @throws
+     */
     @Override
     public BaseResponse<GroupTourBody> queryGroupTourById(GroupTourRequest request) {
         GroupTourBody groupTourProductBody = null;
@@ -85,7 +93,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         if(groupTourProductMPO != null){
             groupTourProductBody = new GroupTourBody();
             BeanUtils.copyProperties(groupTourProductMPO,groupTourProductBody);
-            groupTourProductBody.setCreateTime(DateTimeUtil.formatFullDate(groupTourProductMPO.getCreateTime()));
             if(ListUtils.isNotEmpty(groupTourProductSetMealMPOS)){
                 List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p->{
                     GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
