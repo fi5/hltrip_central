@@ -144,4 +144,11 @@ public interface ProductService {
      * @return
      */
     BaseResponse<List<AddressInfo>> recommendCites(RecommendRequestV2 request);
+
+    /**
+     * 推荐主题
+     * @param request
+     * @return
+     */
+    BaseResponse<List<String>> recommendSubjects(RecommendRequestV2 request);
 }
