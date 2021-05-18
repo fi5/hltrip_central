@@ -100,11 +100,29 @@ public interface ProductService {
      */
     BaseResponse<RecommendResult> recommendListV2(RecommendRequest request);
 
-    ScenicTicketListResult scenicTicketList(ScenicTicketListReq req);
+    /**
+     * 门票列表
+     * [req]
+     * @return {@link BaseResponse< ScenicTicketListResult>}
+     * @throws
+     */
+    BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req);
 
-    GroupTourListResult groupTourList(GroupTourListReq req);
+    /**
+     * 跟团游列表
+     * [req]
+     * @return {@link BaseResponse< ScenicTicketListResult>}
+     * @throws
+     */
+    BaseResponse<GroupTourListResult> groupTourList(GroupTourListReq req);
 
-    HotelScenicListResult hotelScenicList(HotelScenicListReq req);
+    /**
+     * 酒景列表
+     * [req]
+     * @return {@link BaseResponse< ScenicTicketListResult>}
+     * @throws
+     */
+    BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req);
 
     /**
      * 推荐列表
