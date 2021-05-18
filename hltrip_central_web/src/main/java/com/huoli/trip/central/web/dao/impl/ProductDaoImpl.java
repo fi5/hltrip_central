@@ -541,8 +541,11 @@ public class ProductDaoImpl implements ProductDao {
                 criteria.and("themeName").regex(themeName);
             }
         }
-        if (StringUtils.isNotBlank(req.getArrCity())) {
-            criteria.and("arrCity").regex(req.getArrCity());
+        if(StringUtils.isNotBlank(req.getArrCity())){
+            criteria.and("arrPlaces").regex(req.getArrCity());
+        }
+        if (StringUtils.isNotBlank(req.getArrCityCode())) {
+            criteria.and("arrCity").regex(req.getArrCityCode());
         }
 
         MatchOperation matchOperation = Aggregation.match(criteria);
@@ -579,6 +582,7 @@ public class ProductDaoImpl implements ProductDao {
                 .first("depPlaces").as("depPlaces")
                 .first("channelName").as("channelName")
                 .first("groupTourTypeName").as("groupTourTypeName")
+                .first("groupTourType").as("groupTourType")
                 ;
     }
 
@@ -593,10 +597,16 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("productName").regex(req.getName());
         }
         if (StringUtils.isNotBlank(req.getDepCity())) {
-            criteria.and("depCity").regex(req.getDepCity());
+            criteria.and("depPlaces").regex(req.getDepCity());
+        }
+        if (StringUtils.isNotBlank(req.getDepCityCode())) {
+            criteria.and("depCity").regex(req.getDepCityCode());
         }
         if (StringUtils.isNotBlank(req.getArrCity())) {
-            criteria.and("arrCity").regex(req.getArrCity());
+            criteria.and("arrPlaces").regex(req.getArrCity());
+        }
+        if (StringUtils.isNotBlank(req.getArrCityCode())) {
+            criteria.and("arrCity").regex(req.getArrCityCode());
         }
         if(StringUtils.isNotBlank(req.getGroupTourType())){
             criteria.and("groupTourType").is(req.getGroupTourType());
@@ -623,10 +633,16 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("scenicSpotName").regex(req.getName());
         }
         if (StringUtils.isNotBlank(req.getDepCity())) {
-            criteria.and("depCity").regex(req.getDepCity());
+            criteria.and("depPlaces").regex(req.getDepCity());
+        }
+        if (StringUtils.isNotBlank(req.getDepCityCode())) {
+            criteria.and("depCity").regex(req.getDepCityCode());
         }
         if (StringUtils.isNotBlank(req.getArrCity())) {
-            criteria.and("arrCity").regex(req.getArrCity());
+            criteria.and("arrPlaces").regex(req.getArrCity());
+        }
+        if (StringUtils.isNotBlank(req.getArrCityCode())) {
+            criteria.and("arrCity").regex(req.getArrCityCode());
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex");
