@@ -341,14 +341,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
         List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
         Date startDate = new Date();
-        if(StringUtils.isNotBlank(request.getStartDate())
-                && DateTimeUtil.getDateDiffDays(new Date(request.getStartDate()), startDate) > 0){
-            startDate = DateTimeUtil.parse(request.getStartDate(), DateTimeUtil.YYYYMMDD);
+        if(StringUtils.isNotBlank(request.getStartDate())){
+            Date reqStartDate = DateTimeUtil.parse(request.getStartDate(), DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(reqStartDate, startDate) > 0) {
+                startDate = reqStartDate;
+            }
         }
         Date endDate = null;
-        if(StringUtils.isNotBlank(request.getEndDate())
-                && DateTimeUtil.getDateDiffDays(new Date(request.getEndDate()), startDate)> 0){
-            endDate = DateTimeUtil.parse(request.getEndDate(), DateTimeUtil.YYYYMMDD);
+        if(StringUtils.isNotBlank(request.getEndDate())){
+            Date reqEndDate = DateTimeUtil.parse(request.getEndDate(), DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(reqEndDate, startDate)> 0) {
+                endDate = reqEndDate;
+            }
         }
         final Date searchStartDate = startDate;
         final Date searchEndDate = endDate;
