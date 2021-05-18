@@ -608,7 +608,7 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
             criteria.and("arrCity").regex(req.getArrCityCode());
         }
-        if(StringUtils.isNotBlank(req.getGroupTourType())){
+        if(StringUtils.isNotBlank(req.getGroupTourType()) && !StringUtils.equals(req.getGroupTourType(), "0")){
             criteria.and("groupTourType").is(req.getGroupTourType());
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
