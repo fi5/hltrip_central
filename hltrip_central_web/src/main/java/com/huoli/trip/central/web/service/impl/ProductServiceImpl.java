@@ -10,10 +10,11 @@ import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
-import com.huoli.trip.common.constant.CentralError;
-import com.huoli.trip.common.constant.Constants;
-import com.huoli.trip.common.constant.ProductType;
+import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.entity.*;
+import com.huoli.trip.common.entity.mpo.AddressInfo;
+import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
+import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -23,24 +24,20 @@ import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StopWatch;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
@@ -88,6 +85,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private SupplierPolicyDao supplierPolicyDao;
+
+    @Autowired
+    private RecommendDao recommendDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -241,6 +241,145 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+    }
+
+    @Override
+    public BaseResponse<RecommendResultV2> recommendListV3(RecommendRequestV2 request) {
+        String sysTag = "为你精选";
+        RecommendResultV2 result = new RecommendResultV2();
+        List<RecommendProductV2> products = Lists.newArrayList();
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        List<RecommendBaseInfo> oriRecommendBaseInfos;
+        if(recommendMPO == null){
+            // 如果带城市查不到就只按位置查
+            List<RecommendMPO> recommendMPOs = recommendDao.getListByPosition(request);
+            oriRecommendBaseInfos = recommendMPOs.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
+        } else {
+            oriRecommendBaseInfos = recommendMPO.getRecommendBaseInfos();
+        }
+        if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
+            List<RecommendBaseInfo> recommendBaseInfos;
+            oriRecommendBaseInfos = resetRecommendBaseInfo(request.getAppSource(), oriRecommendBaseInfos);
+            // 只有首页当地推荐需要补充逻辑
+            if(request.getPosition() == 2){
+                recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> {
+                        boolean b = (StringUtils.equals(rb.getTitle(), request.getTag()) || StringUtils.equals(sysTag, request.getTag()));
+                        // 用系统标签时就随便返回一些
+                        if(StringUtils.equals(rb.getCategory(), "d_ss_ticket")){
+                            return b && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
+                        } else {
+                            return b && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode() && rb.getAppSource().contains(request.getAppSource());
+                        }
+                    }).collect(Collectors.toList());
+                // 如果当前标签产品数量不够就用其它城市相同标签凑（这个理论上是能凑够的，因为之前获取标签的时候已经查过一遍了，但是不排除这段时间产品有变化导致数量不足的可能）
+                if(recommendBaseInfos.size() < request.getPageSize() && !StringUtils.equals(sysTag, request.getTag())){
+                    List<RecommendMPO> recommendMPOs = recommendDao.getListByTag(request.getPosition().toString(), Lists.newArrayList(request.getTag()));
+                    List<RecommendBaseInfo> newRecommendBaseInfos = recommendMPOs.stream().filter(r -> !StringUtils.equals(r.getCity(), request.getCity())).flatMap(r -> r.getRecommendBaseInfos().stream()).filter(rb ->
+                            StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                    rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
+                    if(newRecommendBaseInfos.size() >= (request.getPageSize() - recommendBaseInfos.size())){
+                        recommendBaseInfos.addAll(newRecommendBaseInfos);
+                    }
+                }
+            }
+            // 当地门票位置用主题过滤
+            else if(request.getPosition() == 4){
+                recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb ->
+                        StringUtils.equals(rb.getSubjectCode(), request.getSubjectCode())
+                                && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
+            }
+            // 其它位置逻辑一样
+            else {
+                recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb ->
+                        StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
+            }
+            products = recommendBaseInfos.stream().map(rb ->
+                    convertToRecommendProductV2(rb, request.getPosition().toString())).collect(Collectors.toList());
+        }
+        if(products.size() > request.getPageSize()){
+            products = products.subList(0, request.getPageSize());
+            // 系统标签没有更多
+            if(!StringUtils.equals(sysTag, request.getTag())){
+                result.setMore(1);
+            }
+        }
+        result.setProducts(products);
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<List<String>> recommendTags(RecommendRequestV2 request){
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
+        List<String> tags = Lists.newArrayList();
+        if(ListUtils.isNotEmpty(baseInfos)){
+            baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
+            Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
+            List<String> shortTags = Lists.newArrayList();
+            map.forEach((k, v) -> {
+                if(v.size() >= request.getPageSize()){
+                    tags.add(k);
+                } else {
+                    shortTags.add(k);
+                }
+            });
+            // 如果当前城市的标签内容数量不够就用其它城市凑，够数就算；
+            if(ListUtils.isNotEmpty(shortTags)){
+                List<RecommendMPO> recommendMPOs = recommendDao.getListByTag(request.getPosition().toString(), shortTags);
+                Map<String, List<RecommendBaseInfo>> shortMap = recommendMPOs.stream().flatMap(r ->
+                        r.getRecommendBaseInfos().stream()).filter(rb ->
+                        shortTags.contains(rb.getTitle())).collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
+                shortMap.forEach((k, v) -> {
+                    if(v.size() >= request.getPageSize()){
+                        tags.add(k);
+                    }
+                });
+            }
+        }
+        // 实在没有就返回这个
+        if(ListUtils.isEmpty(tags)){
+            tags.add("为你精选");
+        }
+        return BaseResponse.withSuccess(tags);
+    }
+
+    @Override
+    public BaseResponse<List<AddressInfo>> recommendCites(RecommendRequestV2 request){
+        List<RecommendMPO> recommendMPOs = recommendDao.getCites(request);
+        List<AddressInfo> addressInfos = recommendMPOs.stream().map(r -> {
+            AddressInfo addressInfo = new AddressInfo();
+            addressInfo.setCityCode(r.getCity());
+            addressInfo.setCityName(r.getCityName());
+            return addressInfo;
+        }).collect(Collectors.toList());
+        return BaseResponse.withSuccess(addressInfos);
+    }
+
+    @Override
+    public BaseResponse<List<String>> recommendSubjects(RecommendRequestV2 request){
+        RecommendMPO recommendMPO = recommendDao.getList(request);
+        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
+        List<String> subjects = Lists.newArrayList();
+        if(ListUtils.isNotEmpty(baseInfos)){
+            baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
+            subjects = baseInfos.stream().map(b -> b.getSubjectCode()).distinct().collect(Collectors.toList());
+        }
+        return BaseResponse.withSuccess(subjects);
+    }
+
+    private List<RecommendBaseInfo> resetRecommendBaseInfo(String appSource, List<RecommendBaseInfo> oriRecommendBaseInfos){
+        if(StringUtils.equals(appSource, "kssl")){
+            List<RecommendBaseInfo> sort = Lists.newArrayList();
+            // 凯撒商旅的晟和产品要排在前面
+            sort.addAll(oriRecommendBaseInfos.stream().filter(rb -> StringUtils.equals(rb.getChannel(), "hllx_shenghe")).collect(Collectors.toList()));
+            sort.addAll(oriRecommendBaseInfos.stream().filter(rb -> !StringUtils.equals(rb.getChannel(), "hllx_shenghe")).collect(Collectors.toList()));
+            oriRecommendBaseInfos = sort;
+        } else {
+            // 凯撒商旅之外的来源不能卖晟和的产品
+            oriRecommendBaseInfos.removeIf(rb -> StringUtils.equals(rb.getChannel(), "hllx_shenghe"));
+        }
+        return oriRecommendBaseInfos;
     }
 
     @Override
@@ -964,5 +1103,22 @@ public class ProductServiceImpl implements ProductService {
         } catch (Exception e) {
             log.error("获取标记推荐列表异常", e);
         }
+    }
+
+    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, String position){
+        RecommendProductV2 recommendProduct = new RecommendProductV2();
+        recommendProduct.setPoiId(rb.getPoiId());
+        recommendProduct.setPoiName(rb.getPoiName());
+        recommendProduct.setProductId(rb.getProductId());
+        recommendProduct.setProductName(rb.getProductName());
+        recommendProduct.setChannel(rb.getChannel());
+        recommendProduct.setChannelName(rb.getChannelName());
+        recommendProduct.setPrice(rb.getApiSellPrice());
+        recommendProduct.setImage(rb.getMainImage());
+        recommendProduct.setPosition(Integer.valueOf(position));
+        recommendProduct.setCategory(rb.getCategory());
+        recommendProduct.setBookDay(rb.getBookDay());
+        recommendProduct.setRecommendDesc(rb.getRecommendDesc());
+        return recommendProduct;
     }
 }
