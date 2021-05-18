@@ -282,8 +282,8 @@ public class ProductServiceImpl implements ProductService {
                             !StringUtils.equals(r.getCity(), request.getCity())).flatMap(r ->
                             r.getRecommendBaseInfos().stream()).filter(rb ->
                             StringUtils.equals(rb.getTitle(), request.getTag())
-                                    && StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
-                                    rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
+                                    && (StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                    rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode())).collect(Collectors.toList());
                     log.info("补充数据   {}", JSON.toJSONString(newRecommendBaseInfos));
                     if(newRecommendBaseInfos.size() >= (request.getPageSize() - recommendBaseInfos.size())){
                         recommendBaseInfos.addAll(newRecommendBaseInfos);
