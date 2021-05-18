@@ -382,15 +382,23 @@ public class ProductServiceImpl implements ProductService {
                         if(StringUtils.equals(rb.getCategory(), "d_ss_ticket")){
                             return b && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode();
                         } else {
-                            return b && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode() && rb.getAppSource().contains(request.getAppSource());
+                            b = b && rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode();
+                            if(ListUtils.isNotEmpty(rb.getAppSource())){
+                                b = b && rb.getAppSource().contains(request.getAppSource());
+                            }
+                            return b;
                         }
                     }).collect(Collectors.toList());
                 // 如果当前标签产品数量不够就用其它城市相同标签凑（这个理论上是能凑够的，因为之前获取标签的时候已经查过一遍了，但是不排除这段时间产品有变化导致数量不足的可能）
                 if(recommendBaseInfos.size() < request.getPageSize() && !StringUtils.equals(sysTag, request.getTag())){
                     List<RecommendMPO> recommendMPOs = recommendDao.getListByTag(request.getPosition().toString(), Lists.newArrayList(request.getTag()));
-                    List<RecommendBaseInfo> newRecommendBaseInfos = recommendMPOs.stream().filter(r -> !StringUtils.equals(r.getCity(), request.getCity())).flatMap(r -> r.getRecommendBaseInfos().stream()).filter(rb ->
-                            StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
-                                    rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
+                    List<RecommendBaseInfo> newRecommendBaseInfos = recommendMPOs.stream().filter(r ->
+                            !StringUtils.equals(r.getCity(), request.getCity())).flatMap(r ->
+                            r.getRecommendBaseInfos().stream()).filter(rb ->
+                            StringUtils.equals(rb.getTitle(), request.getTag())
+                                    && (StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                    rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode())).collect(Collectors.toList());
+                    log.info("补充数据   {}", JSON.toJSONString(newRecommendBaseInfos));
                     if(newRecommendBaseInfos.size() >= (request.getPageSize() - recommendBaseInfos.size())){
                         recommendBaseInfos.addAll(newRecommendBaseInfos);
                     }
@@ -923,6 +931,9 @@ public class ProductServiceImpl implements ProductService {
                 if(po.getPriceCalendar() != null && po.getPriceCalendar().getPriceInfos() != null){
                     increasePrice(Lists.newArrayList(po.getPriceCalendar().getPriceInfos()), po.getSupplierId(), po.getCode(),po.getPrice());
                 }
+                List<PriceInfoPO> priceInfos = Lists.newArrayList(po.getPriceCalendar().getPriceInfos());
+                increasePrice(priceInfos, po.getSupplierId(), po.getCode(), null);
+                po.getPriceCalendar().setPriceInfos(priceInfos.get(0));
                 Product product = ProductConverter.convertToProduct(po, 0);
                 // 设置主item，放在最外层，product里的去掉
                 if (result.getMainItem() == null) {
