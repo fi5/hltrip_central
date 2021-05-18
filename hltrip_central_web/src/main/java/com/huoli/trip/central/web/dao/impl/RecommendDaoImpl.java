@@ -36,6 +36,18 @@ public class RecommendDaoImpl implements RecommendDao {
     }
 
     @Override
+    public List<RecommendMPO> getListByPosition(RecommendRequestV2 request){
+        Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
+        return mongoTemplate.find(new Query(criteria), RecommendMPO.class);
+    }
+
+    @Override
+    public List<RecommendMPO> getListByTag(String position, List<String> tags){
+        Criteria criteria = Criteria.where("position").is(position).and("recommendBaseInfos.title").in(tags);
+        return mongoTemplate.find(new Query(criteria), RecommendMPO.class);
+    }
+
+    @Override
     public List<RecommendMPO> getCites(RecommendRequestV2 request){
         Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
         MatchOperation matchOperation = Aggregation.match(criteria);
