@@ -146,6 +146,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 productBases.add(scenicSpotProductBase);
                 String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
                 scenicSpotProductBase.setCategory(category);
+                scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
 
                 String startDate = scenicSpotProductPriceMPO.getStartDate();
                 LocalDate localDate = LocalDate.now();
@@ -204,7 +205,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     }
                 }
 
-                scenicSpotProductBase.setTicketkind(ticketkind);
+                scenicSpotProductBase.setTicketkindTag(ticketkind);
                 BasePrice basePrice = new BasePrice();
                 BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
                 //需要调用加价方法
