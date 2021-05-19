@@ -5,16 +5,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductV2Service;
+import com.huoli.trip.central.web.constant.ColourConstants;
 import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotRuleMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.IncreasePrice;
@@ -160,18 +158,25 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 if(StringUtils.equals(startDate,dateStr)) {
                     tag = new Tag();
                     tag.setName("可订今日");
+                    tag.setColour(ColourConstants.TICKET_BLUE);
                     bookTag.add(tag);
                 }else if(StringUtils.equals(startDate,tomorrowStr)){
                     tag = new Tag();
                     tag.setName("可订明日");
+                    tag.setColour(ColourConstants.TICKET_BLUE);
                     bookTag.add(tag);
                 }
                 scenicSpotProductBase.setBookTag(bookTag);
+
+
 
                 List<Tag> ticketkind = new ArrayList<>();
                 String refundTag = scenicSpotRuleMPO.getRefundTag();
                 if(StringUtils.isNotEmpty(refundTag)){
                     Tag tag1 = new Tag();
+                    if(StringUtils.equals("随心退",refundTag)){
+                        tag1.setColour(ColourConstants.TICKET_GREEN);
+                    }
                     tag1.setName(refundTag);
                     ticketkind.add(tag);
                 }
@@ -185,9 +190,21 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     int maxCount = scenicSpotRuleMPO.getMaxCount();
                     Tag tag2 = new Tag();
                     tag2.setName("限购".concat(String.valueOf(maxCount)).concat("张/单"));
+                    tag2.setColour(ColourConstants.TICKET_BLUE);
                     ticketkind.add(tag2);
                 }
+                ScenicSpotProductTransaction scenicSpotProductTransaction = scenicSpotProduct.getScenicSpotProductTransaction();
+                if(scenicSpotProductTransaction != null){
+                    int ticketOutHour = scenicSpotProductTransaction.getTicketOutHour();
+                    int ticketOutMinute = scenicSpotProductTransaction.getTicketOutMinute();
+                    if( 0== ticketOutHour &&0 == ticketOutMinute){
+                        Tag tag2 = new Tag();
+                        tag2.setName("随买随用");
+                        ticketkind.add(tag2);
+                    }
+                }
 
+                scenicSpotProductBase.setTicketkind(ticketkind);
                 BasePrice basePrice = new BasePrice();
                 BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
                 //需要调用加价方法
