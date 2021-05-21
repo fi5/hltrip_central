@@ -7,10 +7,7 @@ import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
-import com.huoli.trip.supplier.self.lvmama.vo.Booker;
-import com.huoli.trip.supplier.self.lvmama.vo.OrderInfo;
-import com.huoli.trip.supplier.self.lvmama.vo.Recipient;
-import com.huoli.trip.supplier.self.lvmama.vo.Traveller;
+import com.huoli.trip.supplier.self.lvmama.vo.*;
 import com.huoli.trip.supplier.self.lvmama.vo.request.CreateOrderRequest;
 import com.huoli.trip.supplier.self.lvmama.vo.request.ValidateOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
@@ -110,6 +107,16 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
     public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
         Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
         request.setBooker(booker);
+        //需要场次号
+        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+
+        Product product = new Product();
+        product.setGoodsId(Long.parseLong(req.getGoodsId()));
+        product.setProductId(Long.parseLong(req.getProductId()));
+        product.setQuantity(req.getQunatity());
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
+        product.setVisitDate(req.getBeginDate());
+        orderInfo.setProduct(product);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
             List<Traveller> traveller = new ArrayList<>(guests.size());
@@ -123,8 +130,6 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
             }
             request.setTraveller(traveller);
         }
-        //需要场次号
-        OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(req.getSellAmount()),null);
         request.setOrderInfo(orderInfo);
         //邮寄信息
        /* Recipient recipient = new Recipient();
@@ -134,6 +139,17 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
     public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
         Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
         request.setBooker(booker);
+        //需要场次号
+        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+
+        Product product = new Product();
+        product.setGoodsId(Long.parseLong(req.getGoodsId()));
+        product.setProductId(Long.parseLong(req.getProductId()));
+        product.setQuantity(req.getCount());
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
+        product.setVisitDate(req.getBeginDate());
+        orderInfo.setProduct(product);
+
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
             List<Traveller> traveller = new ArrayList<>(guests.size());
@@ -147,8 +163,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
             }
             request.setTraveller(traveller);
         }
-        //需要场次号
-        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+
         request.setOrderInfo(orderInfo);
         //邮寄信息
        /* Recipient recipient = new Recipient();
