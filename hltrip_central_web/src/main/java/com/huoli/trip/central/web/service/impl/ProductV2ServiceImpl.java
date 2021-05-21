@@ -5,16 +5,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductV2Service;
+import com.huoli.trip.central.web.constant.ColourConstants;
 import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotRuleMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.IncreasePrice;
@@ -32,6 +30,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -143,11 +144,92 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 ScenicSpotProductBase scenicSpotProductBase = new ScenicSpotProductBase();
                 BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
                 productBases.add(scenicSpotProductBase);
+                String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
+                scenicSpotProductBase.setCategory(category);
+                scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
 
+                String startDate = scenicSpotProductPriceMPO.getStartDate();
+                LocalDate localDate = LocalDate.now();
+                LocalDate tomorrow = localDate.plusDays(1);
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String dateStr = localDate.format(fmt);
+                String tomorrowStr = tomorrow.format(fmt);
+                List<Tag> bookTag = new ArrayList<>(1);
+                Tag tag = null;
+                if(StringUtils.equals(startDate,dateStr)) {
+                    tag = new Tag();
+                    tag.setName("可订今日");
+                    tag.setColour(ColourConstants.TICKET_BLUE);
+                    bookTag.add(tag);
+                }else if(StringUtils.equals(startDate,tomorrowStr)){
+                    tag = new Tag();
+                    tag.setName("可订明日");
+                    tag.setColour(ColourConstants.TICKET_BLUE);
+                    bookTag.add(tag);
+                }
+                scenicSpotProductBase.setBookTag(bookTag);
+
+
+
+                List<Tag> ticketkind = new ArrayList<>();
+                String refundTag = scenicSpotRuleMPO.getRefundTag();
+                if(StringUtils.isNotEmpty(refundTag)){
+                    Tag tag1 = new Tag();
+                    if(StringUtils.equals("随心退",refundTag)){
+                        tag1.setColour(ColourConstants.TICKET_GREEN);
+                    }
+                    tag1.setName(refundTag);
+                    ticketkind.add(tag);
+                }
+                int ticketType = scenicSpotRuleMPO.getTicketType();
+                Tag tag1 = new Tag();
+                tag1.setName(0 == ticketType?"电子票":"实体票");
+                ticketkind.add(tag1);
+
+                int limitBuy = scenicSpotRuleMPO.getLimitBuy();
+                if(1 == limitBuy){
+                    int maxCount = scenicSpotRuleMPO.getMaxCount();
+                    Tag tag2 = new Tag();
+                    tag2.setName("限购".concat(String.valueOf(maxCount)).concat("张/单"));
+                    tag2.setColour(ColourConstants.TICKET_BLUE);
+                    ticketkind.add(tag2);
+                }
+                ScenicSpotProductTransaction scenicSpotProductTransaction = scenicSpotProduct.getScenicSpotProductTransaction();
+                if(scenicSpotProductTransaction != null){
+                    int ticketOutHour = scenicSpotProductTransaction.getTicketOutHour();
+                    int ticketOutMinute = scenicSpotProductTransaction.getTicketOutMinute();
+                    if( 0== ticketOutHour &&0 == ticketOutMinute){
+                        Tag tag2 = new Tag();
+                        tag2.setName("随买随用");
+                        ticketkind.add(tag2);
+                    }
+                }
+
+                scenicSpotProductBase.setTicketkindTag(ticketkind);
                 BasePrice basePrice = new BasePrice();
                 BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
                 //需要调用加价方法
+                IncreasePrice increasePrice = new IncreasePrice();
+                increasePrice.setChannelCode(scenicSpotProduct.getChannel());
+                increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
+                increasePrice.setAppSource(request.getFrom());
+                increasePrice.setProductCategory(category);
+                List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
+                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
+                priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
+                priceCalendars.add(priceCalendar);
+                commonService.increasePrice(increasePrice);
+                List<IncreasePriceCalendar> prices = increasePrice.getPrices();
+                if(ListUtils.isEmpty(prices)){
+                    log.info("产品因为价格计算之后无价格数据返回,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
+                    continue;
+                }
+                BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice,"sellPrice");
+                IncreasePriceCalendar increasePriceCalendar = prices.get(0);
+                basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
                 basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
+                scenicSpotProductBase.setPrice(basePrice);
             }
         }
         return BaseResponse.withSuccess(productBases);
@@ -246,6 +328,21 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             basePrices = effective.stream().map(p->{
                 BasePrice basePrice = new BasePrice();
                 BeanUtils.copyProperties(p,basePrice);
+                //需要调用加价方法
+                IncreasePrice increasePrice = new IncreasePrice();
+                increasePrice.setChannelCode(request.getChannelCode());
+                increasePrice.setProductCode(p.getScenicSpotProductId());
+                increasePrice.setAppSource(request.getFrom());
+                increasePrice.setProductCategory("d_ss_ticket");
+                List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
+                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                priceCalendar.setAdtSellPrice(p.getSellPrice());
+                priceCalendar.setDate(p.getStartDate());
+                priceCalendars.add(priceCalendar);
+                commonService.increasePrice(increasePrice);
+                List<IncreasePriceCalendar> prices = increasePrice.getPrices();
+                IncreasePriceCalendar priceCalendar1 = prices.get(0);
+                basePrice.setSellPrice(priceCalendar1.getAdtSellPrice());
                 return basePrice;
             }).collect(Collectors.toList());
         }
@@ -341,14 +438,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
         List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
         Date startDate = new Date();
-        if(StringUtils.isNotBlank(request.getStartDate())
-                && DateTimeUtil.getDateDiffDays(new Date(request.getStartDate()), startDate) > 0){
-            startDate = DateTimeUtil.parse(request.getStartDate(), DateTimeUtil.YYYYMMDD);
+        if(StringUtils.isNotBlank(request.getStartDate())){
+            Date reqStartDate = DateTimeUtil.parse(request.getStartDate(), DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(reqStartDate, startDate) > 0) {
+                startDate = reqStartDate;
+            }
         }
         Date endDate = null;
-        if(StringUtils.isNotBlank(request.getEndDate())
-                && DateTimeUtil.getDateDiffDays(new Date(request.getEndDate()), startDate)> 0){
-            endDate = DateTimeUtil.parse(request.getEndDate(), DateTimeUtil.YYYYMMDD);
+        if(StringUtils.isNotBlank(request.getEndDate())){
+            Date reqEndDate = DateTimeUtil.parse(request.getEndDate(), DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(reqEndDate, startDate)> 0) {
+                endDate = reqEndDate;
+            }
         }
         final Date searchStartDate = startDate;
         final Date searchEndDate = endDate;
