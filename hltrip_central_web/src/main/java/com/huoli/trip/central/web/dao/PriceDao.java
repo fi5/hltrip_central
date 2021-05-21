@@ -52,4 +52,11 @@ public interface PriceDao {
      * @return
      */
     List<PriceSinglePO> selectByProductCode(String productCode, int count);
+
+    /**
+     * 查产品价格
+     * @param productCode
+     * @return
+     */
+    PricePO selectPricePOByProductCode(String productCode);
 }

@@ -13,9 +13,13 @@ import com.huoli.trip.common.entity.PriceSinglePO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.entity.RecommendProductPO;
 import com.huoli.trip.common.util.ConfigGetter;
+import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.vo.PriceInfo;
+import com.huoli.trip.common.vo.RecommendProduct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -26,6 +30,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -61,10 +66,18 @@ public class RecommendTask {
 
     @Async
     @PostConstruct
-    @Scheduled(cron = "0 0/15 * * * ?")
+    @Scheduled(cron = "0 0/25 * * * ?")
     public void refreshRecommendList(){
         refreshRecommendList(0);
     }
+
+    @Async
+    @PostConstruct
+    @Scheduled(cron = "0 0/3 * * * ?")
+    public void refreshRecommendListV2(){
+        refreshRecommendListV2(0);
+    }
+
 
     @Async
     public void refreshRecommendList(int force) {
@@ -99,18 +112,23 @@ public class RecommendTask {
         log.info("执行刷新推荐列表任务。。。");
         List<RecommendProductPO> recommendProductPOs = productDao.getRecommendProducts();
         if(ListUtils.isNotEmpty(recommendProductPOs)){
+            log.info("数据库的推荐产品={}", JSON.toJSONString(recommendProductPOs));
             List<RecommendProductPO> recommends = recommendProductPOs.stream().map(r -> {
+                log.info("检查产品{}", r.getProductCode());
                 ProductPO productPO = productDao.getTripProductByCode(r.getProductCode());
                 if(productPO.getStatus() != Constants.PRODUCT_STATUS_VALID){
+                    log.info("产品{}非上线状态{}，跳过。", productPO.getCode(), productPO.getStatus());
                      productDao.updateRecommendProductStatus(productPO.getCode(), productPO.getStatus());
                      return null;
                 }
                 PriceSinglePO priceSinglePO = priceDao.selectByProductCode(productPO.getCode());
                 r.setPriceInfo(priceSinglePO.getPriceInfos());
+                log.info("产品{}最新价格={}", productPO.getCode(), JSON.toJSONString(r.getPriceInfo()));
                 return r;
             }).filter(r -> r != null).collect(Collectors.toList());
             int size = ConfigGetter.getByFileItemInteger(ConfigConstants.CONFIG_FILE_NAME_COMMON, CentralConstants.CONFIG_RECOMMEND_SIZE);
             recommends.stream().collect(Collectors.groupingBy(RecommendProductPO::getPosition)).forEach((k, v) -> {
+                v.sort(Comparator.comparing(p -> p.getLevel(), Integer::compareTo));
                 if(v.size() > size){
                     v = v.subList(0, size);
                 }
@@ -118,8 +136,24 @@ public class RecommendTask {
                 productDao.updateRecommendDisplay(ids, Constants.RECOMMEND_DISPLAY_YES, k);
                 productDao.updateRecommendNotDisplay(ids, k);
                 String key = String.join("_", RECOMMEND_LIST_POSITION_KEY_PREFIX, k.toString());
+                List<RecommendProduct> recommendProducts = v.stream().map(p -> {
+                    RecommendProduct recommendProduct = new RecommendProduct();
+                    BeanUtils.copyProperties(p, recommendProduct);
+                    if(ListUtils.isNotEmpty(p.getMainImages())){
+                        recommendProduct.setMainImages(p.getMainImages().stream().map(i ->
+                                ProductConverter.convertToImageBase(i)).collect(Collectors.toList()));
+                    }
+                    if(p.getPriceInfo() != null){
+                        PriceInfo priceInfo = new PriceInfo();
+                        BeanUtils.copyProperties(p.getPriceInfo(), priceInfo);
+                        priceInfo.setSaleDate(DateTimeUtil.formatDate(p.getPriceInfo().getSaleDate()));
+                        recommendProduct.setPriceInfo(priceInfo);
+                    }
+                    return recommendProduct;
+                }).collect(Collectors.toList());
                 redisService.set(key,
-                        JSON.toJSONString(v), 1, TimeUnit.DAYS);
+                        JSON.toJSONString(recommendProducts), 1, TimeUnit.DAYS);
+                log.info("缓存{}的产品{}", key, JSON.toJSONString(recommendProducts));
             });
         } else {
             log.error("没有可用推荐产品了。");

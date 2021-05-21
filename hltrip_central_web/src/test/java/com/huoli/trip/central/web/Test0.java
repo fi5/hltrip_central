@@ -1,8 +1,10 @@
 package com.huoli.trip.central.web;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
+import com.huoli.trip.central.api.ProductV2Service;
 import com.huoli.trip.central.web.dao.ChannelDao;
 import com.huoli.trip.central.web.dao.PriceDao;
 import com.huoli.trip.central.web.dao.ProductDao;
@@ -13,6 +15,13 @@ import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.Coordinate;
 import com.huoli.trip.common.vo.request.central.*;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
+import com.huoli.trip.common.vo.request.v2.CalendarRequest;
+import com.huoli.trip.common.vo.request.v2.GroupTourRequest;
+import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
+import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
+import com.huoli.trip.common.vo.v2.GroupTourBody;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
@@ -24,8 +33,11 @@ import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +62,18 @@ public class Test0 {
     private ProductService productService;
     @Autowired
     private ChannelDao channelDao;
+    @Autowired
+    private ProductV2Service productV2Service;
+
+    public static void main(String[] args){
+        Pattern pattern = Pattern.compile("(?<=price\\*\\(1\\+)\\d(\\.\\d{1,4})*(?=\\))");
+        Matcher matcher = pattern.matcher("  price    *  (  1  +   0.0008   )   ".replace(" ", ""));
+        if (matcher.find()){
+            System.out.println(matcher.group());
+        } else {
+            System.out.println("not found ..");
+        }
+    }
 
 //    @Test
     public void test(){
@@ -315,5 +339,22 @@ public class Test0 {
 //            System.out.println("看看结果集"+channel.getName());
 //        }
 //    }
+
+    @Test
+    public void testScenicList(){
+        ScenicTicketListReq req = new ScenicTicketListReq();
+        /*BaseResponse<ScenicTicketListResult> scenicTicketListResult = productService.scenicTicketList(req);
+        System.out.println("查询结果："+ JSONObject.toJSONString(scenicTicketListResult));*/
+        /*GroupTourRequest request = new GroupTourRequest();
+        request.setGroupTourId("233");
+        BaseResponse<GroupTourBody> groupTourBodyBaseResponse = productV2Service.queryGroupTourById(request);
+        System.out.println("查询结果："+JSONObject.toJSONString(groupTourBodyBaseResponse));*/
+        CalendarRequest calendarRequest = new CalendarRequest();
+        calendarRequest.setProductId("233");
+        calendarRequest.setSetMealId("234");
+        calendarRequest.setFrom("hbgj");
+        BaseResponse<ProductPriceCalendarResult> productPriceCalendarResultBaseResponse = productV2Service.queryGroupTourPriceCalendar(calendarRequest);
+        System.out.println("查询结果："+JSONObject.toJSONString(productPriceCalendarResultBaseResponse));
+    }
 
 }

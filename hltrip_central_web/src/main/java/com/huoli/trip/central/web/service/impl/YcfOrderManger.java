@@ -89,17 +89,17 @@ public class YcfOrderManger extends OrderManager {
         /**
          * 开始日期大于结束日期
          */
-        if(DateTimeUtil.parseDate(begin).after(DateTimeUtil.parseDate(begin))){
+        /*if(DateTimeUtil.parseDate(begin).after(DateTimeUtil.parseDate(begin))){
             log.error("预订前校验 开始日期大于结束日期 错误 产品编号：{}",req.getProductId());
             return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_1);
-        }
+        }*/
         /**
          * 时间跨度大于90天
          */
-        if(this.isOutTime(DateTimeUtil.parseDate(begin),DateTimeUtil.parseDate(begin))){
+      /*  if(this.isOutTime(DateTimeUtil.parseDate(begin),DateTimeUtil.parseDate(begin))){
             log.error("预订前校验 时间跨度大于90天 错误 产品编号：{}",req.getProductId());
             return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_2);
-        }
+        }*/
         //供应商输出数据包
         YcfBookCheckRes ycfBookCheckRes = null;
         String traceId = req.getTraceId();
@@ -582,9 +582,6 @@ public class YcfOrderManger extends OrderManager {
     public Boolean isOutTime(Date begin,Date end){
         long margin = end.getTime() - begin.getTime();
         margin = margin / (1000 * 60 * 60 * 24);
-        if(margin>90){
-            return true;
-        }
-        return false;
+        return margin > 90;
     }
 }

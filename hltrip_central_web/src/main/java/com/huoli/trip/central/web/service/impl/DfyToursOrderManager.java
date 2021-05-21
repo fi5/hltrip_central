@@ -162,9 +162,9 @@ public class DfyToursOrderManager extends OrderManager {
 		/**
 		 * 开始日期大于结束日期
 		 */
-		if(DateTimeUtil.parseDate(begin).after(DateTimeUtil.parseDate(begin))){
+		/*if(DateTimeUtil.parseDate(begin).after(DateTimeUtil.parseDate(begin))){
 			return BaseResponse.fail(CentralError.ERROR_DATE_ORDER_1);
-		}
+		}*/
 		/**
 		 * 时间跨度大于90天
 		 */
@@ -304,7 +304,7 @@ public class DfyToursOrderManager extends OrderManager {
 		request.setTraceId(req.getTraceId());
 		request.setChannelCode(req.getChannelCode());
 		request.setChannelOrderId(req.getChannelOrderId());
-		request.setPrice(String.valueOf(req.getPrice()));*/
+		request.setPrice(String.valueOf(req.getPrice()));*//*
 		//DfyBaseResult dfyBaseResult = dfyOrderService.payOrder(request);
 		//if(dfyBaseResult != null && dfyBaseResult.isSuccess()){
 			CenterPayOrderRes payOrderRes = new CenterPayOrderRes();
@@ -312,8 +312,8 @@ public class DfyToursOrderManager extends OrderManager {
 			payOrderRes.setLocalOrderId(req.getPartnerOrderId());
 			payOrderRes.setOrderStatus(10);
 			return BaseResponse.success(payOrderRes);
-		//}
-		//return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
+		//}*/
+		return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
 	}
 
 

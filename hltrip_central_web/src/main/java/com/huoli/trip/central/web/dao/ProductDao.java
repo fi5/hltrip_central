@@ -4,7 +4,11 @@ import com.huoli.trip.common.entity.PricePO;
 import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.entity.RecommendProductPO;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.Coordinate;
+import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
+import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -25,7 +29,7 @@ public interface ProductDao {
      * @param itemId
      * @return
      */
-    List<ProductPO> getProductListByItemId(String itemId, Date saleDate);
+    List<ProductPO> getProductListByItemId(String itemId, Date saleDate, String appFrom);
 
     /**
      * 列表页
@@ -166,5 +170,9 @@ public interface ProductDao {
     List<ProductPO> queryValidCity(String city);
     HashMap<String,String> queryValidCitys();
 
+    List<ProductListMPO> scenicTickets(ScenicTicketListReq req);
 
+    List<ProductListMPO> groupTourList(GroupTourListReq req);
+
+    List<ProductListMPO> hotelScenicList(HotelScenicListReq req);
 }
