@@ -1,17 +1,27 @@
 package com.huoli.trip.central.web.converter;
 
+import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
+import com.huoli.trip.supplier.self.lvmama.vo.Booker;
+import com.huoli.trip.supplier.self.lvmama.vo.OrderInfo;
+import com.huoli.trip.supplier.self.lvmama.vo.Recipient;
+import com.huoli.trip.supplier.self.lvmama.vo.Traveller;
+import com.huoli.trip.supplier.self.lvmama.vo.request.CreateOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderReq;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderRes;
+import javafx.beans.binding.When;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,5 +103,60 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
             ycfBookGuests.add(converterGuest(bookGuest));
         });
         return ycfBookGuests;
+    }
+
+    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
+        Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
+        request.setBook(booker);
+        final List<CreateOrderReq.BookGuest> guests = req.getGuests();
+        if(ListUtils.isNotEmpty(guests)){
+            List<Traveller> traveller = new ArrayList<>(guests.size());
+            for(CreateOrderReq.BookGuest guest :guests){
+                final String s = convertLvmamaCredentialsType(guest.getCredentialType());
+                if(StringUtils.isEmpty(s)){
+                    //抛出不支持的证件类型
+                }
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEmail(),guest.getCname(),guest.getCredential(),null,s);
+                traveller.add(traveller1);
+            }
+            request.setTraveller(traveller);
+        }
+        //需要场次号
+        OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(req.getSellAmount()),null);
+        request.setOrderInfo(orderInfo);
+        //邮寄信息
+       /* Recipient recipient = new Recipient();
+        request.setRecipient(recipient);*/
+    }
+
+    private String convertLvmamaCredentialsType(int type){
+        switch (type){
+            case 0:
+                return "ID_CARD";
+            case 1:
+                return "HUZHAO";
+            case 2:
+                return "GANGAO";
+            case 3:
+                return "TAIBAO";
+            default:
+                return "";
+        }
+    }
+
+    public int convertLvmamaOrderStatus(String status){
+        switch (status){
+            case "NORMAL": //下单成功 和 待支付都是待支付状态
+            case "UNPAY":
+                return OrderStatus.TO_BE_PAID.getCode();
+            case "CANCEL":
+                return OrderStatus.CANCELLED.getCode();
+            case "PAYED":
+                return OrderStatus.WAITING_TO_TRAVEL.getCode();
+            case "PARTPAY":
+            return OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode();
+            default:
+                return -1;
+        }
     }
 }
