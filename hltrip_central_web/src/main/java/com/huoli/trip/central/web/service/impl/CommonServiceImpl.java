@@ -53,6 +53,7 @@ public class CommonServiceImpl implements CommonService {
                 log.info("没有查到相关加价配置");
                 return;
             }
+            log.info("查到的加价配置={}", JSON.toJSONString(supplierPolices));
             SupplierPolicyPO supplierPolicy = supplierPolices.stream().sorted(Comparator.comparing(sp -> {
                 String formula = sp.getPriceFormula().replace(" ", "");
                 Pattern pattern = Pattern.compile("(?<=price\\*\\(1\\+)\\d(\\.\\d{1,4})*(?=\\))");
