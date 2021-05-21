@@ -4,6 +4,7 @@ import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
 import com.huoli.trip.supplier.self.lvmama.vo.Booker;
@@ -11,6 +12,7 @@ import com.huoli.trip.supplier.self.lvmama.vo.OrderInfo;
 import com.huoli.trip.supplier.self.lvmama.vo.Recipient;
 import com.huoli.trip.supplier.self.lvmama.vo.Traveller;
 import com.huoli.trip.supplier.self.lvmama.vo.request.CreateOrderRequest;
+import com.huoli.trip.supplier.self.lvmama.vo.request.ValidateOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderReq;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderRes;
@@ -107,7 +109,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
     public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
         Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
-        request.setBook(booker);
+        request.setBooker(booker);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
             List<Traveller> traveller = new ArrayList<>(guests.size());
@@ -123,6 +125,30 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         }
         //需要场次号
         OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(req.getSellAmount()),null);
+        request.setOrderInfo(orderInfo);
+        //邮寄信息
+       /* Recipient recipient = new Recipient();
+        request.setRecipient(recipient);*/
+    }
+
+    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
+        Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
+        request.setBooker(booker);
+        final List<CreateOrderReq.BookGuest> guests = req.getGuests();
+        if(ListUtils.isNotEmpty(guests)){
+            List<Traveller> traveller = new ArrayList<>(guests.size());
+            for(CreateOrderReq.BookGuest guest :guests){
+                final String s = convertLvmamaCredentialsType(guest.getCredentialType());
+                if(StringUtils.isEmpty(s)){
+                    //抛出不支持的证件类型
+                }
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEmail(),guest.getCname(),guest.getCredential(),null,s);
+                traveller.add(traveller1);
+            }
+            request.setTraveller(traveller);
+        }
+        //需要场次号
+        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
         request.setOrderInfo(orderInfo);
         //邮寄信息
        /* Recipient recipient = new Recipient();
