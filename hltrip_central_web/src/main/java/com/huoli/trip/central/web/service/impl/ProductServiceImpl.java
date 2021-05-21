@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
+import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.*;
@@ -88,6 +89,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private RecommendDao recommendDao;
+
+    @Autowired
+    private CommonService commonService;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -1121,7 +1125,14 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setProductName(rb.getProductName());
         recommendProduct.setChannel(rb.getChannel());
         recommendProduct.setChannelName(rb.getChannelName());
-        recommendProduct.setPrice(rb.getApiSellPrice());
+        IncreasePrice increasePrice = new IncreasePrice();
+        increasePrice.setProductCode(rb.getProductId());
+        increasePrice.setChannelCode(rb.getChannel());
+        IncreasePriceCalendar calendar = new IncreasePriceCalendar();
+        calendar.setAdtSellPrice(rb.getApiSettlementPrice());
+        increasePrice.setPrices(Lists.newArrayList(calendar));
+        commonService.increasePrice(increasePrice);
+        recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
         recommendProduct.setPosition(Integer.valueOf(position));
         recommendProduct.setCategory(rb.getCategory());

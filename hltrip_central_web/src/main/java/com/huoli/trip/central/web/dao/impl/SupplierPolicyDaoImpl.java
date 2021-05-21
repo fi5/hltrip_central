@@ -2,11 +2,15 @@ package com.huoli.trip.central.web.dao.impl;
 
 import com.huoli.trip.central.web.dao.SupplierPolicyDao;
 import com.huoli.trip.common.entity.SupplierPolicyPO;
+import com.huoli.trip.common.vo.IncreasePrice;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * 描述：<br/>
@@ -25,6 +29,31 @@ public class SupplierPolicyDaoImpl implements SupplierPolicyDao {
     @Override
     public SupplierPolicyPO getSupplierPolicyBySupplierId(String supplierId){
         return mongoTemplate.findOne(Query.query(Criteria.where("supplierId").is(supplierId)), SupplierPolicyPO.class);
+    }
+
+    @Override
+    public List<SupplierPolicyPO> getSupplierPolicy(IncreasePrice increasePrice){
+        Criteria supplierId = new Criteria();
+        if(StringUtils.isNotBlank(increasePrice.getChannelCode())){
+            supplierId.orOperator(Criteria.where("supplierId").is(increasePrice), Criteria.where("supplierId").is(null));
+        } else {
+            supplierId.andOperator(Criteria.where("supplierId").is(null));
+        }
+        Criteria appSource = new Criteria();
+        if(StringUtils.isNotBlank(increasePrice.getAppSource())){
+            appSource.orOperator(Criteria.where("appSource").in(increasePrice.getAppSource()), Criteria.where("appSource").is(null));
+        } else {
+            appSource.andOperator(Criteria.where("appSource").is(null));
+        }
+        Criteria category = new Criteria();
+        if(StringUtils.isNotBlank(increasePrice.getProductCategory())){
+            category.orOperator(Criteria.where("productType").in(increasePrice.getProductCategory()), Criteria.where("productType").is(null));
+        } else {
+            category.andOperator(Criteria.where("productType").is(null));
+        }
+        Criteria criteria = new Criteria();
+        criteria.andOperator(supplierId, appSource, category);
+        return mongoTemplate.find(Query.query(criteria), SupplierPolicyPO.class);
     }
 
 }
