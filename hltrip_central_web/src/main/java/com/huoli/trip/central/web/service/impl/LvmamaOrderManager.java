@@ -222,7 +222,7 @@ public class LvmamaOrderManager extends OrderManager {
 
 	public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
 		OrderCancelRequest request = new OrderCancelRequest(req.getPartnerOrderId(),req.getOutOrderId());
-		LmmBaseResponse baseResponse = lvmamaOrderService.rufundTicket(request);
+		LmmBaseResponse baseResponse = lvmamaOrderService.refundTicket(request);
 		if(baseResponse != null && "1000".equals(baseResponse.getState().getCode())){
 			return BaseResponse.withSuccess();
 		}
