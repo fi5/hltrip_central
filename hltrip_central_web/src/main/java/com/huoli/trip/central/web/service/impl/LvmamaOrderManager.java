@@ -229,6 +229,4 @@ public class LvmamaOrderManager extends OrderManager {
 		return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
 	}
 
-
-
 }
