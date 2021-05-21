@@ -26,5 +26,6 @@ public interface ProductV2Service {
     BaseResponse<List<BasePrice>> queryCalendar(CalendarRequest request);
 
     BaseResponse<ProductPriceCalendarResult> queryGroupTourPriceCalendar(CalendarRequest request);
+    BaseResponse<ScenicSpotProductDetail> queryScenicSpotProductDetail(ScenicSpotProductRequest request);
 
 }

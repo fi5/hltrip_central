@@ -116,5 +116,23 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         return mongoTemplate.findOne(query, ScenicSpotRuleMPO.class);
     }
 
+    @Override
+    public ScenicSpotProductMPO querySpotProductById(String productId) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("_id").is(productId);
+        query.addCriteria(criteria);
+        return mongoTemplate.findOne(query,ScenicSpotProductMPO.class);
+    }
+
+    @Override
+    public ScenicSpotProductPriceMPO querySpotProductPriceById(String priceId) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("_id").is(priceId);
+        query.addCriteria(criteria);
+        return mongoTemplate.findOne(query,ScenicSpotProductPriceMPO.class);
+    }
+
 
 }
