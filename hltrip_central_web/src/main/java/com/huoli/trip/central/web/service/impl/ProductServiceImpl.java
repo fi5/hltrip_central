@@ -98,6 +98,9 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private RecommendDao recommendDao;
 
+    @Autowired
+    private CommonService commonService;
+
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
@@ -1236,7 +1239,14 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setProductName(rb.getProductName());
         recommendProduct.setChannel(rb.getChannel());
         recommendProduct.setChannelName(rb.getChannelName());
-        recommendProduct.setPrice(rb.getApiSellPrice());
+        IncreasePrice increasePrice = new IncreasePrice();
+        increasePrice.setProductCode(rb.getProductId());
+        increasePrice.setChannelCode(rb.getChannel());
+        IncreasePriceCalendar calendar = new IncreasePriceCalendar();
+        calendar.setAdtSellPrice(rb.getApiSettlementPrice());
+        increasePrice.setPrices(Lists.newArrayList(calendar));
+        commonService.increasePrice(increasePrice);
+        recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
         recommendProduct.setPosition(Integer.valueOf(position));
         recommendProduct.setCategory(rb.getCategory());

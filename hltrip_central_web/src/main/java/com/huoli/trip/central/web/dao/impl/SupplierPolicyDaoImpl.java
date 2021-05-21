@@ -53,7 +53,6 @@ public class SupplierPolicyDaoImpl implements SupplierPolicyDao {
         }
         Criteria criteria = new Criteria();
         criteria.andOperator(supplierId, appSource, category);
-        Query query = new Query();
         return mongoTemplate.find(Query.query(criteria), SupplierPolicyPO.class);
     }
 
