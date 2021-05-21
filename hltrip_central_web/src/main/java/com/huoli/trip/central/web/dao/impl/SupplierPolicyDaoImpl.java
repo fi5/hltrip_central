@@ -35,7 +35,7 @@ public class SupplierPolicyDaoImpl implements SupplierPolicyDao {
     public List<SupplierPolicyPO> getSupplierPolicy(IncreasePrice increasePrice){
         Criteria supplierId = new Criteria();
         if(StringUtils.isNotBlank(increasePrice.getChannelCode())){
-            supplierId.orOperator(Criteria.where("supplierId").is(increasePrice), Criteria.where("supplierId").is(null));
+            supplierId.orOperator(Criteria.where("supplierId").is(increasePrice.getChannelCode()), Criteria.where("supplierId").is(null));
         } else {
             supplierId.andOperator(Criteria.where("supplierId").is(null));
         }
