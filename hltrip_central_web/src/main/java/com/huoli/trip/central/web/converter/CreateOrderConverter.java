@@ -156,14 +156,12 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
             List<Traveller> traveller = new ArrayList<>(guests.size());
             for(CreateOrderReq.BookGuest guest :guests){
                 String credential = guest.getCredential();
+                String credentialType = null;
                 if(StringUtil.isNotEmpty(credential)) {
-                    final String s = convertLvmamaCredentialsType(guest.getCredentialType());
-                    if (StringUtils.isEmpty(s)) {
-                        //抛出不支持的证件类型
-                    }
-                    Traveller traveller1 = new Traveller(guest.getCname(), guest.getMobile(), guest.getEname(), guest.getEmail(), guest.getCredential(), null, s);
-                    traveller.add(traveller1);
+                    credentialType = convertLvmamaCredentialsType(guest.getCredentialType());
                 }
+                Traveller traveller1 = new Traveller(guest.getCname(), guest.getMobile(), guest.getEname(), guest.getEmail(), guest.getCredential(), null, credentialType);
+                traveller.add(traveller1);
             }
             request.setTraveller(traveller);
         }
