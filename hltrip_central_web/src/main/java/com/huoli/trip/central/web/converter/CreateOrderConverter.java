@@ -106,10 +106,11 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
     }
 
     public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
-        Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
-        request.setBooker(booker);
         //需要场次号
         OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+
+        Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
+        orderInfo.setBooker(booker);
 
         Product product = new Product();
         product.setGoodsId(Long.parseLong(req.getGoodsId()));
@@ -120,16 +121,20 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         orderInfo.setProduct(product);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
+
+            Travellers travellers = new Travellers();
             List<Traveller> traveller = new ArrayList<>(guests.size());
+            travellers.setTraveller(traveller);
             for(CreateOrderReq.BookGuest guest :guests){
-                final String s = convertLvmamaCredentialsType(guest.getCredentialType());
-                if(StringUtils.isEmpty(s)){
-                    //抛出不支持的证件类型
+                String credentialType = null;
+                if(StringUtil.isNotEmpty(guest.getCredential())){
+                    credentialType= convertLvmamaCredentialsType(guest.getCredentialType());
                 }
-                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,s);
+
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,credentialType);
                 traveller.add(traveller1);
             }
-            request.setTraveller(traveller);
+            orderInfo.setTravellers(travellers);
         }
         request.setOrderInfo(orderInfo);
         //邮寄信息
@@ -138,10 +143,11 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
     }
 
     public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
-        Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
-        request.setBooker(booker);
         //需要场次号
         OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+
+        Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
+        orderInfo.setBooker(booker);
 
         Product product = new Product();
         product.setGoodsId(Long.parseLong(req.getGoodsId()));
@@ -153,17 +159,20 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
+            Travellers travellers = new Travellers();
             List<Traveller> traveller = new ArrayList<>(guests.size());
+            travellers.setTraveller(traveller);
             for(CreateOrderReq.BookGuest guest :guests){
-                String credential = guest.getCredential();
                 String credentialType = null;
-                if(StringUtil.isNotEmpty(credential)) {
-                    credentialType = convertLvmamaCredentialsType(guest.getCredentialType());
+                if(StringUtil.isNotEmpty(guest.getCredential())){
+                    credentialType= convertLvmamaCredentialsType(guest.getCredentialType());
                 }
-                Traveller traveller1 = new Traveller(guest.getCname(), guest.getMobile(), guest.getEname(), guest.getEmail(), guest.getCredential(), null, credentialType);
+
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,credentialType);
                 traveller.add(traveller1);
             }
-            request.setTraveller(traveller);
+
+            orderInfo.setTravellers(travellers);
         }
 
         request.setOrderInfo(orderInfo);
