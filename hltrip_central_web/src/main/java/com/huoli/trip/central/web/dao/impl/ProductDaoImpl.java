@@ -524,7 +524,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<ProductListMPO> scenicTickets(ScenicTicketListReq req) {
         Criteria criteria = new Criteria();
         //0门票1跟团游2酒景套餐
-        criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0);
+        criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0).and("apiSellPrice").ne(null);
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
@@ -541,9 +541,9 @@ public class ProductDaoImpl implements ProductDao {
                 criteria.and("themeName").regex(themeName);
             }
         }
-        if(StringUtils.isNotBlank(req.getArrCity())){
-            criteria.and("arrPlaces").regex(req.getArrCity());
-        }
+        /*if(StringUtils.isNotBlank(req.getArrCity())){
+            criteria.and("arrCityNames").regex(req.getArrCity());
+        }*/
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
             criteria.and("arrCity").regex(req.getArrCityCode());
         }
@@ -596,15 +596,15 @@ public class ProductDaoImpl implements ProductDao {
         if(StringUtils.isNotBlank(req.getName())){
             criteria.and("productName").regex(req.getName());
         }
-        if (StringUtils.isNotBlank(req.getDepCity())) {
+        /*if (StringUtils.isNotBlank(req.getDepCity())) {
             criteria.and("depPlaces").regex(req.getDepCity());
-        }
+        }*/
         if (StringUtils.isNotBlank(req.getDepCityCode())) {
             criteria.and("depCity").regex(req.getDepCityCode());
         }
-        if (StringUtils.isNotBlank(req.getArrCity())) {
+       /* if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
-        }
+        }*/
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
             criteria.and("arrCity").regex(req.getArrCityCode());
         }
@@ -636,9 +636,9 @@ public class ProductDaoImpl implements ProductDao {
                     .orOperator(Criteria.where("productName").regex(req.getName()));
             criteria.andOperator(nameCriteria);
         }
-        if (StringUtils.isNotBlank(req.getArrCity())) {
+        /*if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
-        }
+        }*/
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
             criteria.and("arrCity").regex(req.getArrCityCode());
         }
