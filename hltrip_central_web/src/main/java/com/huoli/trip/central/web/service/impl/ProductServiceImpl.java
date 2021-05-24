@@ -98,9 +98,6 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private RecommendDao recommendDao;
 
-    @Autowired
-    private CommonService commonService;
-
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
