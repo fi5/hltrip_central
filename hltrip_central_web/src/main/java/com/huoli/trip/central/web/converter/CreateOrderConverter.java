@@ -151,7 +151,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
         Product product = new Product();
         product.setGoodsId(Long.parseLong(req.getGoodsId()));
-        product.setProductId(Long.parseLong(req.getProductId().split("_")[1]));
+        product.setProductId(Long.parseLong(req.getProductId()));
         product.setQuantity(req.getCount());
         product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         product.setVisitDate(req.getBeginDate());
