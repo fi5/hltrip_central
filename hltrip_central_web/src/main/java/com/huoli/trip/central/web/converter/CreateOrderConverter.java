@@ -125,7 +125,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
                 if(StringUtils.isEmpty(s)){
                     //抛出不支持的证件类型
                 }
-                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEmail(),guest.getCname(),guest.getCredential(),null,s);
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,s);
                 traveller.add(traveller1);
             }
             request.setTraveller(traveller);
@@ -158,7 +158,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
                 if(StringUtils.isEmpty(s)){
                     //抛出不支持的证件类型
                 }
-                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEmail(),guest.getCname(),guest.getCredential(),null,s);
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,s);
                 traveller.add(traveller1);
             }
             request.setTraveller(traveller);
