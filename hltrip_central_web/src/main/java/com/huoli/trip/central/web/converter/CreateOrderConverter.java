@@ -107,7 +107,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
     public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
         Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
-        request.setBook(booker);
+        request.setBooker(booker);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
             List<Traveller> traveller = new ArrayList<>(guests.size());
