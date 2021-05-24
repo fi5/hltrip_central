@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.converter;
 
 import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller;
+import com.huoli.eagle.eye.core.util.StringUtil;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.util.ListUtils;
@@ -154,12 +155,15 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         if(ListUtils.isNotEmpty(guests)){
             List<Traveller> traveller = new ArrayList<>(guests.size());
             for(CreateOrderReq.BookGuest guest :guests){
-                final String s = convertLvmamaCredentialsType(guest.getCredentialType());
-                if(StringUtils.isEmpty(s)){
-                    //抛出不支持的证件类型
+                String credential = guest.getCredential();
+                if(StringUtil.isNotEmpty(credential)) {
+                    final String s = convertLvmamaCredentialsType(guest.getCredentialType());
+                    if (StringUtils.isEmpty(s)) {
+                        //抛出不支持的证件类型
+                    }
+                    Traveller traveller1 = new Traveller(guest.getCname(), guest.getMobile(), guest.getEname(), guest.getEmail(), guest.getCredential(), null, s);
+                    traveller.add(traveller1);
                 }
-                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,s);
-                traveller.add(traveller1);
             }
             request.setTraveller(traveller);
         }
