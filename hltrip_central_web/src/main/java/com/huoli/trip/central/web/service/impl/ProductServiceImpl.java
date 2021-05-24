@@ -671,6 +671,7 @@ public class ProductServiceImpl implements ProductService {
             result.setRemark(product.getRemark());
             result.setOperatorPhone(product.getOperatorPhone());
             result.setCityCode(product.getOriCityCode());
+            result.setExtendParams(product.getExtendParams());
 //  调用统一的价格计算并设值
 
             PriceCalcRequest priceCal=new PriceCalcRequest();

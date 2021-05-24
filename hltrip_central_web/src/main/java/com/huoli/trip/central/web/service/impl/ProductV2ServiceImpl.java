@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -501,6 +500,37 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }
 
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<ScenicSpotProductDetail> queryScenicSpotProductDetail(ScenicSpotProductRequest request) {
+        ScenicSpotProductDetail scenucSpotProductDetail =null;
+        ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(request.getProductId());
+        ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = scenicSpotDao.querySpotProductPriceById(request.getPriceId());
+        if(scenicSpotProductMPO != null) {
+            scenucSpotProductDetail =new ScenicSpotProductDetail();
+            BeanUtils.copyProperties(scenicSpotProductMPO, scenucSpotProductDetail);
+        }
+        if(scenicSpotProductPriceMPO != null) {
+            String scenicSpotRuleId = scenicSpotProductPriceMPO.getScenicSpotRuleId();
+            ScenicSpotRuleMPO scenicSpotRuleMPO = scenicSpotDao.queryRuleById(scenicSpotRuleId);
+            if(scenucSpotProductDetail == null){
+                scenucSpotProductDetail =new ScenicSpotProductDetail();
+            }
+            BasePrice basePrice = new BasePrice();
+            BeanUtils.copyProperties(scenicSpotProductPriceMPO, basePrice);
+            basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
+            scenucSpotProductDetail.setPrice(basePrice);
+
+            if(scenicSpotRuleMPO != null){
+                ScenicSpotProductPriceRuleBase ruleBase = new ScenicSpotProductPriceRuleBase();
+                BeanUtils.copyProperties(scenicSpotRuleMPO,ruleBase);
+                scenucSpotProductDetail.setRuleBase(ruleBase);
+
+            }
+        }
+
+        return BaseResponse.withSuccess(scenucSpotProductDetail);
     }
 
 }
