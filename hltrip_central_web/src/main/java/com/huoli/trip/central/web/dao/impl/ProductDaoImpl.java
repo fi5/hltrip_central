@@ -524,7 +524,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<ProductListMPO> scenicTickets(ScenicTicketListReq req) {
         Criteria criteria = new Criteria();
         //0门票1跟团游2酒景套餐
-        criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0);
+        criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0).and("price").ne(null);
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
