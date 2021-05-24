@@ -130,7 +130,6 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
                 if(StringUtil.isNotEmpty(guest.getCredential())){
                     credentialType= convertLvmamaCredentialsType(guest.getCredentialType());
                 }
-
                 Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,credentialType);
                 traveller.add(traveller1);
             }
