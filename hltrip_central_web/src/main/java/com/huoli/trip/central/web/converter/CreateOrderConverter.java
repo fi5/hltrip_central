@@ -122,9 +122,9 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
 
-            Travellers travellers = new Travellers();
-            List<Traveller> traveller = new ArrayList<>(guests.size());
-            travellers.setTraveller(traveller);
+           // Travellers travellers = new Travellers();
+            List<Traveller> travellers = new ArrayList<>(guests.size());
+            //travellers.setTraveller(traveller);
             for(CreateOrderReq.BookGuest guest :guests){
                 String credentialType = null;
                 if(StringUtil.isNotEmpty(guest.getCredential())){
@@ -132,7 +132,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
                 }
 
                 Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,credentialType);
-                traveller.add(traveller1);
+                travellers.add(traveller1);
             }
             orderInfo.setTravellers(travellers);
         }
@@ -159,9 +159,9 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
-            Travellers travellers = new Travellers();
+            //Travellers travellers = new Travellers();
             List<Traveller> traveller = new ArrayList<>(guests.size());
-            travellers.setTraveller(traveller);
+            //travellers.setTraveller(traveller);
             for(CreateOrderReq.BookGuest guest :guests){
                 String credentialType = null;
                 if(StringUtil.isNotEmpty(guest.getCredential())){
@@ -172,7 +172,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
                 traveller.add(traveller1);
             }
 
-            orderInfo.setTravellers(travellers);
+            orderInfo.setTravellers(traveller);
         }
 
         request.setOrderInfo(orderInfo);
