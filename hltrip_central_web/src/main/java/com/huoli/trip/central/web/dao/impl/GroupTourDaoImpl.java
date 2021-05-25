@@ -36,12 +36,15 @@ public class GroupTourDaoImpl implements GroupTourDao {
     }
 
     @Override
-    public List<GroupTourProductSetMealMPO> queryProductSetMealByProductId(String productId, List<String> depCodes) {
+    public List<GroupTourProductSetMealMPO> queryProductSetMealByProductId(String productId, List<String> depCodes, String packageId) {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("groupTourProductId").is(productId);
         if(!CollectionUtils.isEmpty(depCodes)){
             criteria.and("depCode").in(depCodes);
+        }
+        if(StringUtils.isNotBlank(packageId)){
+            criteria.and("_id").is(packageId);
         }
         query.addCriteria(criteria);
         return mongoTemplate.find(query, GroupTourProductSetMealMPO.class);
