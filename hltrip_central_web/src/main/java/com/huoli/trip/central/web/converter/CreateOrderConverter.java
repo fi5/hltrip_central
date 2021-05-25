@@ -107,7 +107,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
     public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
         //需要场次号
-        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+        OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(req.getSellAmount()),null);
 
         Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
         orderInfo.setBooker(booker);
