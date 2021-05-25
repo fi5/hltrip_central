@@ -88,7 +88,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
             });
         }
-        final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId(), depCodes);
+        final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId(), depCodes, request.getPackageId());
         log.info("查询到的套餐列表：{}", JSONObject.toJSONString(groupTourProductSetMealMPOS));
         if(groupTourProductMPO != null){
             groupTourProductBody = new GroupTourBody();
@@ -108,7 +108,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     @Override
     public GroupMealsBody groupMealsBody(GroupTourMealsRequest request) {
         GroupMealsBody body = null;
-        List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(request.getGroupTourId(), null);
+        List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(request.getGroupTourId(), null, request.getPackageId());
         if (CollectionUtils.isNotEmpty(groupTourProductSetMealMPOS)) {
             List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p -> {
                 GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
