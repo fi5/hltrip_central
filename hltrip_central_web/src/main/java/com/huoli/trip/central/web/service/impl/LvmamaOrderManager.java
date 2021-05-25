@@ -218,6 +218,8 @@ public class LvmamaOrderManager extends OrderManager {
 	}
 
 	public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
+		CenterPayCheckRes  payCheckRes = new CenterPayCheckRes();
+		payCheckRes.setResult(true);
 		return BaseResponse.withSuccess();
 	}
 
