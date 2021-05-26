@@ -20,6 +20,7 @@ import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.api.LvmamaOrderService;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyToursOrderDetail;
+import com.huoli.trip.supplier.self.lvmama.vo.OrderInfo;
 import com.huoli.trip.supplier.self.lvmama.vo.OrderPaymentInfo;
 import com.huoli.trip.supplier.self.lvmama.vo.request.*;
 import com.huoli.trip.supplier.self.lvmama.vo.response.LmmBaseResponse;
@@ -134,7 +135,6 @@ public class LvmamaOrderManager extends OrderManager {
 			baseOrderRequest.setSupplierOrderId(req.getSupplierOrderId());
 			baseOrderRequest.setTraceId(req.getTraceId());
 
-
 			BaseResponse<LvOrderDetail> order = lvmamaOrderService.orderDetail(baseOrderRequest);
 			if (order == null)
 				return BaseResponse.fail(CentralError.ERROR_UNKNOWN);
@@ -160,6 +160,8 @@ public class LvmamaOrderManager extends OrderManager {
 
 	public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
 		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
+		validateOrderRequest.setTraceId(req.getTraceId());
+		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req);
 
 		LmmBaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
 		if(!"1000".equals(checkInfos.getState().getCode())){
@@ -169,6 +171,7 @@ public class LvmamaOrderManager extends OrderManager {
 	}
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
 		CreateOrderRequest request = new CreateOrderRequest();
+		request.setTraceId(req.getTraceId());
 		createOrderConverter.convertLvmamaCreateOrderRequest(request,req);
 		OrderResponse response = lvmamaOrderService.createOrder(request);
 		if(response != null && "1000".equals(response.getState().getCode())){
@@ -217,7 +220,9 @@ public class LvmamaOrderManager extends OrderManager {
 	}
 
 	public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
-		return BaseResponse.withSuccess();
+		CenterPayCheckRes  payCheckRes = new CenterPayCheckRes();
+		payCheckRes.setResult(true);
+		return BaseResponse.withSuccess(payCheckRes);
 	}
 
 	public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
