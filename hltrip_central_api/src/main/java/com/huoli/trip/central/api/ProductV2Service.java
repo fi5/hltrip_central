@@ -28,4 +28,11 @@ public interface ProductV2Service {
     BaseResponse<ProductPriceCalendarResult> queryGroupTourPriceCalendar(CalendarRequest request);
     BaseResponse<ScenicSpotProductDetail> queryScenicSpotProductDetail(ScenicSpotProductRequest request);
 
+    BaseResponse<HotelScenicProductDetail> hotelScenicProductDetail(HotelScenicProductRequest request);
+
+    BaseResponse<List<HotelScenicProductSetMealBrief>> hotelScenicProductSetMealList(CalendarRequest request);
+
+    BaseResponse<ProductPriceCalendarResult> queryHotelScenicPriceCalendar(CalendarRequest request);
+
+    BaseResponse<HotelScenicProductSetMealDetail> queryHotelScenicSetMealDetail(HotelScenicSetMealRequest request);
 }
