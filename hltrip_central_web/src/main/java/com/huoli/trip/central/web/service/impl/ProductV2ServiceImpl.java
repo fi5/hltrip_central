@@ -2,16 +2,22 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductV2Service;
 import com.huoli.trip.central.web.constant.ColourConstants;
 import com.huoli.trip.central.web.dao.GroupTourDao;
+import com.huoli.trip.central.web.dao.HotelScenicDao;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotPriceStock;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductPayInfo;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
@@ -50,6 +56,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
     @Autowired
     GroupTourDao groupTourDao;
+
+    @Autowired
+    HotelScenicDao hotelScenicDao;
 
     @Autowired
     private CommonService commonService;
@@ -436,6 +445,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
         GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
         List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
+        //过滤日期
         Date startDate = new Date();
         if(StringUtils.isNotBlank(request.getStartDate())){
             Date reqStartDate = DateTimeUtil.parse(request.getStartDate(), DateTimeUtil.YYYYMMDD);
@@ -531,6 +541,165 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }
 
         return BaseResponse.withSuccess(scenucSpotProductDetail);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/25/21 4:48 PM
+     * 酒景套餐产品详情 产品简要信息，可直接查询返回
+     * [request]
+     * @return {@link BaseResponse< HotelScenicProductDetail>}
+     * @throws
+     */
+    @Override
+    public BaseResponse<HotelScenicProductDetail> hotelScenicProductDetail(HotelScenicProductRequest request) {
+        HotelScenicProductDetail hotelScenicProductDetail = hotelScenicDao.queryHotelScenicProductById(request.getProductId());
+        return BaseResponse.withSuccess(hotelScenicProductDetail);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/26/21 10:01 AM
+     * 套餐列表
+     * [request]
+     * @return {@link BaseResponse< List< HotelScenicProductSetMealBrief>>}
+     * @throws
+     */
+    @Override
+    public BaseResponse<List<HotelScenicProductSetMealBrief>> hotelScenicProductSetMealList(CalendarRequest request) {
+        List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
+        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+        List<HotelScenicProductSetMealBrief> briefList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(setMealMpoList)){
+            briefList = setMealMpoList.stream().map(setMealMpo -> {
+                HotelScenicProductSetMealBrief brief = new HotelScenicProductSetMealBrief();
+                BeanUtils.copyProperties(setMealMpo, brief);
+                brief.setPackageId(setMealMpo.getId());
+                brief.setProductId(setMealMpo.getHotelScenicSpotProductId());
+                brief.setTitle(setMealMpo.getName());
+                brief.setThemeElements(productMPO.getPayInfo() == null ? 0 : productMPO.getPayInfo().getThemeElements());
+                //价格计算
+                IncreasePrice increasePrice = hotelIncreasePrice(productMPO, request, setMealMpo.getPriceStocks());
+
+                brief.setPrice(increasePrice.getPrices().stream().filter(a -> StringUtils.equals(a.getDate(), request.getStartDate())).collect(Collectors.toList()).get(0).getAdtSellPrice());
+                return brief;
+            }).collect(Collectors.toList());
+        }
+        return BaseResponse.withSuccess(briefList);
+    }
+
+    private IncreasePrice hotelIncreasePrice(HotelScenicSpotProductMPO productMPO, CalendarRequest request, List<HotelScenicSpotPriceStock> priceStocks) {
+        IncreasePrice increasePrice = new IncreasePrice();
+        increasePrice.setChannelCode(productMPO.getChannel());
+        increasePrice.setProductCode(productMPO.getId());
+        increasePrice.setAppSource(request.getFrom());
+        increasePrice.setProductCategory(productMPO.getCategory());
+        List<IncreasePriceCalendar> priceCalendars = priceStocks.stream().map(item -> {
+            IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+            priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
+            priceCalendar.setChdSellPrice(item.getChdSellPrice());
+            priceCalendar.setDate(item.getDate());
+            return priceCalendar;
+        }).collect(Collectors.toList());
+        increasePrice.setPrices(priceCalendars);
+        commonService.increasePrice(increasePrice);
+        return increasePrice;
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/26/21 2:18 PM
+     * 酒景套餐价格日历
+     * [request]
+     * @return {@link BaseResponse< ProductPriceCalendarResult>}
+     * @throws
+     */
+    @Override
+    public BaseResponse<ProductPriceCalendarResult> queryHotelScenicPriceCalendar(CalendarRequest request) {
+        List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
+        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+        List<HotelScenicSpotPriceStock> allPriceStocks = new ArrayList<>();
+        //将所有价格整合到一起
+        for (HotelScenicSpotProductSetMealMPO hotelScenicSpotProductSetMealMPO : setMealMpoList) {
+            allPriceStocks.addAll(hotelScenicSpotProductSetMealMPO.getPriceStocks());
+        }
+        //价格根据日期分组
+        Map<String, List<HotelScenicSpotPriceStock>> priceMapByDate = allPriceStocks.stream().collect(Collectors.groupingBy(a -> a.getDate()));
+        Set<String> dates = priceMapByDate.keySet();
+        List<HotelScenicSpotPriceStock> priceStocks = new ArrayList<>();
+        Date startDate = new Date();
+        if(StringUtils.isNotBlank(request.getStartDate())){
+            Date reqStartDate = DateTimeUtil.parse(request.getStartDate(), DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(reqStartDate, startDate) > 0) {
+                startDate = reqStartDate;
+            }
+        }
+        Date endDate = null;
+        if(StringUtils.isNotBlank(request.getEndDate())){
+            Date reqEndDate = DateTimeUtil.parse(request.getEndDate(), DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(reqEndDate, startDate)> 0) {
+                endDate = reqEndDate;
+            }
+        }
+        //筛选最低价格并过滤非查询日期
+        for (String date : dates) {
+            Date calendarDate = DateTimeUtil.parse(date, DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(calendarDate, startDate) < 0 || DateTimeUtil.getDateDiffDays(calendarDate, endDate) > 0){
+                continue;
+            }
+            List<HotelScenicSpotPriceStock> tmpPriceStock = priceMapByDate.get(date);
+            tmpPriceStock.sort(Comparator.comparing(a -> a.getAdtSellPrice()));
+            priceStocks.add(tmpPriceStock.get(0));
+        }
+        Map<String, HotelScenicSpotPriceStock> priceStocksByDate = Maps.uniqueIndex(priceStocks, a -> a.getDate());
+        //加价
+        IncreasePrice increasePrice = hotelIncreasePrice(productMPO, request, priceStocks);
+        List<PriceInfo> resultPrices = increasePrice.getPrices().stream().map(item -> {
+            PriceInfo priceInfo = new PriceInfo();
+            HotelScenicSpotPriceStock hotelScenicSpotPriceStock = priceStocksByDate.get(item.getDate());
+            priceInfo.setProductCode(request.getProductId());
+            priceInfo.setSaleDate(item.getDate());
+            priceInfo.setSalePrice(item.getAdtSellPrice());
+            priceInfo.setSettlePrice(hotelScenicSpotPriceStock.getAdtPrice());
+            priceInfo.setStock(hotelScenicSpotPriceStock.getAdtStock());
+            priceInfo.setChdSalePrice(item.getChdSellPrice());
+            priceInfo.setChdSettlePrice(hotelScenicSpotPriceStock.getChdPrice());
+            return priceInfo;
+        }).collect(Collectors.toList());
+
+        ProductPriceCalendarResult result = new ProductPriceCalendarResult();
+        result.setPriceInfos(resultPrices);
+
+        return BaseResponse.withSuccess(result);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/26/21 4:17 PM
+     * 酒景套餐详情
+     * [request]
+     * @return {@link BaseResponse< HotelScenicProductSetMealDetail>}
+     * @throws
+     */
+    @Override
+    public BaseResponse<HotelScenicProductSetMealDetail> queryHotelScenicSetMealDetail(HotelScenicSetMealRequest request) {
+        HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicDao.queryHotelScenicsetMealById(request);
+        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+        HotelScenicProductSetMealDetail result = new HotelScenicProductSetMealDetail();
+        BeanUtils.copyProperties(setMealMPO, result);
+        result.setProductId(setMealMPO.getHotelScenicSpotProductId());
+        result.setPackageId(setMealMPO.getId());
+        result.setTitle(setMealMPO.getName());
+        HotelScenicSpotProductPayInfo payInfo = productMPO.getPayInfo();
+        if(payInfo != null){
+            result.setBookNotice(payInfo.getBookNotice());
+            result.setCostExclude(payInfo.getCostExclude());
+            result.setBookNotices(payInfo.getBookNotices());
+            result.setThemeElements(payInfo.getThemeElements());
+        }
+        result.setChannel(productMPO.getChannel());
+        result.setRefundRules(productMPO.getRefundRules());
+        return BaseResponse.withSuccess(result);
     }
 
 }
