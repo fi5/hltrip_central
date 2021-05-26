@@ -79,7 +79,7 @@ public class HotelScenicDaoImpl implements HotelScenicDao {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("_id").is(request.getPackageId());
-        criteria.and("_hotelScenicSpotProductId").is(request.getProductId());
+        criteria.and("hotelScenicSpotProductId").is(request.getProductId());
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, HotelScenicSpotProductSetMealMPO.class);
     }
