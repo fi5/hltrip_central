@@ -14,7 +14,7 @@ public interface GroupTourDao {
 
     GroupTourProductMPO queryTourProduct(String groupTourId);
 
-    List<GroupTourProductSetMealMPO> queryProductSetMealByProductId(String productId, List<String> depCodes);
+    List<GroupTourProductSetMealMPO> queryProductSetMealByProductId(String productId, List<String> depCodes, String packageId);
 
     GroupTourProductSetMealMPO queryGroupSetMealBySetId(String setMealId);
 
