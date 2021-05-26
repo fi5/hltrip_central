@@ -160,6 +160,7 @@ public class LvmamaOrderManager extends OrderManager {
 
 	public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
 		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
+		validateOrderRequest.setTraceId(req.getTraceId());
 		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req);
 
 		LmmBaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
@@ -170,6 +171,7 @@ public class LvmamaOrderManager extends OrderManager {
 	}
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
 		CreateOrderRequest request = new CreateOrderRequest();
+		request.setTraceId(req.getTraceId());
 		createOrderConverter.convertLvmamaCreateOrderRequest(request,req);
 		OrderResponse response = lvmamaOrderService.createOrder(request);
 		if(response != null && "1000".equals(response.getState().getCode())){
