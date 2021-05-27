@@ -14,6 +14,7 @@ import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
+import com.huoli.trip.common.entity.mpo.hotel.HotelMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotPriceStock;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductPayInfo;
@@ -699,6 +700,24 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }
         result.setChannel(productMPO.getChannel());
         result.setRefundRules(productMPO.getRefundRules());
+        return BaseResponse.withSuccess(result);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/27/21 3:36 PM
+     * 酒店详情
+     * [request]
+     * @return {@link BaseResponse< HotelInfoBase>}
+     * @throws
+     */
+    @Override
+    public BaseResponse<HotelInfoBase> queryHotelInfoDetail(HotelInfoRequest request) {
+        HotelMPO hotelMPO = hotelScenicDao.queryHotelMpo(request.getHotelId());
+        HotelInfoBase result = new HotelInfoBase();
+        if(hotelMPO != null){
+            BeanUtils.copyProperties(hotelMPO, result);
+        }
         return BaseResponse.withSuccess(result);
     }
 
