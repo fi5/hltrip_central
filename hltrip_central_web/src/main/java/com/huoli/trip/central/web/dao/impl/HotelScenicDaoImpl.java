@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.dao.impl;
 
 import com.huoli.trip.central.web.dao.HotelScenicDao;
 import com.huoli.trip.common.constant.MongoConst;
+import com.huoli.trip.common.entity.mpo.hotel.HotelMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
 import com.huoli.trip.common.vo.request.v2.CalendarRequest;
@@ -82,5 +83,14 @@ public class HotelScenicDaoImpl implements HotelScenicDao {
         criteria.and("hotelScenicSpotProductId").is(request.getProductId());
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, HotelScenicSpotProductSetMealMPO.class);
+    }
+
+    @Override
+    public HotelMPO queryHotelMpo(String hotelId) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("_id").is(hotelId);
+        query.addCriteria(criteria);
+        return mongoTemplate.findOne(query, HotelMPO.class);
     }
 }

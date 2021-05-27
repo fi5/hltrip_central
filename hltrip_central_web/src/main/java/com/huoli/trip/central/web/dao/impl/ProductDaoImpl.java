@@ -631,9 +631,7 @@ public class ProductDaoImpl implements ProductDao {
         }
         if(StringUtils.isNotBlank(req.getName())){
             Criteria nameCriteria = new Criteria();
-            nameCriteria.orOperator(Criteria.where("scenicSpotName").regex(req.getName()))
-                    .orOperator(Criteria.where("hotelName").regex(req.getName()))
-                    .orOperator(Criteria.where("productName").regex(req.getName()));
+            nameCriteria.orOperator(Criteria.where("scenicSpotName").regex(req.getName()), Criteria.where("hotelName").regex(req.getName()), Criteria.where("productName").regex(req.getName()));
             criteria.andOperator(nameCriteria);
         }
         /*if (StringUtils.isNotBlank(req.getArrCity())) {

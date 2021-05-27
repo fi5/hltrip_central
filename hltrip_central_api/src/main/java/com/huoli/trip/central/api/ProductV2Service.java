@@ -35,4 +35,6 @@ public interface ProductV2Service {
     BaseResponse<ProductPriceCalendarResult> queryHotelScenicPriceCalendar(CalendarRequest request);
 
     BaseResponse<HotelScenicProductSetMealDetail> queryHotelScenicSetMealDetail(HotelScenicSetMealRequest request);
+
+    BaseResponse<HotelInfoBase> queryHotelInfoDetail(HotelInfoRequest request);
 }
