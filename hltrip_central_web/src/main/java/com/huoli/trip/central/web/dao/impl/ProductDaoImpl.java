@@ -522,6 +522,29 @@ public class ProductDaoImpl implements ProductDao {
 
     @Override
     public List<ProductListMPO> scenicTickets(ScenicTicketListReq req) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req);
+        LimitOperation limit = Aggregation.limit(req.getPageSize());
+        SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
+        operations.add(limit);
+        operations.add(skip);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+
+        return  output.getMappedResults();
+    }
+
+
+
+    @Override
+    public int getScenicTicketTotal(ScenicTicketListReq req) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+        return output.getMappedResults() == null ? 0 : output.getMappedResults().size();
+    }
+
+    private List<AggregationOperation> buildScenicTicketOperations(ScenicTicketListReq req) {
+        List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         //0门票1跟团游2酒景套餐
         criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0).and("apiSellPrice").ne(null);
@@ -553,12 +576,11 @@ public class ProductDaoImpl implements ProductDao {
         GroupOperation groupOperation = getNewListGroupField("scenicSpotId");
         SortOperation priceSortOperation = Aggregation.sort(Sort.Direction.ASC, "apiSellPrice");
         groupOperation.min("apiSellPrice");
-        LimitOperation limit = Aggregation.limit(req.getPageSize());
-        SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
-        Aggregation aggregation = Aggregation.newAggregation(matchOperation, groupOperation, priceSortOperation, sortOperation, skip, limit);
-        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
-
-        return  output.getMappedResults();
+        operations.add(matchOperation);
+        operations.add(sortOperation);
+        operations.add(groupOperation);
+        operations.add(priceSortOperation);
+        return operations;
     }
 
     private GroupOperation getNewListGroupField(String... field) {
@@ -588,6 +610,29 @@ public class ProductDaoImpl implements ProductDao {
 
     @Override
     public List<ProductListMPO> groupTourList(GroupTourListReq req) {
+        List<AggregationOperation> operations = buildGroupTourListOperation(req);
+        LimitOperation limit = Aggregation.limit(req.getPageSize());
+        SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
+        operations.add(limit);
+        operations.add(skip);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+
+        return  output.getMappedResults();
+    }
+
+
+    @Override
+    public int groupTourListCount(GroupTourListReq req) {
+        List<AggregationOperation> operations = buildGroupTourListOperation(req);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+
+        return  output.getMappedResults() == null ? 0 : output.getMappedResults().size();
+    }
+
+    private List<AggregationOperation> buildGroupTourListOperation(GroupTourListReq req) {
+        List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0);
         if (StringUtils.isNotBlank(req.getApp())) {
@@ -613,17 +658,26 @@ public class ProductDaoImpl implements ProductDao {
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex");
+        operations.add(matchOperation);
+        operations.add(sortOperation);
+        return operations;
+    }
+
+    @Override
+    public List<ProductListMPO> hotelScenicList(HotelScenicListReq req) {
+        List<AggregationOperation> operations = buildHotelScenicListOperations(req);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
-        List<AggregationOperation> operations = Lists.newArrayList(matchOperation,sortOperation, skip, limit);
+        operations.add(limit);
+        operations.add(skip);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
         return  output.getMappedResults();
     }
 
-    @Override
-    public List<ProductListMPO> hotelScenicList(HotelScenicListReq req) {
+    private List<AggregationOperation> buildHotelScenicListOperations(HotelScenicListReq req) {
+        List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         criteria.and("category").is("hotel_scenicSpot").and("status").is(1).and("isDel").is(0);
         if (StringUtils.isNotBlank(req.getApp())) {
@@ -642,10 +696,17 @@ public class ProductDaoImpl implements ProductDao {
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex");
-        List<AggregationOperation> operations = Lists.newArrayList(matchOperation,sortOperation);
+        operations.add(matchOperation);
+        operations.add(sortOperation);
+        return operations;
+    }
+
+    @Override
+    public int hotelScenicListCount(HotelScenicListReq req) {
+        List<AggregationOperation> operations = buildHotelScenicListOperations(req);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
-        return  output.getMappedResults();
+        return  output.getMappedResults() == null ? 0 : output.getMappedResults().size();
     }
 }
