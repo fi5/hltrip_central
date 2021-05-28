@@ -263,7 +263,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req) {
         List<ProductListMPO> productListMPOS = productDao.scenicTickets(req);
+        int count = productDao.getScenicTicketTotal(req);
         ScenicTicketListResult result=new ScenicTicketListResult();
+        if(count > req.getPageSize() * req.getPageIndex()){
+            result.setMore(1);
+        }
         List<ScenicTicketListItem> items = Lists.newArrayList();
         if(CollectionUtils.isNotEmpty(productListMPOS)){
             productListMPOS.stream().forEach(item -> {
@@ -291,7 +295,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<GroupTourListResult> groupTourList(GroupTourListReq req) {
         List<ProductListMPO> productListMPOS = productDao.groupTourList(req);
+        int count = productDao.groupTourListCount(req);
         GroupTourListResult result=new GroupTourListResult();
+        if(count > req.getPageIndex() * req.getPageSize()){
+            result.setMore(1);
+        }
         List<GroupTourListItem> items = Lists.newArrayList();
         if(CollectionUtils.isNotEmpty(productListMPOS)){
             productListMPOS.stream().forEach(item -> {
@@ -319,7 +327,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req) {
         List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
+        int count = productDao.hotelScenicListCount(req);
         HotelScenicListResult result=new HotelScenicListResult();
+        if(count > req.getPageIndex() * req.getPageSize()){
+            result.setMore(1);
+        }
         List<HotelScenicListItem> items = Lists.newArrayList();
         if(CollectionUtils.isNotEmpty(productListMPOS)){
             productListMPOS.stream().forEach(item -> {

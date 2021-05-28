@@ -175,4 +175,10 @@ public interface ProductDao {
     List<ProductListMPO> groupTourList(GroupTourListReq req);
 
     List<ProductListMPO> hotelScenicList(HotelScenicListReq req);
+
+    int getScenicTicketTotal(ScenicTicketListReq req);
+
+    int groupTourListCount(GroupTourListReq req);
+
+    int hotelScenicListCount(HotelScenicListReq req);
 }
