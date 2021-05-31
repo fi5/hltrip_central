@@ -3,18 +3,28 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.*;
+import com.huoli.trip.central.web.dao.HotelScenicDao;
 import com.huoli.trip.central.web.dao.ProductDao;
+import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.entity.*;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotPriceStock;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductBackupMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductBackupMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.PriceCalcRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
+import com.huoli.trip.common.vo.request.v2.HotelScenicSetMealRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
@@ -30,10 +40,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +72,10 @@ public class YcfOrderManger extends OrderManager {
     private CancelOrderConverter cancelOrderConverter;
     @Autowired
     private ApplyRefundConverter applyRefundConverter;
+    @Autowired
+    private ScenicSpotDao scenicSpotDao;
+    @Autowired
+    private HotelScenicDao hotelScenicDao;
     public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_YCF;
     public String getChannel(){
         return CHANNEL;
@@ -83,7 +94,17 @@ public class YcfOrderManger extends OrderManager {
         //开始组装供应商请求参数
         YcfBookCheckReq ycfBookCheckReq = new YcfBookCheckReq();
         //转供应商productId
-        ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
+        //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
+        switch (req.getCategory()){
+            case "d_ss_ticket":
+                ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+                ycfBookCheckReq.setProductId(scenicSpotProductMPO.getSupplierProductId());
+                break;
+            case "hotel_scenicSpot":
+                HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(req.getProductId());
+                ycfBookCheckReq.setProductId(productMPO.getSupplierProductId());
+                break;
+        }
         ycfBookCheckReq.setBeginDate(begin);
         ycfBookCheckReq.setEndDate(end);
         /**
@@ -240,7 +261,18 @@ public class YcfOrderManger extends OrderManager {
         }
         //先校验是否可以预定
         BookCheckReq bookCheckReq = new BookCheckReq();
-        bookCheckReq.setProductId(req.getProductId());
+        //转供应商productId
+        //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
+        switch (req.getCategory()){
+            case "d_ss_ticket":
+                ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+                bookCheckReq.setProductId(scenicSpotProductMPO.getSupplierProductId());
+                break;
+            case "hotel_scenicSpot":
+                HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(req.getProductId());
+                bookCheckReq.setProductId(productMPO.getSupplierProductId());
+                break;
+        }
         bookCheckReq.setBeginDate(begin);
         bookCheckReq.setEndDate(end);
         bookCheckReq.setCount(req.getQunatity());
@@ -262,7 +294,7 @@ public class YcfOrderManger extends OrderManager {
         //*********************************************组装供应商请求开始**********************************************
         //转换客户端传来的参数
         YcfCreateOrderReq ycfCreateOrderReq = createOrderConverter.convertRequestToSupplierRequest(req);
-        //获取中台产品信息
+       /* //获取中台产品信息
         ProductPO productPO = productDao.getTripProductByCode(req.getProductId());
         //本地餐饮
         FoodPO food = productPO.getFood();
@@ -272,7 +304,72 @@ public class YcfOrderManger extends OrderManager {
         List<RoomInfoPO> rooms = room.getRooms();
         //本地票资源
         TicketPO ticket = productPO.getTicket();
-        List<TicketInfoPO> tickets = ticket.getTickets();
+        List<TicketInfoPO> tickets = ticket.getTickets();*/
+        List<YcfResourceFood> foods = new ArrayList<>();
+        List<YcfResourceTicket> tickets = new ArrayList<>();
+        List<YcfResourceRoom> rooms = new ArrayList<>();
+        YcfProduct ycfProduct = null;
+        //供应商价格集合
+        List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
+        switch (req.getCategory()){
+            case "d_ss_ticket":
+                ScenicSpotProductBackupMPO backupMPO = scenicSpotDao.queryBackInfoByProductId(req.getProductId());
+                if(StringUtils.isNotBlank(backupMPO.getOriginContent())){
+                    ycfProduct = JSONObject.parseObject(backupMPO.getOriginContent(), YcfProduct.class);
+                }
+                ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = scenicSpotDao.querySpotProductPriceById(req.getPackageId());
+                if(scenicSpotProductPriceMPO != null){
+                    //价格对象
+                    YcfPriceItem ycfPriceItem = new YcfPriceItem();
+                    //YYYYMMDD
+                    ycfPriceItem.setDate(DateTimeUtil.parseDate(scenicSpotProductPriceMPO.getStartDate()));
+                    ycfPriceItem.setPrice(scenicSpotProductPriceMPO.getSettlementPrice());
+                    ycfPriceItemList = Arrays.asList(ycfPriceItem);
+                }
+                break;
+            case "hotel_scenicSpot":
+                HotelScenicSpotProductBackupMPO hotelBackUp = hotelScenicDao.queryBackInfoByProductId(req.getProductId());
+                if (StringUtils.isNotBlank(hotelBackUp.getOriginContent())) {
+                    ycfProduct = JSONObject.parseObject(hotelBackUp.getOriginContent(), YcfProduct.class);
+                }
+                HotelScenicSetMealRequest request = new HotelScenicSetMealRequest();
+                request.setProductId(req.getProductId());
+                request.setPackageId(req.getPackageId());
+                Date startDate = new Date();
+                if(StringUtils.isNotBlank(req.getBeginDate())){
+                    Date reqStartDate = DateTimeUtil.parse(req.getBeginDate(), DateTimeUtil.YYYYMMDD);
+                    if(DateTimeUtil.getDateDiffDays(reqStartDate, startDate) > 0) {
+                        startDate = reqStartDate;
+                    }
+                }
+                Date endDate = null;
+                if(StringUtils.isNotBlank(req.getEndDate())){
+                    Date reqEndDate = DateTimeUtil.parse(req.getEndDate(), DateTimeUtil.YYYYMMDD);
+                    if(DateTimeUtil.getDateDiffDays(reqEndDate, startDate)> 0) {
+                        endDate = reqEndDate;
+                    }
+                }
+                HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicDao.queryHotelScenicSetMealById(request);
+                List<HotelScenicSpotPriceStock> priceStocks = setMealMPO.getPriceStocks();
+                for (HotelScenicSpotPriceStock priceStock : priceStocks) {
+                    Date calendarDate = DateTimeUtil.parse(priceStock.getDate(), DateTimeUtil.YYYYMMDD);
+                    if(DateTimeUtil.getDateDiffDays(calendarDate, startDate) < 0 || DateTimeUtil.getDateDiffDays(calendarDate, endDate) > 0){
+                        continue;
+                    }
+                    //价格对象
+                    YcfPriceItem ycfPriceItem = new YcfPriceItem();
+                    //YYYYMMDD
+                    ycfPriceItem.setDate(DateTimeUtil.parseDate(priceStock.getDate()));
+                    ycfPriceItem.setPrice(priceStock.getAdtPrice());
+                    ycfPriceItemList.add(ycfPriceItem);
+                }
+                break;
+        }
+        if(ycfProduct != null){
+            foods = ycfProduct.getFoodList();
+            tickets = ycfProduct.getTicketList();
+            rooms = ycfProduct.getRoomList();
+        }
         //传入参数没有包含任何资源(房，票，餐)
         if(CollectionUtils.isEmpty(foods)
                 && CollectionUtils.isEmpty(rooms)
@@ -282,39 +379,37 @@ public class YcfOrderManger extends OrderManager {
         }
         //**供应商餐饮**
         List<YcfBookFood> ycfBookFoods = new ArrayList<>();
-        if(food!=null && !CollectionUtils.isEmpty(foods)){
+        if(!CollectionUtils.isEmpty(foods)){
             foods.forEach(f ->{
                 YcfBookFood ycfBookFood = new YcfBookFood();
-                ycfBookFood.setFoodId(f.getSupplierResourceId());
+                ycfBookFood.setFoodId(f.getFoodId());
                 ycfBookFood.setCheckInDate(req.getBeginDate());
                 ycfBookFoods.add(ycfBookFood);
             });
         }
         //**供应商房资源组**
         List<YcfBookRoom> ycfBookRooms = new ArrayList<>();
-        if(room!=null && !CollectionUtils.isEmpty(rooms)){
+        if(!CollectionUtils.isEmpty(rooms)){
             rooms.forEach(roomInfoPO ->{
                 YcfBookRoom ycfBookRoom = new YcfBookRoom();
                 ycfBookRoom.setCheckInDate(req.getBeginDate());
                 ycfBookRoom.setCheckOutDate(req.getEndDate());
-                ycfBookRoom.setRoomId(roomInfoPO.getSupplierResourceId());
+                ycfBookRoom.setRoomId(roomInfoPO.getRoomId());
                 ycfBookRooms.add(ycfBookRoom);
             });
         }
         //**供应商门票资源组**
         List<YcfBookTicket> ycfBookTickets = new ArrayList<>();
-        if(ticket!=null && !CollectionUtils.isEmpty(tickets)){
+        if(!CollectionUtils.isEmpty(tickets)){
             tickets.forEach(ticketInfoPO ->{
                 YcfBookTicket ycfBookTicket = new YcfBookTicket();
                 ycfBookTicket.setCheckInDate(req.getBeginDate());
-                ycfBookTicket.setTicketId(ticketInfoPO.getSupplierResourceId());
+                ycfBookTicket.setTicketId(ticketInfoPO.getTicketId());
                 ycfBookTickets.add(ycfBookTicket);
             });
         }
         //获取中台价格日历
-        PricePO pricePos = productDao.getPricePos(req.getProductId());
-        //供应商价格集合
-        List<YcfPriceItem> ycfPriceItemList = new ArrayList<>();
+        /*PricePO pricePos = productDao.getPricePos(req.getProductId());
         if(pricePos!=null&&!CollectionUtils.isEmpty(pricePos.getPriceInfos())){
             //取时间范围内的价格集合,以酒店入住范围为基准，如果没有酒店  日期就取小产品单元的使用时间
             List<PriceInfoPO> priceInfoPOS = null;
@@ -337,8 +432,8 @@ public class YcfOrderManger extends OrderManager {
             }
         }else{
             log.error("创建订单 产品数据库价格日历返回数据空 产品code: {}",req.getProductId());
-        }
-        //组装价格计算服务的请求
+        }*/
+        //TODO 组装价格计算服务的请求
         PriceCalcRequest calcRequest = new PriceCalcRequest();
         calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));

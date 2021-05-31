@@ -4,10 +4,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
+import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
@@ -52,6 +54,9 @@ public class DfyToursOrderManager extends OrderManager {
 
 	@Autowired
 	private ProductService productService;
+
+	@Autowired
+	private GroupTourDao groupTourDao;
 
 
 
@@ -178,7 +183,12 @@ public class DfyToursOrderManager extends OrderManager {
 		//ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
 		req1.setBeginDate(begin);
 		req1.setEndDate(end);
+		//2020-05-31 新增packageId category
 		req1.setProductId(req.getProductId());
+		req1.setProductId(req.getPackageId());
+		req1.setCategory(req.getCategory());
+		req1.setAdtNum(req.getCount());
+		req1.setChdNum(req.getChdCount());
 		String traceId = req.getTraceId();
 		if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
 			traceId = TraceIdUtils.getTraceId();
@@ -210,6 +220,7 @@ public class DfyToursOrderManager extends OrderManager {
 		}catch (HlCentralException e){
 			return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
 		}
+		//TODO 价格计算
 		CenterBookCheck  bookCheck = new CenterBookCheck();
 		PriceCalcRequest calcRequest = new PriceCalcRequest();
 		calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
@@ -243,9 +254,11 @@ public class DfyToursOrderManager extends OrderManager {
 	 * @return
 	 */
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
+		GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(req.getProductId());
 		DfyCreateToursOrderRequest dfyCreateOrderRequest = new DfyCreateToursOrderRequest();
 		dfyCreateOrderRequest.setStartTime(req.getBeginDate());
-		dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getSupplierProductId()));
+		//dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getSupplierProductId()));
+		dfyCreateOrderRequest.setProductId(Integer.valueOf(groupTourProductMPO.getSupplierProductId()));
 		dfyCreateOrderRequest.setAdultNum(req.getAdultNum());
 		dfyCreateOrderRequest.setChildNum(req.getChildNum());
 		dfyCreateOrderRequest.setStartCity(req.getStartCity());
