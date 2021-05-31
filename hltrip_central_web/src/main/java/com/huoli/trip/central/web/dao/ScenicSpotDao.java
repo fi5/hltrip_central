@@ -31,4 +31,5 @@ public interface ScenicSpotDao {
 	ScenicSpotProductMPO querySpotProductById(String productId);
 	ScenicSpotProductPriceMPO querySpotProductPriceById(String priceId);
 
+    ScenicSpotProductBackupMPO queryBackInfoByProductId(String productId);
 }

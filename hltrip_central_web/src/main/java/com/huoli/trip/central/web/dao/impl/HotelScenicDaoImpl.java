@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.dao.impl;
 import com.huoli.trip.central.web.dao.HotelScenicDao;
 import com.huoli.trip.common.constant.MongoConst;
 import com.huoli.trip.common.entity.mpo.hotel.HotelMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductBackupMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
 import com.huoli.trip.common.vo.request.v2.CalendarRequest;
@@ -76,7 +77,7 @@ public class HotelScenicDaoImpl implements HotelScenicDao {
     }
 
     @Override
-    public HotelScenicSpotProductSetMealMPO queryHotelScenicsetMealById(HotelScenicSetMealRequest request) {
+    public HotelScenicSpotProductSetMealMPO queryHotelScenicSetMealById(HotelScenicSetMealRequest request) {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("_id").is(request.getPackageId());
@@ -92,5 +93,14 @@ public class HotelScenicDaoImpl implements HotelScenicDao {
         criteria.and("_id").is(hotelId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, HotelMPO.class);
+    }
+
+    @Override
+    public HotelScenicSpotProductBackupMPO queryBackInfoByProductId(String productId) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("productMPO._id").is(productId);
+        query.addCriteria(criteria);
+        return mongoTemplate.findOne(query, HotelScenicSpotProductBackupMPO.class);
     }
 }
