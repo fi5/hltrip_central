@@ -151,4 +151,18 @@ public interface ProductService {
      * @return
      */
     BaseResponse<List<String>> recommendSubjects(RecommendRequestV2 request);
+
+    /**
+     * 新版价格计算
+     * @param request
+     * @return
+     */
+    BaseResponse<PriceCalcResult> calcTotalPriceV2(PriceCalcRequest request);
+
+    /**
+     * 新版价格详情
+     * @param req
+     * @return
+     */
+    BaseResponse<ProductPriceDetialResult> getPriceDetailV2(ProductPriceReq req);
 }

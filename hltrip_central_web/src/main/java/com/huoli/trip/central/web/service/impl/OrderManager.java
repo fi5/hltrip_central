@@ -76,4 +76,16 @@ public abstract class OrderManager {
         return;
     }
 
+    /**
+     * 刷新价格
+     * @param productCode
+     * @param supplierProductId
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    public void syncPriceV2(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
+        return;
+    }
+
 }

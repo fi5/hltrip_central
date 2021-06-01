@@ -668,6 +668,24 @@ public class YcfOrderManger extends OrderManager {
         }
     }
 
+    @Override
+    public void syncPriceV2(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
+        try {
+            YcfGetPriceRequest request = new YcfGetPriceRequest();
+            if(StringUtils.isEmpty(traceId)){
+                traceId = TraceIdUtils.getTraceId();
+            }
+            request.setProductID(supplierProductId);
+            request.setPartnerProductID(productCode);
+            request.setStartDate(startDate);
+            request.setEndDate(endDate);
+            request.setTraceId(traceId);
+            ycfSynService.syncPriceV2(request);
+        } catch (Exception e) {
+            log.error("刷新价格异常，", e);
+        }
+    }
+
     /**
      * 判断时间跨度超过90天
      * @param begin
