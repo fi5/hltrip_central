@@ -167,7 +167,7 @@ public class LvmamaOrderManager extends OrderManager {
 	public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
 		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
 		validateOrderRequest.setTraceId(req.getTraceId());
-		//2020-05-31 获取产品信息
+		//2021-05-31 获取产品信息
 		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
 		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(req.getProductId(), req.getBeginDate(), req.getBeginDate());
 		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req, scenicSpotProductMPO, scenicSpotProductPriceMPOS);
@@ -181,7 +181,7 @@ public class LvmamaOrderManager extends OrderManager {
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
 		CreateOrderRequest request = new CreateOrderRequest();
 		request.setTraceId(req.getTraceId());
-		//2020-05-31 获取产品信息
+		//2021-05-31 获取产品信息
 		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
 		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(req.getProductId(), req.getBeginDate(), req.getBeginDate());
 		createOrderConverter.convertLvmamaCreateOrderRequest(request,req, scenicSpotProductMPO, scenicSpotProductPriceMPOS);

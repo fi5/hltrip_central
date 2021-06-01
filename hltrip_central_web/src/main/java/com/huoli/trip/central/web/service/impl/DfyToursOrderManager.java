@@ -183,7 +183,7 @@ public class DfyToursOrderManager extends OrderManager {
 		//ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
 		req1.setBeginDate(begin);
 		req1.setEndDate(end);
-		//2020-05-31 新增packageId category
+		//2021-05-31 新增packageId category
 		req1.setProductId(req.getProductId());
 		req1.setProductId(req.getPackageId());
 		req1.setCategory(req.getCategory());

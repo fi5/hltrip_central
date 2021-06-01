@@ -120,7 +120,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         product.setQuantity(req.getQunatity());
         /*product.setSellPrice(Float.parseFloat(req.getSellPrice()));*/
         product.setVisitDate(req.getBeginDate());
-        //2020-05-31 goodsid和productId从mongo拿
+        //2021-05-31 goodsid和productId从mongo拿
         product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
         product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
         if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
@@ -162,7 +162,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         product.setQuantity(req.getCount());
         //product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         product.setVisitDate(req.getBeginDate());
-        //2020-05-31 goodsid和productId从mongo拿
+        //2021-05-31 goodsid和productId从mongo拿
         product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
         product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
         if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
