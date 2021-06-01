@@ -231,7 +231,7 @@ public class DfyOrderManager extends OrderManager {
         req1.setBeginDate(begin);
         req1.setEndDate(end);
         req1.setProductId(req.getProductId());
-        //2020-05-31 新增packageId和category
+        //2021-05-31 新增packageId和category
         req1.setPackageId(req.getPackageId());
         req1.setCategory(req.getCategory());
         req1.setAdtNum(req.getCount());

@@ -78,7 +78,7 @@ public class HllxOrderManager extends OrderManager {
         //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         req1.setBeginDate(begin);
         req1.setEndDate(end);
-        //2020-05-31 增加packageId和category
+        //2021-05-31 增加packageId和category
         req1.setProductId(req.getProductId());
         req1.setPackageId(req.getPackageId());
         req1.setCategory(req.getCategory());
@@ -122,7 +122,7 @@ public class HllxOrderManager extends OrderManager {
         PriceCalcRequest calcRequest = new PriceCalcRequest();
         calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
-        //2020-05-31 价格计算，使用packageId
+        //2021-05-31 价格计算，使用packageId
         //calcRequest.setProductCode(req.getProductId());
         calcRequest.setProductCode(req.getPackageId());
         calcRequest.setQuantity(req.getCount());
