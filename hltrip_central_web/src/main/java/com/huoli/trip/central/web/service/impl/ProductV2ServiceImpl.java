@@ -2,7 +2,6 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductV2Service;
@@ -684,7 +683,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<HotelScenicProductSetMealDetail> queryHotelScenicSetMealDetail(HotelScenicSetMealRequest request) {
-        HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicDao.queryHotelScenicsetMealById(request);
+        HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicDao.queryHotelScenicSetMealById(request);
         HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
         HotelScenicProductSetMealDetail result = new HotelScenicProductSetMealDetail();
         BeanUtils.copyProperties(setMealMPO, result);

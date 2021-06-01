@@ -4,6 +4,8 @@ import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller
 import com.huoli.eagle.eye.core.util.StringUtil;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
@@ -105,7 +107,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         return ycfBookGuests;
     }
 
-    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
+    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request, CreateOrderReq req, ScenicSpotProductMPO scenicSpotProductMPO, List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS){
         //需要场次号
         OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(req.getSellAmount()),null);
 
@@ -113,11 +115,17 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         orderInfo.setBooker(booker);
 
         Product product = new Product();
-        product.setGoodsId(Long.parseLong(req.getGoodsId()));
-        product.setProductId(Long.parseLong(req.getProductId()));
+        /*product.setGoodsId(Long.parseLong(req.getGoodsId()));
+        product.setProductId(Long.parseLong(req.getProductId()));*/
         product.setQuantity(req.getQunatity());
-        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
+        /*product.setSellPrice(Float.parseFloat(req.getSellPrice()));*/
         product.setVisitDate(req.getBeginDate());
+        //2021-05-31 goodsid和productId从mongo拿
+        product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
+        product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
+        if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
+            product.setSellPrice(scenicSpotProductPriceMPOS.get(0).getSettlementPrice().floatValue());
+        }
         orderInfo.setProduct(product);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
@@ -142,19 +150,25 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         request.setRecipient(recipient);*/
     }
 
-    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
-        //需要场次号
+    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req, ScenicSpotProductMPO scenicSpotProductMPO, List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS){
+        //后续支持场次票之后 需要场次号
         OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
 
         Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
         orderInfo.setBooker(booker);
 
         Product product = new Product();
-        product.setGoodsId(Long.parseLong(req.getGoodsId()));
-        product.setProductId(Long.parseLong(req.getProductId()));
+       /* product.setGoodsId(Long.parseLong(req.getGoodsId()));
+        product.setProductId(Long.parseLong(req.getProductId()));*/
         product.setQuantity(req.getCount());
-        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
+        //product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         product.setVisitDate(req.getBeginDate());
+        //2021-05-31 goodsid和productId从mongo拿
+        product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
+        product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
+        if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
+            product.setSellPrice(scenicSpotProductPriceMPOS.get(0).getSettlementPrice().floatValue());
+        }
         orderInfo.setProduct(product);
 
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();

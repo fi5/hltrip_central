@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.mpo.hotel.HotelMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductBackupMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
 import com.huoli.trip.common.vo.request.v2.CalendarRequest;
@@ -22,7 +23,9 @@ public interface HotelScenicDao {
 
     HotelScenicSpotProductMPO queryHotelScenicProductMpoById(String productId);
 
-    HotelScenicSpotProductSetMealMPO queryHotelScenicsetMealById(HotelScenicSetMealRequest request);
+    HotelScenicSpotProductSetMealMPO queryHotelScenicSetMealById(HotelScenicSetMealRequest request);
 
     HotelMPO queryHotelMpo(String hotelId);
+
+    HotelScenicSpotProductBackupMPO queryBackInfoByProductId(String productId);
 }

@@ -78,7 +78,10 @@ public class HllxOrderManager extends OrderManager {
         //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         req1.setBeginDate(begin);
         req1.setEndDate(end);
+        //2021-05-31 增加packageId和category
         req1.setProductId(req.getProductId());
+        req1.setPackageId(req.getPackageId());
+        req1.setCategory(req.getCategory());
         HllxBookCheckRes hllxBookCheckRes;
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
@@ -114,11 +117,14 @@ public class HllxOrderManager extends OrderManager {
         }catch (HlCentralException e){
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
         }
+        //TODO 价格计算
         CenterBookCheck  bookCheck = new CenterBookCheck();
         PriceCalcRequest calcRequest = new PriceCalcRequest();
         calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
-        calcRequest.setProductCode(req.getProductId());
+        //2021-05-31 价格计算，使用packageId
+        //calcRequest.setProductCode(req.getProductId());
+        calcRequest.setProductCode(req.getPackageId());
         calcRequest.setQuantity(req.getCount());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
@@ -149,6 +155,8 @@ public class HllxOrderManager extends OrderManager {
         HllxCreateOrderReq hllxCreateOrderReq = new HllxCreateOrderReq();
         hllxCreateOrderReq.setDate(req.getBeginDate());
         hllxCreateOrderReq.setProductId(req.getProductId());
+        hllxCreateOrderReq.setPackageId(req.getPackageId());
+        hllxCreateOrderReq.setCategory(req.getCategory());
         hllxCreateOrderReq.setQunatity(req.getQunatity());
         HllxBookCheckRes hllxBookCheckRes;
         String traceId = req.getTraceId();
