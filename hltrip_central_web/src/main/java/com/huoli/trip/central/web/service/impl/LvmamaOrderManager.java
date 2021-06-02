@@ -5,6 +5,7 @@ import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
+import com.huoli.trip.common.util.UploadUtil;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.vo.request.OrderOperReq;
@@ -100,7 +101,8 @@ public class LvmamaOrderManager extends OrderManager {
 
 					if (StringUtils.isNotBlank(oneInfo.getQRcode())) {
 						OrderDetailRep.Voucher oneVoucher = new OrderDetailRep.Voucher();
-						oneVoucher.setVocherUrl(oneInfo.getQRcode());
+						String url = UploadUtil.decodeBase64ToImage(oneInfo.getQRcode(), detail.getOrderId()+".jpg");
+						oneVoucher.setVocherUrl(url);
 						oneVoucher.setType(2);
 						vochers.add(oneVoucher);
 					}
@@ -135,7 +137,9 @@ public class LvmamaOrderManager extends OrderManager {
 
 	public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
 		try {
-			LmmResendCodeRequest resendCodeRequest = new LmmResendCodeRequest(req.getOrderId(),req.getSupplierOrderId());
+			LmmResendCodeRequest resendCodeRequest = new LmmResendCodeRequest();
+			LmmResendCodeOrder lmmResendCodeOrder = new LmmResendCodeOrder(req.getOrderId(),req.getSupplierOrderId());
+			resendCodeRequest.setOrder(lmmResendCodeOrder);
 			resendCodeRequest.setTraceId(req.getTraceId());
 			lvmamaOrderService.resendCode(resendCodeRequest);
 			BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
