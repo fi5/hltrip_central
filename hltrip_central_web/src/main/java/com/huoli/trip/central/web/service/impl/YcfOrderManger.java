@@ -176,10 +176,15 @@ public class YcfOrderManger extends OrderManager {
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getCount());
+        //2021-06-02
+        calcRequest.setChannelCode(req.getChannelCode());
+        calcRequest.setFrom(req.getFrom());
+        calcRequest.setPackageCode(req.getPackageId());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
         try{
-            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            //BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
             priceCalcResult = priceCalcResultBaseResponse.getData();
             //没有价格直接抛异常
             if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
@@ -433,16 +438,22 @@ public class YcfOrderManger extends OrderManager {
         }else{
             log.error("创建订单 产品数据库价格日历返回数据空 产品code: {}",req.getProductId());
         }*/
-        //TODO 组装价格计算服务的请求
+        //组装价格计算服务的请求
         PriceCalcRequest calcRequest = new PriceCalcRequest();
         calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getQunatity());
+        //2021-06-02
+        calcRequest.setChannelCode(req.getChannelCode());
+        calcRequest.setFrom(req.getFrom());
+        calcRequest.setPackageCode(req.getPackageId());
+        calcRequest.setCategory(req.getCategory());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
         try{
-            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            //BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
             priceCalcResult = priceCalcResultBaseResponse.getData();
             //没有价格直接抛异常
             if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
