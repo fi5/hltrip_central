@@ -115,16 +115,20 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         orderInfo.setBooker(booker);
 
         Product product = new Product();
-        /*product.setGoodsId(Long.parseLong(req.getGoodsId()));
-        product.setProductId(Long.parseLong(req.getProductId()));*/
         product.setQuantity(req.getQunatity());
-        /*product.setSellPrice(Float.parseFloat(req.getSellPrice()));*/
         product.setVisitDate(req.getBeginDate());
         //2021-05-31 goodsid和productId从mongo拿
-        product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
-        product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
+        if(scenicSpotProductMPO != null){
+            product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
+            product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
+        }else{
+            product.setGoodsId(Long.parseLong(req.getGoodsId()));
+            product.setProductId(Long.parseLong(req.getProductId()));
+        }
         if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
             product.setSellPrice(scenicSpotProductPriceMPOS.get(0).getSettlementPrice().floatValue());
+        }else{
+            product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         }
         orderInfo.setProduct(product);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
@@ -157,16 +161,20 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         orderInfo.setBooker(booker);
 
         Product product = new Product();
-       /* product.setGoodsId(Long.parseLong(req.getGoodsId()));
-        product.setProductId(Long.parseLong(req.getProductId()));*/
         product.setQuantity(req.getCount());
-        //product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         product.setVisitDate(req.getBeginDate());
         //2021-05-31 goodsid和productId从mongo拿
-        product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
-        product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
+        if(scenicSpotProductMPO != null){
+            product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
+            product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
+        }else{
+            product.setGoodsId(Long.parseLong(req.getGoodsId()));
+            product.setProductId(Long.parseLong(req.getProductId()));
+        }
         if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
             product.setSellPrice(scenicSpotProductPriceMPOS.get(0).getSettlementPrice().floatValue());
+        }else{
+            product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         }
         orderInfo.setProduct(product);
 
