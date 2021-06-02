@@ -131,7 +131,9 @@ public class LvmamaOrderManager extends OrderManager {
 
 	public BaseResponse<OrderDetailRep> getVochers(OrderOperReq req){
 		try {
-			LmmResendCodeRequest resendCodeRequest = new LmmResendCodeRequest(req.getOrderId(),req.getSupplierOrderId());
+			LmmResendCodeRequest resendCodeRequest = new LmmResendCodeRequest();
+			LmmResendCodeOrder lmmResendCodeOrder = new LmmResendCodeOrder(req.getOrderId(),req.getSupplierOrderId());
+			resendCodeRequest.setOrder(lmmResendCodeOrder);
 			resendCodeRequest.setTraceId(req.getTraceId());
 			lvmamaOrderService.resendCode(resendCodeRequest);
 			BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
