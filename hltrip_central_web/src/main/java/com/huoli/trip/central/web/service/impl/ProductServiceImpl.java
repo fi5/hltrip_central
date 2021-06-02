@@ -955,7 +955,7 @@ public class ProductServiceImpl implements ProductService {
             ScenicSpotProductMPO productMPO = scenicSpotProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
-            GroupTourProductMPO productMPO = groupTourProductDao.getProductById(request.getPackageCode());
+            GroupTourProductMPO productMPO = groupTourProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
         } else if(StringUtils.equals(request.getCategory(), "hotel_scenicSpot")) {
             HotelScenicSpotProductMPO productMPO = hotelScenicSpotProductDao.getProductById(request.getProductCode());
