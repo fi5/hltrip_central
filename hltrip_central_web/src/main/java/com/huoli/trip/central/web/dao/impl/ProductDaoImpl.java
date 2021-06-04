@@ -634,7 +634,7 @@ public class ProductDaoImpl implements ProductDao {
     private List<AggregationOperation> buildGroupTourListOperation(GroupTourListReq req) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
-        criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0);
+        criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0).and("apiSellPrice").ne(null);
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
@@ -679,7 +679,7 @@ public class ProductDaoImpl implements ProductDao {
     private List<AggregationOperation> buildHotelScenicListOperations(HotelScenicListReq req) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
-        criteria.and("category").is("hotel_scenicSpot").and("status").is(1).and("isDel").is(0);
+        criteria.and("category").is("hotel_scenicSpot").and("status").is(1).and("isDel").is(0).and("apiSellPrice").ne(null);
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
