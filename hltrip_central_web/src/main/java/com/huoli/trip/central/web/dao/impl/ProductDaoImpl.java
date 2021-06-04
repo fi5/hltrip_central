@@ -525,8 +525,8 @@ public class ProductDaoImpl implements ProductDao {
         List<AggregationOperation> operations = buildScenicTicketOperations(req);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
-        operations.add(limit);
         operations.add(skip);
+        operations.add(limit);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
@@ -613,8 +613,8 @@ public class ProductDaoImpl implements ProductDao {
         List<AggregationOperation> operations = buildGroupTourListOperation(req);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
-        operations.add(limit);
         operations.add(skip);
+        operations.add(limit);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
@@ -668,8 +668,8 @@ public class ProductDaoImpl implements ProductDao {
         List<AggregationOperation> operations = buildHotelScenicListOperations(req);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
-        operations.add(limit);
         operations.add(skip);
+        operations.add(limit);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
