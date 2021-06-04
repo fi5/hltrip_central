@@ -2,8 +2,7 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
-import com.huoli.trip.common.constant.CentralError;
-import com.huoli.trip.common.constant.ChannelConstant;
+import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.util.UploadUtil;
 import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
@@ -235,7 +234,9 @@ public class LvmamaOrderManager extends OrderManager {
 		OrderCancelRequest request = new OrderCancelRequest(req.getPartnerOrderId(),req.getOutOrderId());
 		LmmBaseResponse baseResponse = lvmamaOrderService.refundTicket(request);
 		if(baseResponse != null && "1000".equals(baseResponse.getState().getCode())){
-			return BaseResponse.withSuccess();
+			CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
+			centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+			return BaseResponse.withSuccess(centerCancelOrderRes);
 		}
 		return BaseResponse.fail(CentralError.ERROR_SUPPLIER_CANCEL_ORDER);
 	}
