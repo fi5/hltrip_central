@@ -164,5 +164,5 @@ public interface ProductService {
      * @param req
      * @return
      */
-    BaseResponse<ProductPriceDetialResult> getPriceDetailV2(ProductPriceReq req);
+    BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req);
 }

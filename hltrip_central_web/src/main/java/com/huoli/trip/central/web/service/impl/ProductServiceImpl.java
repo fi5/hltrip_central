@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
+import com.huoli.trip.central.web.mapper.PassengerTemplateMapper;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
@@ -25,6 +26,7 @@ import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotRuleMPO;
+import com.huoli.trip.common.entity.po.PassengerTemplatePO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -131,6 +133,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ScenicSpotDao scenicSpotDao;
+
+    @Autowired
+    private PassengerTemplateMapper passengerTemplateMapper;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -770,7 +775,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse<ProductPriceDetialResult> getPriceDetailV2(ProductPriceReq req) {
+    public BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req) {
         try {
             ProductPriceDetailResultV2 result = new ProductPriceDetailResultV2();
             if(StringUtils.equals(req.getCategory(), "d_ss_ticket")) {
@@ -825,6 +830,11 @@ public class ProductServiceImpl implements ProductService {
                 result.setTicketCardTypes(ruleMPO.getTicketCardTypes());
                 result.setTravellerInfos(ruleMPO.getTravellerInfos());
                 result.setTravellerTypes(ruleMPO.getTravellerTypes());
+                if(ListUtils.isNotEmpty(result.getTravellerInfos())){
+                    result.setPeopleLimit(1);
+                } else {
+                    result.setPeopleLimit(-1);
+                }
                 ProductPriceDetailResultV2.TicketInfo ticketInfo = new ProductPriceDetailResultV2.TicketInfo();
                 ticketInfo.setCardType(ruleMPO.getCardType());
                 ticketInfo.setChangeTicketAddress(ruleMPO.getChangeTicketAddress());
@@ -842,6 +852,16 @@ public class ProductServiceImpl implements ProductService {
                 GroupTourProductMPO productMPO = groupTourProductDao.getProductById(req.getProductCode());
                 if (null == setMealMPO) {
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
+                }
+                PassengerTemplatePO passengerTemplatePO = passengerTemplateMapper.getPassengerTemplateById(productMPO.getTravelerTemplateId());
+                if(passengerTemplatePO != null){
+                    result.setPeopleLimit(passengerTemplatePO.getPeopleLimit());
+                    if(StringUtils.isNotBlank(passengerTemplatePO.getPassengerInfo())){
+                        result.setTravellerInfos(Arrays.stream(passengerTemplatePO.getPassengerInfo().split(",")).map(Integer::valueOf).collect(Collectors.toList()));
+                    }
+                    if(StringUtils.isNotBlank(passengerTemplatePO.getIdInfo())){
+                        result.setTravellerTypes(Arrays.stream(passengerTemplatePO.getIdInfo().split(",")).map(Integer::valueOf).collect(Collectors.toList()));
+                    }
                 }
                 result.setProductCode(productMPO.getId());
                 result.setPackageCode(setMealMPO.getId());
@@ -880,6 +900,16 @@ public class ProductServiceImpl implements ProductService {
             } else if(StringUtils.equals(req.getCategory(), "hotel_scenicSpot")){
                 HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicSpotProductSetMealDao.getSetMealById(req.getPackageCode());
                 HotelScenicSpotProductMPO productMPO = hotelScenicSpotProductDao.getProductById(req.getProductCode());
+                PassengerTemplatePO passengerTemplatePO = passengerTemplateMapper.getPassengerTemplateById(StringUtils.isNotBlank(productMPO.getTravellerTemplateId()) ? Integer.parseInt(productMPO.getTravellerTemplateId()) : 0);
+                if(passengerTemplatePO != null){
+                    result.setPeopleLimit(passengerTemplatePO.getPeopleLimit());
+                    if(StringUtils.isNotBlank(passengerTemplatePO.getPassengerInfo())){
+                        result.setTravellerInfos(Arrays.stream(passengerTemplatePO.getPassengerInfo().split(",")).map(Integer::valueOf).collect(Collectors.toList()));
+                    }
+                    if(StringUtils.isNotBlank(passengerTemplatePO.getIdInfo())){
+                        result.setTravellerTypes(Arrays.stream(passengerTemplatePO.getIdInfo().split(",")).map(Integer::valueOf).collect(Collectors.toList()));
+                    }
+                }
                 result.setProductCode(productMPO.getId());
                 result.setPackageCode(setMealMPO.getId());
                 result.setProductName(productMPO.getProductName());
