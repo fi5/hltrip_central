@@ -21,6 +21,7 @@ import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSe
 import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotRuleMPO;
@@ -127,6 +128,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private GroupTourProductDao groupTourProductDao;
+
+    @Autowired
+    private ScenicSpotDao scenicSpotDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -768,7 +772,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<ProductPriceDetialResult> getPriceDetailV2(ProductPriceReq req) {
         try {
-            ProductPriceDetialResult result = new ProductPriceDetialResult();
+            ProductPriceDetailResultV2 result = new ProductPriceDetailResultV2();
             if(StringUtils.equals(req.getCategory(), "d_ss_ticket")) {
                 ScenicSpotProductMPO productMPO = scenicSpotProductDao.getProductById(req.getProductCode());
                 if (null == productMPO) {
@@ -778,30 +782,60 @@ public class ProductServiceImpl implements ProductService {
                 if (priceMPO == null) {
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
                 }
-                ScenicSpotRuleMPO ruleMPO = scenicSpotRuleDao.getRuleById(priceMPO.getScenicSpotRuleId());
-                if (ruleMPO != null) {
-                    result.setRefundDesc(ruleMPO.getRefundRuleDesc());
-                    if (ListUtils.isNotEmpty(ruleMPO.getRefundRules())) {
-                        result.setRefundRules(ruleMPO.getRefundRules().stream().map(rr -> {
-                            ScenicProductRefundRule scenicProductRefundRule = new ScenicProductRefundRule();
-                            scenicProductRefundRule.setDay(rr.getDay());
-                            scenicProductRefundRule.setRefundRuleType(rr.getRefundRuleType());
-                            scenicProductRefundRule.setDeductionType(rr.getDeductionType());
-                            scenicProductRefundRule.setFee(rr.getFee());
-                            scenicProductRefundRule.setHour(rr.getHour());
-                            scenicProductRefundRule.setMinute(rr.getMinute());
-                            return scenicProductRefundRule;
-                        }).collect(Collectors.toList()));
-                    }
-                }
-                String channelCode = productMPO.getChannel();
-                log.info("渠道信息为：{}", channelCode);
-                OrderManager orderManager = orderFactory.getOrderManager(channelCode);
-                log.info("获取到的manager 是：{}", JSON.toJSONString(orderManager));
-                if (orderManager == null) {
+                ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(req.getProductCode());
+                if(scenicSpotMPO == null){
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
                 }
-                result.setName(productMPO.getName());
+                ScenicSpotRuleMPO ruleMPO = scenicSpotRuleDao.getRuleById(priceMPO.getScenicSpotRuleId());
+                // 如果规则没有。下面很多信息都拿不到
+                if (ruleMPO == null) {
+                    return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
+                }
+                if (ListUtils.isNotEmpty(ruleMPO.getRefundRules())) {
+                    result.setRefundRules(ruleMPO.getRefundRules().stream().map(rr -> {
+                        ScenicProductRefundRule scenicProductRefundRule = new ScenicProductRefundRule();
+                        scenicProductRefundRule.setDay(rr.getDay());
+                        scenicProductRefundRule.setRefundRuleType(rr.getRefundRuleType());
+                        scenicProductRefundRule.setDeductionType(rr.getDeductionType());
+                        scenicProductRefundRule.setFee(rr.getFee());
+                        scenicProductRefundRule.setHour(rr.getHour());
+                        scenicProductRefundRule.setMinute(rr.getMinute());
+                        return scenicProductRefundRule;
+                    }).collect(Collectors.toList()));
+                }
+                result.setProductCode(productMPO.getId());
+                result.setProductName(productMPO.getName());
+                result.setSupplierId(productMPO.getChannel());
+                result.setSupplierProductId(productMPO.getSupplierProductId());
+                result.setBookBeforeDay(productMPO.getScenicSpotProductTransaction().getBookBeforeDay());
+                result.setBookBeforeTime(productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                result.setBuyMax(ruleMPO.getMaxCount());
+                result.setBuyMin(1);
+                result.setDescription(productMPO.getPcDescription());
+                if(ListUtils.isNotEmpty(productMPO.getDescInfos())){
+                    productMPO.getDescInfos().stream().filter(di ->
+                            StringUtils.equals(di.getTitle(), "费用不包含")).findFirst().ifPresent(di ->
+                            result.setExcludeDesc(di.getContent()));
+                }
+                result.setImages(productMPO.getImages());
+                result.setIncludeDesc(ruleMPO.getFeeInclude());
+                result.setRefundType(ruleMPO.getRefundCondition());
+                result.setRefundDesc(ruleMPO.getRefundRuleDesc());
+                result.setTicketInfos(ruleMPO.getTicketInfos());
+                result.setTicketCardTypes(ruleMPO.getTicketCardTypes());
+                result.setTravellerInfos(ruleMPO.getTravellerInfos());
+                result.setTravellerTypes(ruleMPO.getTravellerTypes());
+                ProductPriceDetailResultV2.TicketInfo ticketInfo = new ProductPriceDetailResultV2.TicketInfo();
+                ticketInfo.setCardType(ruleMPO.getCardType());
+                ticketInfo.setChangeTicketAddress(ruleMPO.getChangeTicketAddress());
+                ticketInfo.setInAddress(ruleMPO.getInAddress());
+                ticketInfo.setInType(ruleMPO.getInType());
+                ticketInfo.setVoucherType(ruleMPO.getVoucherType());
+                result.setTicketInfo(ticketInfo);
+                result.setRemark(ruleMPO.getSupplementDesc());
+                result.setDepCityCode(scenicSpotMPO.getCityCode());
+                result.setArrCityCode(scenicSpotMPO.getCityCode());
+                result.setDescInfos(productMPO.getDescInfos());
                 result.setExtendParams(productMPO.getExtendParams());
             } else if(StringUtils.equals(req.getCategory(), "group_tour")){
                 GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(req.getPackageCode());
@@ -809,7 +843,29 @@ public class ProductServiceImpl implements ProductService {
                 if (null == setMealMPO) {
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
                 }
-                result.setName(setMealMPO.getName());
+                result.setProductCode(productMPO.getId());
+                result.setPackageCode(setMealMPO.getId());
+                result.setProductName(productMPO.getProductName());
+                result.setPackageName(setMealMPO.getName());
+                result.setSupplierId(productMPO.getChannel());
+                result.setSupplierProductId(productMPO.getSupplierProductId());
+                result.setBookBeforeDay(productMPO.getGroupTourProductPayInfo().getBeforeBookDay());
+                result.setDescription(productMPO.getComputerDesc());
+                result.setExcludeDesc(setMealMPO.getCostExclude());
+                result.setIncludeDesc(setMealMPO.getConstInclude());
+                result.setImages(productMPO.getImages());
+                result.setBookDesc(setMealMPO.getBookNotice());
+                if(ListUtils.isNotEmpty(productMPO.getDepInfos())){
+                    result.setDepCityCode(productMPO.getDepInfos().stream().filter(dep ->
+                            StringUtils.isNotBlank(dep.getCityCode())).map(dep ->
+                            dep.getCityCode()).collect(Collectors.joining(",")));
+                }
+                if(ListUtils.isNotEmpty(productMPO.getArrInfos())){
+                    result.setArrCityCode(productMPO.getArrInfos().stream().filter(arr ->
+                            StringUtils.isNotBlank(arr.getCityCode())).map(arr ->
+                            arr.getCityCode()).collect(Collectors.joining(",")));
+                }
+                result.setGroupTourTripInfos(setMealMPO.getGroupTourTripInfos());
                 if(ListUtils.isNotEmpty(productMPO.getGroupTourRefundRules())){
                     result.setRefundRuleVOs(productMPO.getGroupTourRefundRules().stream().map(grr -> {
                         BaseRefundRuleVO baseRefundRuleVO = new BaseRefundRuleVO();
@@ -824,7 +880,32 @@ public class ProductServiceImpl implements ProductService {
             } else if(StringUtils.equals(req.getCategory(), "hotel_scenicSpot")){
                 HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicSpotProductSetMealDao.getSetMealById(req.getPackageCode());
                 HotelScenicSpotProductMPO productMPO = hotelScenicSpotProductDao.getProductById(req.getProductCode());
-                result.setName(setMealMPO.getName());
+                result.setProductCode(productMPO.getId());
+                result.setPackageCode(setMealMPO.getId());
+                result.setProductName(productMPO.getProductName());
+                result.setPackageName(setMealMPO.getName());
+                result.setSupplierId(productMPO.getChannel());
+                result.setSupplierProductId(productMPO.getSupplierProductId());
+                result.setBookBeforeDay(productMPO.getPayInfo().getBeforeBookDay());
+                result.setBuyMax(setMealMPO.getBuyMax());
+                result.setBuyMin(setMealMPO.getBuyMin());
+                result.setDescription(productMPO.getComputerDesc());
+                result.setExcludeDesc(productMPO.getPayInfo().getCostExclude());
+                result.setImages(productMPO.getImages());
+                result.setHotelElements(setMealMPO.getHotelElements());
+                result.setOtherElements(setMealMPO.getOtherElements());
+                result.setRestaurantElements(setMealMPO.getRestaurantElements());
+                result.setSpaElements(setMealMPO.getSpaElements());
+                result.setScenicSpotElements(setMealMPO.getScenicSpotElements());
+                result.setSpecialActivityElements(setMealMPO.getSpecialActivityElements());
+                result.setTrafficConnectionElements(setMealMPO.getTrafficConnectionElements());
+                result.setBookDesc(productMPO.getPayInfo().getBookNotice());
+                result.setRemark(setMealMPO.getMealDesc());
+                if(ListUtils.isNotEmpty(productMPO.getAddressInfo())){
+                    result.setArrCityCode(productMPO.getAddressInfo().stream().filter(arr ->
+                            StringUtils.isNotBlank(arr.getCityCode())).map(arr ->
+                            arr.getCityCode()).collect(Collectors.joining(",")));
+                }
                 if(ListUtils.isNotEmpty(productMPO.getRefundRules())){
                     result.setRefundRuleVOs(productMPO.getRefundRules().stream().map(grr -> {
                         BaseRefundRuleVO baseRefundRuleVO = new BaseRefundRuleVO();
