@@ -34,6 +34,7 @@
 				<value>classpath:/kafka.properties</value>
 				<value>classpath:/mongo.properties</value>
 				<value>classpath:/redis.properties</value>
+				<value>classpath:/db-huolitrip.properties</value>
 			</list>
 
 		</property>
