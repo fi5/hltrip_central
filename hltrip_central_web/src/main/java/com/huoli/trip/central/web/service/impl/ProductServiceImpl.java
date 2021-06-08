@@ -770,7 +770,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse<ProductPriceDetialResult> getPriceDetailV2(ProductPriceReq req) {
+    public BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req) {
         try {
             ProductPriceDetailResultV2 result = new ProductPriceDetailResultV2();
             if(StringUtils.equals(req.getCategory(), "d_ss_ticket")) {
