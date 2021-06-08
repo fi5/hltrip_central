@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
  * 创建日期：2021/6/8<br>
  */
 @Repository
-@Mapper
+//@Mapper
 public interface PassengerTemplateMapper {
 
     /**
