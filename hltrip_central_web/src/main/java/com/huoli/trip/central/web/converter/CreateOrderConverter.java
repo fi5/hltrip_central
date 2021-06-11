@@ -1,10 +1,8 @@
 package com.huoli.trip.central.web.converter;
 
-import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller;
 import com.huoli.eagle.eye.core.util.StringUtil;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
-import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
@@ -15,15 +13,10 @@ import com.huoli.trip.supplier.self.lvmama.vo.request.ValidateOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderReq;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderRes;
-import javafx.beans.binding.When;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.lang.ref.ReferenceQueue;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
