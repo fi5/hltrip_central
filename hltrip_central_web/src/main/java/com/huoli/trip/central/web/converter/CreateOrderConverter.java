@@ -4,6 +4,7 @@ import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller
 import com.huoli.eagle.eye.core.util.StringUtil;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
@@ -22,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.ref.ReferenceQueue;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -144,7 +146,10 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
     public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
         //需要场次号
-        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+        int count = req.getCount()+req.getChdCount();
+        String sellPrice = req.getSellPrice();
+        BigDecimal multiply = new BigDecimal(sellPrice).multiply(new BigDecimal(count));
+        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(multiply),null);
 
         Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
         orderInfo.setBooker(booker);
