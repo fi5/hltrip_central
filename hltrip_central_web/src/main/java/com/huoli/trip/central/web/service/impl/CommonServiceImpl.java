@@ -49,7 +49,7 @@ public class CommonServiceImpl implements CommonService {
                 return;
             }
             List<SupplierPolicyPO> supplierPolices = supplierPolicyDao.getSupplierPolicy(increasePrice);
-            if(ListUtils.isEmpty(supplierPolices)){
+            if(ListUtils.isNotEmpty(supplierPolices)){
                 log.info("没有查到相关加价配置");
                 return;
             }
