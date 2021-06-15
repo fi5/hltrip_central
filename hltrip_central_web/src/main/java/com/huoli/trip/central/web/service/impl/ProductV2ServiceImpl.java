@@ -182,10 +182,37 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     log.info("产品因为价格规则无数据异常被过滤,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
                     continue;
                 }
+
                 ScenicSpotProductBase scenicSpotProductBase = new ScenicSpotProductBase();
+                String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
+                BasePrice basePrice = new BasePrice();
+                BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
+                //需要调用加价方法
+                IncreasePrice increasePrice = new IncreasePrice();
+                increasePrice.setChannelCode(scenicSpotProduct.getChannel());
+                increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
+                increasePrice.setAppSource(request.getFrom());
+                increasePrice.setProductCategory(category);
+                List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
+                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
+                priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
+                priceCalendars.add(priceCalendar);
+                increasePrice.setPrices(priceCalendars);
+                commonService.increasePrice(increasePrice);
+                List<IncreasePriceCalendar> prices = increasePrice.getPrices();
+                if(ListUtils.isEmpty(prices)){
+                    log.info("产品因为价格计算之后无价格数据返回,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
+                    continue;
+                }
+                BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice,"sellPrice");
+                IncreasePriceCalendar increasePriceCalendar = prices.get(0);
+                basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
+                basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
+                scenicSpotProductBase.setPrice(basePrice);
+
                 BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
                 productBases.add(scenicSpotProductBase);
-                String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
                 scenicSpotProductBase.setCategory(category);
                 scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
 
@@ -247,31 +274,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
 
                 scenicSpotProductBase.setTicketkindTag(ticketkind);
-                BasePrice basePrice = new BasePrice();
-                BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
-                //需要调用加价方法
-                IncreasePrice increasePrice = new IncreasePrice();
-                increasePrice.setChannelCode(scenicSpotProduct.getChannel());
-                increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
-                increasePrice.setAppSource(request.getFrom());
-                increasePrice.setProductCategory(category);
-                List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
-                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-                priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
-                priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
-                priceCalendars.add(priceCalendar);
-                increasePrice.setPrices(priceCalendars);
-                commonService.increasePrice(increasePrice);
-                List<IncreasePriceCalendar> prices = increasePrice.getPrices();
-                if(ListUtils.isEmpty(prices)){
-                    log.info("产品因为价格计算之后无价格数据返回,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
-                    continue;
-                }
-                BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice,"sellPrice");
-                IncreasePriceCalendar increasePriceCalendar = prices.get(0);
-                basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
-                basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
-                scenicSpotProductBase.setPrice(basePrice);
+
             }
         }
         return BaseResponse.withSuccess(productBases);
