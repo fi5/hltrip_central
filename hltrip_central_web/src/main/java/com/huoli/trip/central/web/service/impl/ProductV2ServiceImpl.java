@@ -227,6 +227,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
                 priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
                 priceCalendars.add(priceCalendar);
+                increasePrice.setPrices(priceCalendars);
                 commonService.increasePrice(increasePrice);
                 List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                 if(ListUtils.isEmpty(prices)){
