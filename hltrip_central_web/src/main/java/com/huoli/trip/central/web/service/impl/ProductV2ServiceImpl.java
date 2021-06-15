@@ -29,6 +29,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.v2.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.data.Json;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
@@ -135,6 +136,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         String date = request.getDate();
         List<ScenicSpotProductBase> productBases = null;
         if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
+            log.info("查询到的产品列表数据为：{}",JSON.toJSONString(scenicSpotProductMPOS));
             productBases = new ArrayList<>();
             for (ScenicSpotProductMPO scenicSpotProduct : scenicSpotProductMPOS) {
                 String productId = scenicSpotProduct.getId();
