@@ -395,7 +395,8 @@ public class ProductServiceImpl implements ProductService {
      * @return {@link IncreasePrice}
      * @throws
      */
-    private IncreasePrice increasePrice(ProductListMPO productListMPO, String app){
+    @Override
+    public IncreasePrice increasePrice(ProductListMPO productListMPO, String app){
         IncreasePrice increasePrice = new IncreasePrice();
         increasePrice.setChannelCode(productListMPO.getChannel());
         increasePrice.setProductCode(productListMPO.getProductId());
