@@ -63,8 +63,6 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         criteria.and("scenicSpotId").is(scenicSpotId);
         criteria.and("status").is(1);
         query.addCriteria(criteria);
-
-        query.fields().include("_id").include("productId").include("productName").include("price").include("type").include("tags").include("scenicSpotOpenTimes").include("otherOpenTimeDesc").include("scenicSpotProductTransaction");
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = mongoTemplate.find(query, ScenicSpotProductMPO.class);
         return scenicSpotProductMPOS;
     }
