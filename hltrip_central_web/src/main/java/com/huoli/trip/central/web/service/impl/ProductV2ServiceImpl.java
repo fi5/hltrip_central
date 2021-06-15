@@ -4,12 +4,15 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.api.ProductV2Service;
 import com.huoli.trip.central.web.constant.ColourConstants;
 import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.central.web.dao.HotelScenicDao;
+import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.service.CommonService;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
@@ -24,6 +27,7 @@ import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.IncreasePriceCalendar;
 import com.huoli.trip.common.vo.PriceInfo;
+import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.v2.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
@@ -63,6 +67,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private ProductDao productDao;
+
+    @Autowired
+    private ProductService productService;
+
     @Override
     public BaseResponse<ScenicSpotBase> querycScenicSpotBase(ScenicSpotRequest request) {
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
@@ -97,7 +107,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
             });
         }
-        final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId(), depCodes, request.getPackageId());
+        final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId(), depCodes, request.getPackageId(), request.getDate());
         log.info("查询到的套餐列表：{}", JSONObject.toJSONString(groupTourProductSetMealMPOS));
         if(groupTourProductMPO != null){
             groupTourProductBody = new GroupTourBody();
@@ -111,13 +121,36 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 groupTourProductBody.setSetMeals(meals);
             }
         }
+        //加载推荐列表
+        GroupTourListReq groupTourListReq = new GroupTourListReq();
+        if(CollectionUtils.isNotEmpty(depCodes) && depCodes.size() > 1){
+            groupTourListReq.setDepCityCode(request.getCityCode());
+        }else{
+            groupTourListReq.setDepPlace(request.getCityCode());
+        }
+        groupTourListReq.setArrCityCode(request.getArrCity());
+        groupTourListReq.setGroupTourType(groupTourProductMPO.getGroupTourType());
+        List<ProductListMPO> productListMPOS = productDao.groupTourList(groupTourListReq);
+        if (CollectionUtils.isNotEmpty(productListMPOS)) {
+            List<GroupTourRecommend> groupTourRecommends = productListMPOS.stream().map(a -> {
+                GroupTourRecommend groupTourRecommend = new GroupTourRecommend();
+                groupTourRecommend.setCategory(a.getCategory());
+                groupTourRecommend.setImage(a.getProductImageUrl());
+                groupTourRecommend.setProductId(a.getProductId());
+                groupTourRecommend.setProductName(a.getProductName());
+                IncreasePrice increasePrice = productService.increasePrice(a, request.getFrom());
+                groupTourRecommend.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                return groupTourRecommend;
+            }).collect(Collectors.toList());
+            groupTourProductBody.setRecommends(groupTourRecommends);
+        }
         return BaseResponse.withSuccess(groupTourProductBody);
     }
 
     @Override
     public GroupMealsBody groupMealsBody(GroupTourMealsRequest request) {
         GroupMealsBody body = null;
-        List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(request.getGroupTourId(), null, request.getPackageId());
+        List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(request.getGroupTourId(), null, request.getPackageId(), request.getDate());
         if (CollectionUtils.isNotEmpty(groupTourProductSetMealMPOS)) {
             List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p -> {
                 GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();

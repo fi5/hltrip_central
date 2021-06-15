@@ -641,9 +641,9 @@ public class ProductDaoImpl implements ProductDao {
         if(StringUtils.isNotBlank(req.getName())){
             criteria.and("productName").regex(req.getName());
         }
-        /*if (StringUtils.isNotBlank(req.getDepCity())) {
-            criteria.and("depPlaces").regex(req.getDepCity());
-        }*/
+        if (StringUtils.isNotBlank(req.getDepPlace())) {
+            criteria.and("depPlaces").regex(req.getDepPlace());
+        }
         if (StringUtils.isNotBlank(req.getDepCityCode())) {
             criteria.and("depCity").regex(req.getDepCityCode());
         }
