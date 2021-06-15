@@ -215,6 +215,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 productBases.add(scenicSpotProductBase);
                 scenicSpotProductBase.setCategory(category);
                 scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
+                scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
 
                 String startDate = scenicSpotProductPriceMPO.getStartDate();
                 LocalDate localDate = LocalDate.now();
