@@ -424,7 +424,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
          try {
             SimpleDateFormat myFormatter = new SimpleDateFormat("yyyy-MM-dd");
             Date myDate = myFormatter.parse(date);
-            SimpleDateFormat formatter = new SimpleDateFormat("E");
+            SimpleDateFormat formatter = new SimpleDateFormat("EEEE");
             String str = formatter.format(myDate);
             log.info("获取到的星期几：{}",str);
             if(list.contains(str)){
