@@ -366,7 +366,11 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             for (ScenicSpotProductPriceMPO  ss: effective) {
                 String startDate1 = ss.getStartDate();
                 String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
-                if(ss.getWeekDay().contains(dayOfWeekByDate)){
+                String weekDay = ss.getWeekDay();
+                if(StringUtils.isEmpty(weekDay)){
+                    weekDay ="1,2,3,4,5,6,7";
+                }
+                if(weekDay.contains(dayOfWeekByDate)){
                     fe.add(ss);
                 }
 
