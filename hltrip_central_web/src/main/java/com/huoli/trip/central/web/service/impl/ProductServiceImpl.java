@@ -1139,6 +1139,7 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setBookDay(rb.getBookDay());
         recommendProduct.setRecommendDesc(rb.getRecommendDesc());
         recommendProduct.setTags(rb.getTags());
+        recommendProduct.setSubTitle(rb.getSubTitle());
         return recommendProduct;
     }
 }
