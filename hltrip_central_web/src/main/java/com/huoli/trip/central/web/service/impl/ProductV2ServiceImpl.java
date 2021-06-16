@@ -430,7 +430,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 dayOfweek = String.valueOf(list.indexOf(str)+1);
             }
             } catch (Exception e) {
-
+             log.error("获取星期异常",e);
             }
             return dayOfweek;
      }
