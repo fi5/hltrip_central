@@ -379,6 +379,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
 
                 }
+            log.info("过滤后的数据为：{}",JSON.toJSONString(effective));
                 effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
                 basePrices = effective.stream().map(p -> {
                     BasePrice basePrice = new BasePrice();
