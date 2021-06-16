@@ -370,6 +370,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             for (ScenicSpotProductPriceMPO  ss: effective) {
                 String startDate1 = ss.getStartDate();
                 String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
+                log.info("当前价格日期为：{},获取到的人星期为：{}",startDate1,dayOfWeekByDate);
                 String weekDay = ss.getWeekDay();
                 if(StringUtils.isEmpty(weekDay)){
                     weekDay ="1,2,3,4,5,6,7";
