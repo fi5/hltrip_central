@@ -365,14 +365,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
             }
 
-            if (ListUtils.isNotEmpty(effective)) {
-                List<ScenicSpotProductPriceMPO> fe = new ArrayList<>(effective.size());
-                for (ScenicSpotProductPriceMPO ss : effective) {
-                    String startDate1 = ss.getStartDate();
-                    String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
-                    if (ss.getWeekDay().contains(dayOfWeekByDate)) {
-                        fe.add(ss);
-                    }
+        if(ListUtils.isNotEmpty(effective)){
+            List<ScenicSpotProductPriceMPO>  fe = new ArrayList<>(effective.size());
+            for (ScenicSpotProductPriceMPO  ss: effective) {
+                String startDate1 = ss.getStartDate();
+                String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
+                String weekDay = ss.getWeekDay();
+                if(StringUtils.isEmpty(weekDay)){
+                    weekDay ="1,2,3,4,5,6,7";
+                }
+                if(weekDay.contains(dayOfWeekByDate)){
+                    fe.add(ss);
+                }
 
                 }
                 effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
