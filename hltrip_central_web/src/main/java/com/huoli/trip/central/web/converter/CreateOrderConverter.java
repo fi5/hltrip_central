@@ -1,17 +1,30 @@
 package com.huoli.trip.central.web.converter;
 
+import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller;
+import com.huoli.eagle.eye.core.util.StringUtil;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.util.BigDecimalUtil;
+import com.huoli.trip.common.util.ListUtils;
+import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
 import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
+import com.huoli.trip.supplier.self.lvmama.vo.*;
+import com.huoli.trip.supplier.self.lvmama.vo.request.CreateOrderRequest;
+import com.huoli.trip.supplier.self.lvmama.vo.request.ValidateOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderReq;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderRes;
+import javafx.beans.binding.When;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import java.lang.ref.ReferenceQueue;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,5 +106,126 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
             ycfBookGuests.add(converterGuest(bookGuest));
         });
         return ycfBookGuests;
+    }
+
+    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
+        //需要场次号
+        Integer adultNum = req.getAdultNum();
+        Integer childNum = req.getChildNum();
+        int count = 0;
+        if(adultNum != null){
+            count = adultNum;
+        }
+        if(childNum != null) {
+            count = count +childNum.intValue();
+        }
+        String sellPrice = req.getSellPrice();
+        BigDecimal multiply = new BigDecimal(sellPrice).multiply(new BigDecimal(count));
+        OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(multiply),null);
+
+        Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
+        orderInfo.setBooker(booker);
+
+        Product product = new Product();
+        product.setGoodsId(Long.parseLong(req.getGoodsId()));
+        product.setProductId(Long.parseLong(req.getProductId()));
+        product.setQuantity(req.getQunatity());
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
+        product.setVisitDate(req.getBeginDate());
+        orderInfo.setProduct(product);
+        final List<CreateOrderReq.BookGuest> guests = req.getGuests();
+        if(ListUtils.isNotEmpty(guests)){
+
+           // Travellers travellers = new Travellers();
+            List<Traveller> travellers = new ArrayList<>(guests.size());
+            //travellers.setTraveller(traveller);
+            for(CreateOrderReq.BookGuest guest :guests){
+                String credentialType = null;
+                if(StringUtil.isNotEmpty(guest.getCredential())){
+                    credentialType= convertLvmamaCredentialsType(guest.getCredentialType());
+                }
+
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,credentialType);
+                travellers.add(traveller1);
+            }
+            orderInfo.setTravellers(travellers);
+        }
+        request.setOrderInfo(orderInfo);
+        //邮寄信息
+       /* Recipient recipient = new Recipient();
+        request.setRecipient(recipient);*/
+    }
+
+    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
+        //需要场次号
+        int count = req.getCount()+req.getChdCount();
+        String sellPrice = req.getSellPrice();
+        BigDecimal multiply = new BigDecimal(sellPrice).multiply(new BigDecimal(count));
+        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(multiply),null);
+
+        Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
+        orderInfo.setBooker(booker);
+
+        Product product = new Product();
+        product.setGoodsId(Long.parseLong(req.getGoodsId()));
+        product.setProductId(Long.parseLong(req.getProductId()));
+        product.setQuantity(req.getCount());
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
+        product.setVisitDate(req.getBeginDate());
+        orderInfo.setProduct(product);
+
+        final List<CreateOrderReq.BookGuest> guests = req.getGuests();
+        if(ListUtils.isNotEmpty(guests)){
+            //Travellers travellers = new Travellers();
+            List<Traveller> traveller = new ArrayList<>(guests.size());
+            //travellers.setTraveller(traveller);
+            for(CreateOrderReq.BookGuest guest :guests){
+                String credentialType = null;
+                if(StringUtil.isNotEmpty(guest.getCredential())){
+                    credentialType= convertLvmamaCredentialsType(guest.getCredentialType());
+                }
+
+                Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,credentialType);
+                traveller.add(traveller1);
+            }
+
+            orderInfo.setTravellers(traveller);
+        }
+
+        request.setOrderInfo(orderInfo);
+        //邮寄信息
+       /* Recipient recipient = new Recipient();
+        request.setRecipient(recipient);*/
+    }
+
+    private String convertLvmamaCredentialsType(int type){
+        switch (type){
+            case 0:
+                return "ID_CARD";
+            case 1:
+                return "HUZHAO";
+            case 2:
+                return "GANGAO";
+            case 3:
+                return "TAIBAO";
+            default:
+                return "";
+        }
+    }
+
+    public int convertLvmamaOrderStatus(String status){
+        switch (status){
+            case "NORMAL": //下单成功 和 待支付都是待支付状态
+            case "UNPAY":
+                return OrderStatus.TO_BE_PAID.getCode();
+            case "CANCEL":
+                return OrderStatus.CANCELLED.getCode();
+            case "PAYED":
+                return OrderStatus.WAITING_TO_TRAVEL.getCode();
+            case "PARTPAY":
+            return OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode();
+            default:
+                return -1;
+        }
     }
 }

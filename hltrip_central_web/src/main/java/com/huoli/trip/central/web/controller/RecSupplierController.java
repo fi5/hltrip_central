@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.controller;
 
 import com.huoli.trip.central.api.OrderService;
 import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.vo.TripNotice;
 import com.huoli.trip.common.vo.request.PushOrderStatusReq;
 import com.huoli.trip.common.vo.request.RefundNoticeReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
@@ -39,6 +40,12 @@ public class RecSupplierController {
 	@RequestMapping(value = "/orderStatusNotice", method = RequestMethod.POST)
 	public BaseResponse orderStatusNotice(@RequestBody PushOrderStatusReq req) {
 		orderService.orderStatusNotice(req);
+		return BaseResponse.success(null);
+	}
+
+	@RequestMapping(value = "/tripNotice", method = RequestMethod.POST)
+	public BaseResponse orderStatusNotice(@RequestBody TripNotice request) {
+		orderService.tripNotice(request);
 		return BaseResponse.success(null);
 	}
 }

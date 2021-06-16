@@ -5,11 +5,16 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
 import com.huoli.trip.common.constant.Constants;
+import com.huoli.trip.common.constant.MongoConst;
 import com.huoli.trip.common.entity.*;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
 import com.huoli.trip.common.vo.Coordinate;
+import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
+import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.MongoCursor;
 import lombok.extern.slf4j.Slf4j;
@@ -513,5 +518,136 @@ public class ProductDaoImpl implements ProductDao {
             map.put(iterator.next(),Constants.COLLECTION_NAME_TRIP_CITY);
         }
         return map;
+    }
+
+    @Override
+    public List<ProductListMPO> scenicTickets(ScenicTicketListReq req) {
+        Criteria criteria = new Criteria();
+        //0门票1跟团游2酒景套餐
+        criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0);
+        if (StringUtils.isNotBlank(req.getApp())) {
+            criteria.and("appSource").regex(req.getApp());
+        }
+        if(StringUtils.isNotBlank(req.getName())){
+            criteria.and("scenicSpotName").regex(req.getName());
+        }
+        if (StringUtils.isNotBlank(req.getThemeCode())) {
+            String[] themeCodes = req.getThemeCode().split(",");
+            criteria.and("themeCode").in(themeCodes);
+        }
+        if (StringUtils.isNotBlank(req.getThemeName())) {
+            String[] themeNames = req.getThemeName().split(",");
+            for (String themeName : themeNames) {
+                criteria.and("themeName").regex(themeName);
+            }
+        }
+        if(StringUtils.isNotBlank(req.getArrCity())){
+            criteria.and("arrPlaces").regex(req.getArrCity());
+        }
+        if (StringUtils.isNotBlank(req.getArrCityCode())) {
+            criteria.and("arrCity").regex(req.getArrCityCode());
+        }
+
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex");
+        GroupOperation groupOperation = getNewListGroupField("scenicSpotId");
+        SortOperation priceSortOperation = Aggregation.sort(Sort.Direction.ASC, "apiSellPrice");
+        groupOperation.min("apiSellPrice");
+        LimitOperation limit = Aggregation.limit(req.getPageSize());
+        SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
+        Aggregation aggregation = Aggregation.newAggregation(matchOperation, groupOperation, priceSortOperation, sortOperation, skip, limit);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+
+        return  output.getMappedResults();
+    }
+
+    private GroupOperation getNewListGroupField(String... field) {
+        return Aggregation.group(field)
+                .first("productId").as("productId")
+                .first("scenicSpotId").as("scenicSpotId")
+                .first("hotelId").as("hotelId")
+                .first("scenicSpotName").as("scenicSpotName")
+                .first("productImageUrl").as("productImageUrl")
+                .first("apiSellPrice").as("apiSellPrice")
+                .first("price").as("price")
+                .first("type").as("type")
+                .first("tags").as("tags")
+                .first("productTags").as("productTags")
+                .first("briefDesc").as("briefDesc")
+                .first("sortIndex").as("sortIndex")
+                .first("channel").as("channel")
+                .first("category").as("category")
+                .first("themeName").as("themeName")
+                .first("productName").as("productName")
+                .first("depPlaces").as("depPlaces")
+                .first("channelName").as("channelName")
+                .first("groupTourTypeName").as("groupTourTypeName")
+                .first("groupTourType").as("groupTourType")
+                ;
+    }
+
+    @Override
+    public List<ProductListMPO> groupTourList(GroupTourListReq req) {
+        Criteria criteria = new Criteria();
+        criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0);
+        if (StringUtils.isNotBlank(req.getApp())) {
+            criteria.and("appSource").regex(req.getApp());
+        }
+        if(StringUtils.isNotBlank(req.getName())){
+            criteria.and("productName").regex(req.getName());
+        }
+        if (StringUtils.isNotBlank(req.getDepCity())) {
+            criteria.and("depPlaces").regex(req.getDepCity());
+        }
+        if (StringUtils.isNotBlank(req.getDepCityCode())) {
+            criteria.and("depCity").regex(req.getDepCityCode());
+        }
+        if (StringUtils.isNotBlank(req.getArrCity())) {
+            criteria.and("arrPlaces").regex(req.getArrCity());
+        }
+        if (StringUtils.isNotBlank(req.getArrCityCode())) {
+            criteria.and("arrCity").regex(req.getArrCityCode());
+        }
+        if(StringUtils.isNotBlank(req.getGroupTourType()) && !StringUtils.equals(req.getGroupTourType(), "0")){
+            criteria.and("groupTourType").is(req.getGroupTourType());
+        }
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex");
+        LimitOperation limit = Aggregation.limit(req.getPageSize());
+        SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
+        List<AggregationOperation> operations = Lists.newArrayList(matchOperation,sortOperation, skip, limit);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+
+        return  output.getMappedResults();
+    }
+
+    @Override
+    public List<ProductListMPO> hotelScenicList(HotelScenicListReq req) {
+        Criteria criteria = new Criteria();
+        criteria.and("category").is("hotel_scenicSpot").and("status").is(1).and("isDel").is(0);
+        if (StringUtils.isNotBlank(req.getApp())) {
+            criteria.and("appSource").regex(req.getApp());
+        }
+        if(StringUtils.isNotBlank(req.getName())){
+            Criteria nameCriteria = new Criteria();
+            nameCriteria.orOperator(Criteria.where("scenicSpotName").regex(req.getName()))
+                    .orOperator(Criteria.where("hotelName").regex(req.getName()))
+                    .orOperator(Criteria.where("productName").regex(req.getName()));
+            criteria.andOperator(nameCriteria);
+        }
+        if (StringUtils.isNotBlank(req.getArrCity())) {
+            criteria.and("arrPlaces").regex(req.getArrCity());
+        }
+        if (StringUtils.isNotBlank(req.getArrCityCode())) {
+            criteria.and("arrCity").regex(req.getArrCityCode());
+        }
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex");
+        List<AggregationOperation> operations = Lists.newArrayList(matchOperation,sortOperation);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+
+        return  output.getMappedResults();
     }
 }

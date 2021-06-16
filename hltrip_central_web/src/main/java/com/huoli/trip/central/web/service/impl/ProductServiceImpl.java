@@ -16,6 +16,7 @@ import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.CommonUtils;
@@ -23,8 +24,12 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.central.*;
+import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
+import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
+import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
+import com.huoli.trip.common.vo.response.goods.*;
 import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -88,10 +93,10 @@ public class ProductServiceImpl implements ProductService {
     private SupplierPolicyDao supplierPolicyDao;
 
     @Autowired
-    private RecommendDao recommendDao;
+    private CommonService commonService;
 
     @Autowired
-    private CommonService commonService;
+    private RecommendDao recommendDao;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -245,6 +250,111 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.NO_RESULT_RECOMMEND_LIST_ERROR);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/13/21 3:10 PM
+     * 门票产品列表
+     * [req]
+     * @return {@link ScenicTicketListResult}
+     * @throws
+     */
+    @Override
+    public BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req);
+        ScenicTicketListResult result=new ScenicTicketListResult();
+        List<ScenicTicketListItem> items = Lists.newArrayList();
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
+                BeanUtils.copyProperties(item, scenicTicketListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                scenicTicketListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(scenicTicketListItem);
+            });
+        }
+        result.setItems(items);
+        return BaseResponse.withSuccess(result);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/13/21 4:16 PM
+     * 跟团游产品列表
+     * [req]
+     * @return {@link GroupTourListResult}
+     * @throws
+     */
+    @Override
+    public BaseResponse<GroupTourListResult> groupTourList(GroupTourListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.groupTourList(req);
+        GroupTourListResult result=new GroupTourListResult();
+        List<GroupTourListItem> items = Lists.newArrayList();
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                GroupTourListItem groupTourListItem = new GroupTourListItem();
+                BeanUtils.copyProperties(item, groupTourListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                groupTourListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(groupTourListItem);
+            });
+        }
+        result.setItems(items);
+        return BaseResponse.withSuccess(result);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/13/21 4:16 PM
+     * 酒景产品列表
+     * [req]
+     * @return {@link HotelScenicListResult}
+     * @throws
+     */
+    @Override
+    public BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req) {
+        List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
+        HotelScenicListResult result=new HotelScenicListResult();
+        List<HotelScenicListItem> items = Lists.newArrayList();
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                HotelScenicListItem hotelScenicListItem = new HotelScenicListItem();
+                BeanUtils.copyProperties(item, hotelScenicListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                // 设置价格
+                hotelScenicListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                items.add(hotelScenicListItem);
+            });
+        }
+        result.setItems(items);
+        return BaseResponse.withSuccess(result);
+    }
+
+    /**
+     * @author: wangying
+     * @date 5/13/21 4:21 PM
+     * 组装参数调用加价计算
+     * [productListMPO, app]
+     * @return {@link IncreasePrice}
+     * @throws
+     */
+    private IncreasePrice increasePrice(ProductListMPO productListMPO, String app){
+        IncreasePrice increasePrice = new IncreasePrice();
+        increasePrice.setChannelCode(productListMPO.getChannel());
+        increasePrice.setProductCode(productListMPO.getProductId());
+        increasePrice.setProductCategory(productListMPO.getCategory());
+        increasePrice.setAppSource(app);
+        IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+        priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
+        increasePrice.setPrices(Arrays.asList(priceCalendar));
+        commonService.increasePrice(increasePrice);
+        return increasePrice;
     }
 
     @Override
@@ -561,6 +671,7 @@ public class ProductServiceImpl implements ProductService {
             result.setRemark(product.getRemark());
             result.setOperatorPhone(product.getOperatorPhone());
             result.setCityCode(product.getOriCityCode());
+            result.setExtendParams(product.getExtendParams());
 //  调用统一的价格计算并设值
 
             PriceCalcRequest priceCal=new PriceCalcRequest();
@@ -805,6 +916,7 @@ public class ProductServiceImpl implements ProductService {
             log.error("加价计算失败，不影响主流程，channel = {}, productCode = {}", channelCode, productCode, e);
         }
     }
+
     /**
      * 构建商品详情结果
      * @param productPOs
