@@ -848,6 +848,7 @@ public class ProductServiceImpl implements ProductService {
                 result.setArrCityCode(scenicSpotMPO.getCityCode());
                 result.setDescInfos(productMPO.getDescInfos());
                 result.setExtendParams(productMPO.getExtendParams());
+                result.setAddress(scenicSpotMPO.getAddress());
             } else if(StringUtils.equals(req.getCategory(), "group_tour")){
                 GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(req.getPackageCode());
                 GroupTourProductMPO productMPO = groupTourProductDao.getProductById(req.getProductCode());
