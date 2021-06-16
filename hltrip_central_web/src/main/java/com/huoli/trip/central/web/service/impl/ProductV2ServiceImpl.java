@@ -395,7 +395,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     priceCalendar.setDate(p.getStartDate());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
+                    log.info("调用加价之前的数据为：{}",JSON.toJSONString(increasePrice));
                     commonService.increasePrice(increasePrice);
+                    log.info("调用加价之后的数据为：{}",JSON.toJSONString(increasePrice));
                     List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                     IncreasePriceCalendar priceCalendar1 = prices.get(0);
                     basePrice.setSellPrice(priceCalendar1.getAdtSellPrice());
