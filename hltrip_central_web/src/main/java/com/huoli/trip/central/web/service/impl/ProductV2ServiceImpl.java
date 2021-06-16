@@ -315,86 +315,91 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
     @Override
     public BaseResponse<List<BasePrice>> queryCalendar(CalendarRequest request) {
-        String scenicSpotId = request.getScenicSpotId();
-        String startDate = request.getStartDate();
-        String productId = request.getProductId();
-        String endDate = request.getEndDate();
-        List<BasePrice> basePrices = null;
-        List<ScenicSpotProductPriceMPO> effective = new ArrayList<>();
-        if(StringUtils.isEmpty(productId)){
-            List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(scenicSpotId);
-            if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
-                for(ScenicSpotProductMPO productMPO : scenicSpotProductMPOS){
-                    String productMPOId = productMPO.getId();
-                    int sellType = productMPO.getSellType();
-                    //普通库存是一段时间 需要拆分
-                    if(sellType == 0){
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,null,null);
-                        for(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
-                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate);
-                            if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
+
+            String scenicSpotId = request.getScenicSpotId();
+            String startDate = request.getStartDate();
+            String productId = request.getProductId();
+            String endDate = request.getEndDate();
+            List<BasePrice> basePrices = null;
+        try {
+            List<ScenicSpotProductPriceMPO> effective = new ArrayList<>();
+            if (StringUtils.isEmpty(productId)) {
+                List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(scenicSpotId);
+                if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
+                    for (ScenicSpotProductMPO productMPO : scenicSpotProductMPOS) {
+                        String productMPOId = productMPO.getId();
+                        int sellType = productMPO.getSellType();
+                        //普通库存是一段时间 需要拆分
+                        if (sellType == 0) {
+                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, null, null);
+                            for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
+                                List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate);
+                                if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
+                                    effective.addAll(scenicSpotProductPriceMPOS1);
+                                }
+                            }
+
+                        } else {
+                            effective = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, startDate, endDate);
+                        }
+
+                    }
+                }
+
+            } else {
+                List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
+                if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
+                    log.info("通过产品id查询到的价格信息{}", JSON.toJSONString(scenicSpotProductPriceMPOS));
+                    for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
+                        String startDate1 = s.getStartDate();
+                        String endDate1 = s.getEndDate();
+                        if (!StringUtils.equals(startDate1, endDate1)) {
+                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(s, startDate, endDate);
+                            if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS1)) {
                                 effective.addAll(scenicSpotProductPriceMPOS1);
                             }
+                        } else {
+                            effective.add(s);
                         }
-
-                    }else{
-                        effective = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,startDate,endDate);
-                    }
-
-                }
-            }
-
-        }else {
-            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
-            if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
-                log.info("通过产品id查询到的价格信息{}",JSON.toJSONString(scenicSpotProductPriceMPOS));
-                for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
-                    String startDate1 = s.getStartDate();
-                    String endDate1 = s.getEndDate();
-                    if (!StringUtils.equals(startDate1, endDate1)) {
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(s, startDate, endDate);
-                        if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS1)) {
-                            effective.addAll(scenicSpotProductPriceMPOS1);
-                        }
-                    } else {
-                        effective.add(s);
                     }
                 }
             }
-        }
 
-        if(ListUtils.isNotEmpty(effective)){
-            List<ScenicSpotProductPriceMPO>  fe = new ArrayList<>(effective.size());
-            for (ScenicSpotProductPriceMPO  ss: effective) {
-                String startDate1 = ss.getStartDate();
-                String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
-                if(ss.getWeekDay().contains(dayOfWeekByDate)){
-                    fe.add(ss);
+            if (ListUtils.isNotEmpty(effective)) {
+                List<ScenicSpotProductPriceMPO> fe = new ArrayList<>(effective.size());
+                for (ScenicSpotProductPriceMPO ss : effective) {
+                    String startDate1 = ss.getStartDate();
+                    String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
+                    if (ss.getWeekDay().contains(dayOfWeekByDate)) {
+                        fe.add(ss);
+                    }
+
                 }
-
+                effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
+                basePrices = effective.stream().map(p -> {
+                    BasePrice basePrice = new BasePrice();
+                    BeanUtils.copyProperties(p, basePrice);
+                    //需要调用加价方法
+                    IncreasePrice increasePrice = new IncreasePrice();
+                    increasePrice.setChannelCode(request.getChannelCode());
+                    increasePrice.setProductCode(p.getScenicSpotProductId());
+                    increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setProductCategory("d_ss_ticket");
+                    List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
+                    IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                    priceCalendar.setAdtSellPrice(p.getSellPrice());
+                    priceCalendar.setDate(p.getStartDate());
+                    priceCalendars.add(priceCalendar);
+                    increasePrice.setPrices(priceCalendars);
+                    commonService.increasePrice(increasePrice);
+                    List<IncreasePriceCalendar> prices = increasePrice.getPrices();
+                    IncreasePriceCalendar priceCalendar1 = prices.get(0);
+                    basePrice.setSellPrice(priceCalendar1.getAdtSellPrice());
+                    return basePrice;
+                }).collect(Collectors.toList());
             }
-            effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO :: getStartDate)).collect(Collectors.toList());
-            basePrices = effective.stream().map(p->{
-                BasePrice basePrice = new BasePrice();
-                BeanUtils.copyProperties(p,basePrice);
-                //需要调用加价方法
-                IncreasePrice increasePrice = new IncreasePrice();
-                increasePrice.setChannelCode(request.getChannelCode());
-                increasePrice.setProductCode(p.getScenicSpotProductId());
-                increasePrice.setAppSource(request.getFrom());
-                increasePrice.setProductCategory("d_ss_ticket");
-                List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
-                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-                priceCalendar.setAdtSellPrice(p.getSellPrice());
-                priceCalendar.setDate(p.getStartDate());
-                priceCalendars.add(priceCalendar);
-                increasePrice.setPrices(priceCalendars);
-                commonService.increasePrice(increasePrice);
-                List<IncreasePriceCalendar> prices = increasePrice.getPrices();
-                IncreasePriceCalendar priceCalendar1 = prices.get(0);
-                basePrice.setSellPrice(priceCalendar1.getAdtSellPrice());
-                return basePrice;
-            }).collect(Collectors.toList());
+        }catch (Exception ex){
+            log.error("11111",ex);
         }
         return BaseResponse.withSuccess(basePrices);
     }
