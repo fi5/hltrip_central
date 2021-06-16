@@ -426,6 +426,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             Date myDate = myFormatter.parse(date);
             SimpleDateFormat formatter = new SimpleDateFormat("E");
             String str = formatter.format(myDate);
+            log.info("获取到的星期几：{}",str);
             if(list.contains(str)){
                 dayOfweek = String.valueOf(list.indexOf(str)+1);
             }
