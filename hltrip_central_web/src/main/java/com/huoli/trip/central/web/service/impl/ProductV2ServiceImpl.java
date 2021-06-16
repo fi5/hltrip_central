@@ -406,7 +406,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
      private static String getDayOfWeekByDate(String date) {
         String dayOfweek = "0";
-        String [] weekNum ={"星期一","星期二 ","星期三","星期四","星期五","星期六","星期日"};
+        String [] weekNum ={"星期一","星期二","星期三","星期四","星期五","星期六","星期日"};
          List<String> list = Arrays.asList(weekNum);
          try {
             SimpleDateFormat myFormatter = new SimpleDateFormat("yyyy-MM-dd");
