@@ -343,7 +343,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }
 
         }else {
-            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
+            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productId,startDate,endDate);
             if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
                 log.info("通过产品id查询到的价格信息{}",JSON.toJSONString(scenicSpotProductPriceMPOS));
                 for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
@@ -381,7 +381,11 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 BeanUtils.copyProperties(p,basePrice);
                 //需要调用加价方法
                 IncreasePrice increasePrice = new IncreasePrice();
-                increasePrice.setChannelCode(request.getChannelCode());
+                ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(p.getScenicSpotProductId());
+                if(scenicSpotProductMPO != null){
+                    increasePrice.setChannelCode(scenicSpotProductMPO.getChannel());
+                }
+                //increasePrice.setChannelCode(request.getChannelCode());
                 increasePrice.setProductCode(p.getScenicSpotProductId());
                 increasePrice.setAppSource(request.getFrom());
                 increasePrice.setProductCategory("d_ss_ticket");
