@@ -411,7 +411,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
          try {
             SimpleDateFormat myFormatter = new SimpleDateFormat("yyyy-MM-dd");
             Date myDate = myFormatter.parse(date);
-            SimpleDateFormat formatter = new SimpleDateFormat("E");
+            SimpleDateFormat formatter = new SimpleDateFormat("E",Locale.SIMPLIFIED_CHINESE);
             String str = formatter.format(myDate);
             if(list.contains(str)){
                 dayOfweek = String.valueOf(list.indexOf(str)+1);
