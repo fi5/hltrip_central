@@ -395,6 +395,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                 IncreasePriceCalendar priceCalendar1 = prices.get(0);
                 basePrice.setSellPrice(priceCalendar1.getAdtSellPrice());
+                basePrice.setPriceId(p.getId());
                 return basePrice;
             }).collect(Collectors.toList());
         }
