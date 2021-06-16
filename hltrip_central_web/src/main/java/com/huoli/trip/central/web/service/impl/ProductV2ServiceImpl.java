@@ -345,6 +345,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }else {
             List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
             if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
+                log.info("通过产品id查询到的价格信息{}",JSON.toJSONString(scenicSpotProductPriceMPOS));
                 for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
                     String startDate1 = s.getStartDate();
                     String endDate1 = s.getEndDate();
@@ -385,6 +386,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 priceCalendar.setAdtSellPrice(p.getSellPrice());
                 priceCalendar.setDate(p.getStartDate());
                 priceCalendars.add(priceCalendar);
+                increasePrice.setPrices(priceCalendars);
                 commonService.increasePrice(increasePrice);
                 List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                 IncreasePriceCalendar priceCalendar1 = prices.get(0);
