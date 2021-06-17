@@ -271,8 +271,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     int ticketOutMinute = scenicSpotProductTransaction.getTicketOutMinute();
                     if( 0== ticketOutHour &&0 == ticketOutMinute){
                         Tag tag2 = new Tag();
-                        tag2.setName("随买随用");
+                        tag2.setName("随订随用");
                         ticketkind.add(tag2);
+                        scenicSpotProductBase.setAnyTime(1);
                     }
                 }
 
