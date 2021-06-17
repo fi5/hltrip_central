@@ -848,6 +848,7 @@ public class ProductServiceImpl implements ProductService {
                 result.setArrCityCode(scenicSpotMPO.getCityCode());
                 result.setDescInfos(productMPO.getDescInfos());
                 result.setExtendParams(productMPO.getExtendParams());
+                result.setAddress(scenicSpotMPO.getAddress());
             } else if(StringUtils.equals(req.getCategory(), "group_tour")){
                 GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(req.getPackageCode());
                 GroupTourProductMPO productMPO = groupTourProductDao.getProductById(req.getProductCode());
@@ -1689,6 +1690,7 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setCategory(rb.getCategory());
         recommendProduct.setBookDay(rb.getBookDay());
         recommendProduct.setRecommendDesc(rb.getRecommendDesc());
+        recommendProduct.setSubTitle(rb.getSubTitle());
         return recommendProduct;
     }
 }
