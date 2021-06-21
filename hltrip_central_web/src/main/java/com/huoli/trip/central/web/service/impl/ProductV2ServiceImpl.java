@@ -603,7 +603,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<HotelScenicProductDetail> hotelScenicProductDetail(HotelScenicProductRequest request) {
-        HotelScenicProductDetail hotelScenicProductDetail = hotelScenicDao.queryHotelScenicProductById(request.getProductId());
+        HotelScenicSpotProductMPO hotelScenicSpotProductMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+
+        HotelScenicProductDetail hotelScenicProductDetail = new HotelScenicProductDetail();
+        BeanUtils.copyProperties(hotelScenicSpotProductMPO, hotelScenicProductDetail);
+        hotelScenicProductDetail.setProductId(hotelScenicSpotProductMPO.getId());
+        hotelScenicProductDetail.setDesc(hotelScenicSpotProductMPO.getComputerDesc());
         return BaseResponse.withSuccess(hotelScenicProductDetail);
     }
 
