@@ -4,6 +4,7 @@ import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller
 import com.huoli.eagle.eye.core.util.StringUtil;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.util.ListUtils;
@@ -19,11 +20,13 @@ import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderRes;
 import javafx.beans.binding.When;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.ref.ReferenceQueue;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -109,7 +112,18 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
 
     public void convertLvmamaCreateOrderRequest(CreateOrderRequest request, CreateOrderReq req, ScenicSpotProductMPO scenicSpotProductMPO, List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS){
         //需要场次号
-        OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(req.getSellAmount()),null);
+        Integer adultNum = req.getAdultNum();
+        Integer childNum = req.getChildNum();
+        int count = 0;
+        if(adultNum != null){
+            count = adultNum;
+        }
+        if(childNum != null) {
+            count = count +childNum.intValue();
+        }
+        String sellPrice = req.getSellPrice();
+        BigDecimal multiply = new BigDecimal(sellPrice).multiply(new BigDecimal(count));
+        OrderInfo orderInfo = new OrderInfo(req.getPartnerOrderId(),String.valueOf(multiply),null);
 
         Booker booker = new Booker(req.getcName(),req.getMobile(),req.geteName());
         orderInfo.setBooker(booker);
@@ -154,9 +168,12 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         request.setRecipient(recipient);*/
     }
 
-    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req, ScenicSpotProductMPO scenicSpotProductMPO, List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS){
-        //后续支持场次票之后 需要场次号
-        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(req.getSellAmount()),null);
+    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
+        //需要场次号
+        int count = req.getCount()+req.getChdCount();
+        String sellPrice = req.getSellPrice();
+        BigDecimal multiply = new BigDecimal(sellPrice).multiply(new BigDecimal(count));
+        OrderInfo orderInfo = new OrderInfo(null,String.valueOf(multiply),null);
 
         Booker booker = new Booker(req.getChinaName(),req.getMobile(),req.getEmail());
         orderInfo.setBooker(booker);
