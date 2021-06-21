@@ -433,8 +433,13 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<List<String>> recommendTags(RecommendRequestV2 request){
         RecommendMPO recommendMPO = recommendDao.getList(request);
-        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
         List<String> tags = Lists.newArrayList();
+        if(recommendMPO == null){
+            log.error("没有查到符合条件的标签。。");
+            tags.add("为你精选");
+            return BaseResponse.withSuccess(tags);
+        }
+        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
             Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
@@ -461,6 +466,7 @@ public class ProductServiceImpl implements ProductService {
         }
         // 实在没有就返回这个
         if(ListUtils.isEmpty(tags)){
+            log.error("东拼西凑也没有合适的标签。。");
             tags.add("为你精选");
         }
         return BaseResponse.withSuccess(tags);
