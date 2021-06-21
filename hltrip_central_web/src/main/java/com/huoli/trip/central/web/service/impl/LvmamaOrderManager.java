@@ -3,6 +3,8 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.util.UploadUtil;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
