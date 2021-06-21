@@ -50,10 +50,10 @@ public class GroupTourDaoImpl implements GroupTourDao {
         }
 
         if(StringUtils.isNotBlank(date)){
-            criteria.and("priceStocks.date").is(date);
+            criteria.and("groupTourPrices.date").is(date);
         }else{
             String now = DateTimeUtil.format(new Date(), DateTimeUtil.YYYYMMDD);
-            criteria.and("priceStocks.date").gte(now);
+            criteria.and("groupTourPrices.date").gte(now);
         }
         query.addCriteria(criteria);
         return mongoTemplate.find(query, GroupTourProductSetMealMPO.class);
