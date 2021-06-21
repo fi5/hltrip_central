@@ -168,7 +168,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         request.setRecipient(recipient);*/
     }
 
-    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
+    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req, ScenicSpotProductMPO scenicSpotProductMPO, List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS){
         //需要场次号
         int count = req.getCount()+req.getChdCount();
         String sellPrice = req.getSellPrice();
