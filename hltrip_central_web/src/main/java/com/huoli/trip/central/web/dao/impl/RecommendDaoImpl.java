@@ -29,13 +29,13 @@ public class RecommendDaoImpl implements RecommendDao {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public RecommendMPO getList(RecommendRequestV2 request){
+    public List<RecommendMPO> getList(RecommendRequestV2 request){
         Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
         // 按上游调用方为准，不传城市就按没城市查，这里不对结果准确性负责（原来查标签的地方是必须要有城市的）
         if(StringUtils.isNotBlank(request.getCity())){
             criteria.and("city").is(request.getCity());
         }
-        return mongoTemplate.findOne(new Query(criteria), RecommendMPO.class);
+        return mongoTemplate.find(new Query(criteria), RecommendMPO.class);
     }
 
     @Override
