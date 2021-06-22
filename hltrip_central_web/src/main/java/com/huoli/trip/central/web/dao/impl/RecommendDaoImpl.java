@@ -35,6 +35,10 @@ public class RecommendDaoImpl implements RecommendDao {
         if(StringUtils.isNotBlank(request.getCity())){
             criteria.and("city").is(request.getCity());
         }
+        // 按上游调用方为准，传了标签就加上标签条件（原来只有位置2的时候单独处理）
+        if(StringUtils.isNotBlank(request.getTag())){
+            criteria.and("recommendBaseInfos.title").is(request.getTag());
+        }
         return mongoTemplate.find(new Query(criteria), RecommendMPO.class);
     }
 
