@@ -17,10 +17,7 @@ import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
 import com.huoli.trip.common.entity.mpo.hotel.HotelMPO;
-import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotPriceStock;
-import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
-import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductPayInfo;
-import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.*;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.*;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
@@ -697,12 +694,29 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<ProductPriceCalendarResult> queryHotelScenicPriceCalendar(CalendarRequest request) {
+        ProductPriceCalendarResult result = new ProductPriceCalendarResult();
         List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
         HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
         List<HotelScenicSpotPriceStock> allPriceStocks = new ArrayList<>();
         //将所有价格整合到一起
         for (HotelScenicSpotProductSetMealMPO hotelScenicSpotProductSetMealMPO : setMealMpoList) {
             allPriceStocks.addAll(hotelScenicSpotProductSetMealMPO.getPriceStocks());
+        }
+        HotelScenicSpotProductPayInfo payInfo = productMPO.getPayInfo();
+        if(payInfo != null && payInfo.getSellType() == 0){
+            //普通库存拆分价格日历
+            List<HotelScenicSpotPriceStock> tmpPrices = new ArrayList<>();
+            for (HotelScenicSpotPriceStock allPriceStock : allPriceStocks) {
+                List<HotelScenicSpotPriceStock> splitPriceStock = splitHotelScenicProductCalendar(allPriceStock, payInfo);
+                if (CollectionUtils.isNotEmpty(splitPriceStock)) {
+                    tmpPrices.addAll(tmpPrices);
+                }
+            }
+            allPriceStocks = tmpPrices;
+        }
+        if (CollectionUtils.isEmpty(allPriceStocks)) {
+            //价格数据为空，无价格
+            return BaseResponse.withSuccess(result);
         }
         //价格根据日期分组
         Map<String, List<HotelScenicSpotPriceStock>> priceMapByDate = allPriceStocks.stream().collect(Collectors.groupingBy(a -> a.getDate()));
@@ -748,10 +762,59 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             return priceInfo;
         }).collect(Collectors.toList());
 
-        ProductPriceCalendarResult result = new ProductPriceCalendarResult();
         result.setPriceInfos(resultPrices);
 
         return BaseResponse.withSuccess(result);
+    }
+
+    private List<HotelScenicSpotPriceStock> splitHotelScenicProductCalendar(HotelScenicSpotPriceStock allPriceStock, HotelScenicSpotProductPayInfo payInfo) {
+        List<HotelScenicSpotPriceStock> list = null;
+        try {
+            String useStartDate = payInfo.getGoDate().getStartDate();
+            String useEndDate = payInfo.getGoDate().getEndDate();
+            Date useStart = DateTimeUtil.parse(useStartDate, DateTimeUtil.YYYYMMDD);
+            Date useEnd = DateTimeUtil.parseDate(useEndDate, DateTimeUtil.YYYYMMDD);
+
+            Calendar calBegin = Calendar.getInstance();
+            calBegin.setTime(useStart);
+            Calendar calEnd = Calendar.getInstance();
+            calEnd.setTime(useEnd);
+            calEnd.add(Calendar.DAY_OF_MONTH, 1);
+            while (useEnd.after(calBegin.getTime())) {
+                String date = DateTimeUtil.formatDate(calBegin.getTime(), DateTimeUtil.YYYYMMDD);
+                boolean canSell = true;
+                if (CollectionUtils.isNotEmpty(payInfo.getExUseDate())) {
+                    for (PeriodDate periodDate : payInfo.getExUseDate()) {
+                        Date exStart = DateTimeUtil.parse(periodDate.getStartDate(), DateTimeUtil.YYYYMMDD);
+                        Date exEnd = DateTimeUtil.parse(periodDate.getEndDate(), DateTimeUtil.YYYYMMDD);
+                        if (exStart.before(calBegin.getTime()) && exEnd.after(calBegin.getTime())) {
+                            //在不支持售卖的日期区间内
+                            canSell = false;
+                            break;
+                        }
+                    }
+                }
+                if (canSell && StringUtils.isNotEmpty(payInfo.getExUseWeek())) {
+                    //处理过滤不可售卖星期
+                    String dayOfWeekByDate = getDayOfWeekByDate(date);
+                    if (StringUtils.contains(payInfo.getExUseWeek(), dayOfWeekByDate)) {
+                        //属于不可售卖星期
+                        canSell = false;
+                    }
+                }
+                if(canSell){
+                    //可以售卖的日期
+                    HotelScenicSpotPriceStock stock = new HotelScenicSpotPriceStock();
+                    BeanUtils.copyProperties(allPriceStock, stock);
+                    stock.setDate(date);
+                    list.add(stock);
+                }
+                calBegin.add(Calendar.DAY_OF_MONTH, 1);
+            }
+        }catch (Exception e){
+
+        }
+        return list;
     }
 
     /**
