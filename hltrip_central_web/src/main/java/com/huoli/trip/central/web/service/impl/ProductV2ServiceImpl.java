@@ -776,17 +776,14 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
             Calendar calBegin = Calendar.getInstance();
             calBegin.setTime(useStart);
-            Calendar calEnd = Calendar.getInstance();
-            calEnd.setTime(useEnd);
-            calEnd.add(Calendar.DAY_OF_MONTH, 1);
-            while (useEnd.after(calBegin.getTime())) {
+            while (useEnd.compareTo(calBegin.getTime()) >= 0) {
                 String date = DateTimeUtil.formatDate(calBegin.getTime(), DateTimeUtil.YYYYMMDD);
                 boolean canSell = true;
                 if (CollectionUtils.isNotEmpty(payInfo.getExUseDate())) {
                     for (PeriodDate periodDate : payInfo.getExUseDate()) {
                         Date exStart = DateTimeUtil.parse(periodDate.getStartDate(), DateTimeUtil.YYYYMMDD);
                         Date exEnd = DateTimeUtil.parse(periodDate.getEndDate(), DateTimeUtil.YYYYMMDD);
-                        if (exStart.before(calBegin.getTime()) && exEnd.after(calBegin.getTime())) {
+                        if (exStart.compareTo(calBegin.getTime()) <= 0 && exEnd.compareTo(calBegin.getTime()) >= 0) {
                             //在不支持售卖的日期区间内
                             canSell = false;
                             break;
