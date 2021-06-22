@@ -117,6 +117,31 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p->{
                     GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
                     BeanUtils.copyProperties(p,groupTourProductSetMeal);
+                    //价格计算
+                    IncreasePrice increasePrice = new IncreasePrice();
+                    increasePrice.setChannelCode(groupTourProductMPO.getChannel());
+                    increasePrice.setProductCode(groupTourProductMPO.getId());
+                    increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setProductCategory(groupTourProductMPO.getCategory());
+                    List<GroupTourPrice> groupTourPrices = p.getGroupTourPrices();
+                    List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
+                        IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                        priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
+                        priceCalendar.setChdSellPrice(item.getChdSellPrice());
+                        priceCalendar.setDate(item.getDate());
+                        return priceCalendar;
+                    }).collect(Collectors.toList());
+                    increasePrice.setPrices(priceCalendars);
+                    commonService.increasePrice(increasePrice);
+
+                    Map<String, IncreasePriceCalendar> priceMap = Maps.uniqueIndex(increasePrice.getPrices(), a -> a.getDate());
+
+                    groupTourPrices.stream().forEach(item -> {
+                        IncreasePriceCalendar priceCalendar = priceMap.get(item.getDate());
+                        item.setAdtSellPrice(priceCalendar.getAdtSellPrice());
+                        item.setChdSellPrice(priceCalendar.getChdSellPrice());
+                    });
+                    p.setGroupTourPrices(groupTourPrices);
                     return groupTourProductSetMeal;
                 }).collect(Collectors.toList());
                 groupTourProductBody.setSetMeals(meals);
@@ -604,7 +629,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<HotelScenicProductDetail> hotelScenicProductDetail(HotelScenicProductRequest request) {
-        HotelScenicProductDetail hotelScenicProductDetail = hotelScenicDao.queryHotelScenicProductById(request.getProductId());
+        HotelScenicSpotProductMPO hotelScenicSpotProductMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+
+        HotelScenicProductDetail hotelScenicProductDetail = new HotelScenicProductDetail();
+        BeanUtils.copyProperties(hotelScenicSpotProductMPO, hotelScenicProductDetail);
+        hotelScenicProductDetail.setProductId(hotelScenicSpotProductMPO.getId());
+        hotelScenicProductDetail.setDesc(hotelScenicSpotProductMPO.getComputerDesc());
         return BaseResponse.withSuccess(hotelScenicProductDetail);
     }
 

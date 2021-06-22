@@ -21,7 +21,7 @@ public interface RecommendDao {
      * @param request
      * @return
      */
-    RecommendMPO getList(RecommendRequestV2 request);
+    List<RecommendMPO> getList(RecommendRequestV2 request);
 
     /**
      * 获取城市

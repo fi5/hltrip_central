@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.dao.impl;
 import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
+import com.huoli.trip.common.util.DateTimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -48,7 +50,10 @@ public class GroupTourDaoImpl implements GroupTourDao {
         }
 
         if(StringUtils.isNotBlank(date)){
-            criteria.and("priceStocks.date").is(date);
+            criteria.and("groupTourPrices.date").is(date);
+        }else{
+            String now = DateTimeUtil.format(new Date(), DateTimeUtil.YYYYMMDD);
+            criteria.and("groupTourPrices.date").gte(now);
         }
         query.addCriteria(criteria);
         return mongoTemplate.find(query, GroupTourProductSetMealMPO.class);

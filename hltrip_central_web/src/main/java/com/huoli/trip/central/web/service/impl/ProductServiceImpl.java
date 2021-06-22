@@ -414,14 +414,14 @@ public class ProductServiceImpl implements ProductService {
         String sysTag = "为你精选";
         RecommendResultV2 result = new RecommendResultV2();
         List<RecommendProductV2> products = Lists.newArrayList();
-        RecommendMPO recommendMPO = recommendDao.getList(request);
+        List<RecommendMPO> recommendMPO = recommendDao.getList(request);
         List<RecommendBaseInfo> oriRecommendBaseInfos;
-        if(recommendMPO == null){
+        if(ListUtils.isEmpty(recommendMPO)){
             // 如果带城市查不到就只按位置查
             List<RecommendMPO> recommendMPOs = recommendDao.getListByPosition(request);
             oriRecommendBaseInfos = recommendMPOs.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
         } else {
-            oriRecommendBaseInfos = recommendMPO.getRecommendBaseInfos();
+            oriRecommendBaseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
         }
         if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
             List<RecommendBaseInfo> recommendBaseInfos;
@@ -484,14 +484,14 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<List<String>> recommendTags(RecommendRequestV2 request){
-        RecommendMPO recommendMPO = recommendDao.getList(request);
+        List<RecommendMPO> recommendMPO = recommendDao.getList(request);
         List<String> tags = Lists.newArrayList();
-        if(recommendMPO == null){
+        if(ListUtils.isEmpty(recommendMPO)){
             log.error("没有查到符合条件的标签。。");
             tags.add("为你精选");
             return BaseResponse.withSuccess(tags);
         }
-        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
+        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
             Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
@@ -538,8 +538,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<List<String>> recommendSubjects(RecommendRequestV2 request){
-        RecommendMPO recommendMPO = recommendDao.getList(request);
-        List<RecommendBaseInfo> baseInfos = recommendMPO.getRecommendBaseInfos();
+        List<RecommendMPO> recommendMPO = recommendDao.getList(request);
+        if(ListUtils.isEmpty(recommendMPO)){
+            log.error("没有查到符合条件的主题。。");
+            return BaseResponse.withSuccess();
+        }
+        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
         List<String> subjects = Lists.newArrayList();
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
