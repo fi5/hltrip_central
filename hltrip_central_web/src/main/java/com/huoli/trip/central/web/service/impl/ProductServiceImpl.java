@@ -423,6 +423,7 @@ public class ProductServiceImpl implements ProductService {
             products = recommendBaseInfos.stream().map(rb ->
                     convertToRecommendProductV2(rb, request.getPosition().toString())).collect(Collectors.toList());
         }
+        products.sort(Comparator.comparing(p -> p.getSeq()));
         if(products.size() > request.getPageSize()){
             products = products.subList(0, request.getPageSize());
             // 系统标签没有更多
@@ -1278,6 +1279,7 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setRecommendDesc(rb.getRecommendDesc());
         recommendProduct.setSubTitle(rb.getSubTitle());
         recommendProduct.setTags(rb.getTags());
+        recommendProduct.setSeq(rb.getSeq());
         return recommendProduct;
     }
 }
