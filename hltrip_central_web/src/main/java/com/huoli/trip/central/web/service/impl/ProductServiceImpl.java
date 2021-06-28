@@ -805,6 +805,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req) {
         try {
+            String channel = null;
             ProductPriceDetailResultV2 result = new ProductPriceDetailResultV2();
             if(StringUtils.equals(req.getCategory(), "d_ss_ticket")) {
                 ScenicSpotProductMPO productMPO = scenicSpotProductDao.getProductById(req.getProductCode());
@@ -876,6 +877,7 @@ public class ProductServiceImpl implements ProductService {
                 result.setDescInfos(productMPO.getDescInfos());
                 result.setExtendParams(productMPO.getExtendParams());
                 result.setAddress(scenicSpotMPO.getAddress());
+                channel = productMPO.getChannel();
             } else if(StringUtils.equals(req.getCategory(), "group_tour")){
                 GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(req.getPackageCode());
                 GroupTourProductMPO productMPO = groupTourProductDao.getProductById(req.getProductCode());
@@ -926,6 +928,7 @@ public class ProductServiceImpl implements ProductService {
                         return baseRefundRuleVO;
                     }).collect(Collectors.toList()));
                 }
+                channel = productMPO.getChannel();
             } else if(StringUtils.equals(req.getCategory(), "hotel_scenicSpot")){
                 HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicSpotProductSetMealDao.getSetMealById(req.getPackageCode());
                 HotelScenicSpotProductMPO productMPO = hotelScenicSpotProductDao.getProductById(req.getProductCode());
@@ -976,6 +979,7 @@ public class ProductServiceImpl implements ProductService {
                         return baseRefundRuleVO;
                     }).collect(Collectors.toList()));
                 }
+                channel = productMPO.getChannel();
             }
 
             PriceCalcRequest priceCal = new PriceCalcRequest();
@@ -988,6 +992,7 @@ public class ProductServiceImpl implements ProductService {
                 priceCal.setEndDate(DateTimeUtil.parseDate(req.getEndDate()));
             }
             priceCal.setProductCode(req.getProductCode());
+            priceCal.setChannelCode(channel);
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
             try {
                 priceCalcResultBaseResponse = calcTotalPriceV2(priceCal);
