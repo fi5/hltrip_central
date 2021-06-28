@@ -1182,10 +1182,6 @@ public class ProductServiceImpl implements ProductService {
                 checkPriceV2(priceInfos, startDate, quantity, chdQuantity == null ? 0 : chdQuantity, result);
             }
         }
-        PricePO pricePO = productDao.getPricePos(request.getProductCode());
-        if(pricePO == null || ListUtils.isEmpty(pricePO.getPriceInfos())){
-            return BaseResponse.withFail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
-        }
         return BaseResponse.withSuccess(result);
     }
 
