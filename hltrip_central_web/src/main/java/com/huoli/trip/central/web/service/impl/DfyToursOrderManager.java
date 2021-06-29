@@ -185,7 +185,7 @@ public class DfyToursOrderManager extends OrderManager {
 		req1.setEndDate(end);
 		//2021-05-31 新增packageId category
 		req1.setProductId(req.getProductId());
-		req1.setProductId(req.getPackageId());
+		req1.setPackageId(req.getPackageId());
 		req1.setCategory(req.getCategory());
 		req1.setAdtNum(req.getCount());
 		req1.setChdNum(req.getChdCount());
