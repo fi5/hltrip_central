@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.dao.impl;
 
 import com.huoli.trip.central.web.dao.GroupTourDao;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealBackupMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -66,5 +67,14 @@ public class GroupTourDaoImpl implements GroupTourDao {
         criteria.and("_id").is(setMealId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, GroupTourProductSetMealMPO.class);
+    }
+
+    @Override
+    public GroupTourProductSetMealBackupMPO queryGroupTourBackUp(String packageId) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("groupTourProductSetMealMPO.id").is(packageId);
+        query.addCriteria(criteria);
+        return mongoTemplate.findOne(query, GroupTourProductSetMealBackupMPO.class);
     }
 }

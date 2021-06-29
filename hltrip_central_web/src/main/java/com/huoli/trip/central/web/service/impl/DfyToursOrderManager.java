@@ -10,6 +10,8 @@ import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealBackupMPO;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
@@ -21,10 +23,7 @@ import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.DfyOrderService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
 import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
-import com.huoli.trip.supplier.self.difengyun.vo.Contact;
-import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
-import com.huoli.trip.supplier.self.difengyun.vo.DfyToursOrderDetail;
-import com.huoli.trip.supplier.self.difengyun.vo.Tourist;
+import com.huoli.trip.supplier.self.difengyun.vo.*;
 import com.huoli.trip.supplier.self.difengyun.vo.request.*;
 import com.huoli.trip.supplier.self.difengyun.vo.response.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
@@ -261,14 +260,27 @@ public class DfyToursOrderManager extends OrderManager {
 	 */
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
 		GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(req.getProductId());
+		GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(req.getPackageId());
+		GroupTourProductSetMealBackupMPO backupMPO = groupTourDao.queryGroupTourBackUp(req.getPackageId());
 		DfyCreateToursOrderRequest dfyCreateOrderRequest = new DfyCreateToursOrderRequest();
 		dfyCreateOrderRequest.setStartTime(req.getBeginDate());
 		//dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getSupplierProductId()));
 		dfyCreateOrderRequest.setProductId(Integer.valueOf(groupTourProductMPO.getSupplierProductId()));
 		dfyCreateOrderRequest.setAdultNum(req.getAdultNum());
 		dfyCreateOrderRequest.setChildNum(req.getChildNum());
-		dfyCreateOrderRequest.setStartCity(req.getStartCity());
-		dfyCreateOrderRequest.setStartCityCode(req.getStartCityCode());
+		if(backupMPO != null){
+			DfyToursDetailResponse dfyToursDetailResponse = JSONObject.parseObject(backupMPO.getOriginContent(), DfyToursDetailResponse.class);
+			List<DfyDepartCity> departCitys = dfyToursDetailResponse.getDepartCitys();
+			if (CollectionUtils.isNotEmpty(departCitys)) {
+				for (DfyDepartCity departCity : departCitys) {
+					if (StringUtils.equals(departCity.getName(), groupTourProductSetMealMPO.getDepName())) {
+						dfyCreateOrderRequest.setStartCity(departCity.getName());
+						dfyCreateOrderRequest.setStartCityCode(departCity.getCode());
+						break;
+					}
+				}
+			}
+		}
 		dfyCreateOrderRequest.setStartTime(req.getBeginDate());
 
 		//出行人
