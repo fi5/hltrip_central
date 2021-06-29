@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealBackupMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
 
 import java.util.List;
@@ -18,4 +19,5 @@ public interface GroupTourDao {
 
     GroupTourProductSetMealMPO queryGroupSetMealBySetId(String setMealId);
 
+    GroupTourProductSetMealBackupMPO queryGroupTourBackUp(String packageId);
 }
