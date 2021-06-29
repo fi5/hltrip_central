@@ -154,6 +154,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         groupTourListReq.setArrCityCode(request.getArrCity());
         groupTourListReq.setGroupTourType(groupTourProductMPO.getGroupTourType());
         List<ProductListMPO> productListMPOS = productDao.groupTourList(groupTourListReq);
+        log.info("推荐列表：{}", JSONObject.toJSONString(productListMPOS));
         if (CollectionUtils.isNotEmpty(productListMPOS)) {
             List<GroupTourRecommend> groupTourRecommends = productListMPOS.stream().map(a -> {
                 GroupTourRecommend groupTourRecommend = new GroupTourRecommend();

@@ -405,6 +405,7 @@ public class ProductServiceImpl implements ProductService {
         IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
         priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
         increasePrice.setPrices(Arrays.asList(priceCalendar));
+        log.info("increasePrice:{}", JSONObject.toJSONString(increasePrice));
         commonService.increasePrice(increasePrice);
         return increasePrice;
     }
