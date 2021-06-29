@@ -162,6 +162,8 @@ public class HllxOrderManager extends OrderManager {
         hllxCreateOrderReq.setPackageId(req.getPackageId());
         hllxCreateOrderReq.setCategory(req.getCategory());
         hllxCreateOrderReq.setQunatity(req.getQunatity());
+        hllxCreateOrderReq.setAdtQuantity(req.getAdultNum());
+        hllxCreateOrderReq.setChildQuantity(req.getChildNum());
         HllxBookCheckRes hllxBookCheckRes;
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
