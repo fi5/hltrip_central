@@ -361,8 +361,11 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                             }
                         }
 
-                    } else {
-                        effective = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, startDate, endDate);
+                    }else{
+                        List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, startDate, endDate);
+                        if (CollectionUtils.isNotEmpty(priceMPOS)) {
+                            effective.addAll(priceMPOS);
+                        }
                     }
 
                 }
