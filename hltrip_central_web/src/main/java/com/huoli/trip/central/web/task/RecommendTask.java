@@ -122,6 +122,10 @@ public class RecommendTask {
                      return null;
                 }
                 PriceSinglePO priceSinglePO = priceDao.selectByProductCode(productPO.getCode());
+                if(priceSinglePO == null){
+                    log.info("产品{}没有合适的价格，跳过。", productPO.getCode());
+                    return null;
+                }
                 r.setPriceInfo(priceSinglePO.getPriceInfos());
                 log.info("产品{}最新价格={}", productPO.getCode(), JSON.toJSONString(r.getPriceInfo()));
                 return r;
