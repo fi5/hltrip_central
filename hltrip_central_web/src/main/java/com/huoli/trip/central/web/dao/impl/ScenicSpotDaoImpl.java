@@ -136,7 +136,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     public ScenicSpotProductBackupMPO queryBackInfoByProductId(String productId) {
         Query query = new Query();
         Criteria criteria = new Criteria();
-        criteria.and("scenicSpotProduct._id").is(productId);
+        criteria.and("scenicSpotProduct.id").is(productId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, ScenicSpotProductBackupMPO.class);
     }
