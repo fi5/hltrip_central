@@ -99,7 +99,7 @@ public class HotelScenicDaoImpl implements HotelScenicDao {
     public HotelScenicSpotProductBackupMPO queryBackInfoByProductId(String productId) {
         Query query = new Query();
         Criteria criteria = new Criteria();
-        criteria.and("productMPO._id").is(productId);
+        criteria.and("productMPO.id").is(productId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, HotelScenicSpotProductBackupMPO.class);
     }
