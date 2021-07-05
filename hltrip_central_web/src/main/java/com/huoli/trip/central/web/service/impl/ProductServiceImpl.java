@@ -427,6 +427,8 @@ public class ProductServiceImpl implements ProductService {
         if(StringUtils.isNotBlank(request.getTag())){
             oriRecommendBaseInfos.removeIf(r -> !StringUtils.equals(r.getTitle(), request.getTag()));
         }
+        log.info("recommendMPO:{}", recommendMPO.size());
+        log.info("oriRecommendBaseInfos:{}", oriRecommendBaseInfos.size());
         if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
             List<RecommendBaseInfo> recommendBaseInfos;
             oriRecommendBaseInfos = resetRecommendBaseInfo(request.getAppSource(), oriRecommendBaseInfos);
@@ -475,6 +477,7 @@ public class ProductServiceImpl implements ProductService {
             products = recommendBaseInfos.stream().map(rb ->
                     convertToRecommendProductV2(rb, request.getPosition().toString())).collect(Collectors.toList());
         }
+        log.info("products:{}", products.size());
         if(products.size() > request.getPageSize()){
             products = products.subList(0, request.getPageSize());
             // 系统标签没有更多
