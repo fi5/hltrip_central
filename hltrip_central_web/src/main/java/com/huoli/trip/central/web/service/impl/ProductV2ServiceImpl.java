@@ -30,6 +30,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.v2.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.data.Json;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
@@ -153,6 +154,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         groupTourListReq.setArrCityCode(request.getArrCity());
         groupTourListReq.setGroupTourType(groupTourProductMPO.getGroupTourType());
         List<ProductListMPO> productListMPOS = productDao.groupTourList(groupTourListReq);
+        log.info("推荐列表：{}", JSONObject.toJSONString(productListMPOS));
         if (CollectionUtils.isNotEmpty(productListMPOS)) {
             List<GroupTourRecommend> groupTourRecommends = productListMPOS.stream().map(a -> {
                 GroupTourRecommend groupTourRecommend = new GroupTourRecommend();
@@ -190,6 +192,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         String date = request.getDate();
         List<ScenicSpotProductBase> productBases = null;
         if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
+            log.info("查询到的产品列表数据为：{}",JSON.toJSONString(scenicSpotProductMPOS));
             productBases = new ArrayList<>();
             for (ScenicSpotProductMPO scenicSpotProduct : scenicSpotProductMPOS) {
                 String productId = scenicSpotProduct.getId();
@@ -342,18 +345,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         String endDate = request.getEndDate();
         List<BasePrice> basePrices = null;
         List<ScenicSpotProductPriceMPO> effective = new ArrayList<>();
-        if(StringUtils.isEmpty(productId)){
+        if (StringUtils.isEmpty(productId)) {
             List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(scenicSpotId);
-            if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
-                for(ScenicSpotProductMPO productMPO : scenicSpotProductMPOS){
+            if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
+                for (ScenicSpotProductMPO productMPO : scenicSpotProductMPOS) {
                     String productMPOId = productMPO.getId();
                     int sellType = productMPO.getSellType();
                     //普通库存是一段时间 需要拆分
-                    if(sellType == 0){
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId,null,null);
-                        for(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
+                    if (sellType == 0) {
+                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, null, null);
+                        for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
                             List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate);
-                            if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
+                            if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
                                 effective.addAll(scenicSpotProductPriceMPOS1);
                             }
                         }
@@ -371,7 +374,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }else {
             List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productId,startDate,endDate);
             if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
-                log.info("通过产品id查询到的价格信息{}",JSON.toJSONString(scenicSpotProductPriceMPOS));
+                log.info("通过产品id查询到的价格信息{}", JSON.toJSONString(scenicSpotProductPriceMPOS));
                 for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
                     String startDate1 = s.getStartDate();
                     String endDate1 = s.getEndDate();
@@ -387,24 +390,24 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }
         }
 
-        if(ListUtils.isNotEmpty(effective)){
-            List<ScenicSpotProductPriceMPO>  fe = new ArrayList<>(effective.size());
-            for (ScenicSpotProductPriceMPO  ss: effective) {
+        if (ListUtils.isNotEmpty(effective)) {
+            List<ScenicSpotProductPriceMPO> fe = new ArrayList<>(effective.size());
+            for (ScenicSpotProductPriceMPO ss : effective) {
                 String startDate1 = ss.getStartDate();
                 String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
                 String weekDay = ss.getWeekDay();
-                if(StringUtils.isEmpty(weekDay)){
-                    weekDay ="1,2,3,4,5,6,7";
+                if (StringUtils.isEmpty(weekDay)) {
+                    weekDay = "1,2,3,4,5,6,7";
                 }
-                if(weekDay.contains(dayOfWeekByDate)){
+                if (weekDay.contains(dayOfWeekByDate)) {
                     fe.add(ss);
                 }
 
             }
-            effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO :: getStartDate)).collect(Collectors.toList());
-            basePrices = effective.stream().map(p->{
+            effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
+            basePrices = effective.stream().map(p -> {
                 BasePrice basePrice = new BasePrice();
-                BeanUtils.copyProperties(p,basePrice);
+                BeanUtils.copyProperties(p, basePrice);
                 //需要调用加价方法
                 IncreasePrice increasePrice = new IncreasePrice();
                 ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(p.getScenicSpotProductId());
@@ -448,7 +451,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 dayOfweek = String.valueOf(list.indexOf(str)+1);
             }
             } catch (Exception e) {
-
             }
             return dayOfweek;
      }

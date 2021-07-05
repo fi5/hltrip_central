@@ -405,6 +405,7 @@ public class ProductServiceImpl implements ProductService {
         IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
         priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
         increasePrice.setPrices(Arrays.asList(priceCalendar));
+        log.info("increasePrice:{}", JSONObject.toJSONString(increasePrice));
         commonService.increasePrice(increasePrice);
         return increasePrice;
     }
@@ -493,6 +494,7 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<List<String>> recommendTags(RecommendRequestV2 request){
         List<RecommendMPO> recommendMPO = recommendDao.getList(request);
         List<String> tags = Lists.newArrayList();
+        List<String> topTags = Lists.newArrayList();
         if(ListUtils.isEmpty(recommendMPO)){
             log.error("没有查到符合条件的标签。。");
             tags.add("为你精选");
@@ -505,7 +507,12 @@ public class ProductServiceImpl implements ProductService {
             List<String> shortTags = Lists.newArrayList();
             map.forEach((k, v) -> {
                 if(v.size() >= request.getPageSize()){
-                    tags.add(k);
+                    // 包含晟和产品的标签要放到前面
+                    if(v.stream().anyMatch(r -> StringUtils.equals(Constants.SUPPLIER_CODE_SHENGHE_TICKET, r.getChannel()))){
+                        topTags.add(k);
+                    } else {
+                        tags.add(k);
+                    }
                 } else {
                     shortTags.add(k);
                 }
@@ -518,17 +525,23 @@ public class ProductServiceImpl implements ProductService {
                         shortTags.contains(rb.getTitle())).collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
                 shortMap.forEach((k, v) -> {
                     if(v.size() >= request.getPageSize()){
-                        tags.add(k);
+                        // 包含晟和产品的标签要放到前面
+                        if(v.stream().anyMatch(r -> StringUtils.equals(Constants.SUPPLIER_CODE_SHENGHE_TICKET, r.getChannel()))){
+                            topTags.add(k);
+                        } else {
+                            tags.add(k);
+                        }
                     }
                 });
             }
         }
+        topTags.addAll(tags);
         // 实在没有就返回这个
-        if(ListUtils.isEmpty(tags)){
+        if(ListUtils.isEmpty(topTags)){
             log.error("东拼西凑也没有合适的标签。。");
-            tags.add("为你精选");
+            topTags.add("为你精选");
         }
-        return BaseResponse.withSuccess(tags);
+        return BaseResponse.withSuccess(topTags);
     }
 
     @Override
@@ -1710,6 +1723,7 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setRecommendDesc(rb.getRecommendDesc());
         recommendProduct.setSubTitle(rb.getSubTitle());
         recommendProduct.setTags(rb.getTags());
+        recommendProduct.setSeq(rb.getSeq());
         return recommendProduct;
     }
 }
