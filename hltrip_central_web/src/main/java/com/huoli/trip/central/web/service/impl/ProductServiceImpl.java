@@ -825,7 +825,7 @@ public class ProductServiceImpl implements ProductService {
                 if (priceMPO == null) {
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
                 }
-                ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(req.getPackageCode());
+                ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(productMPO.getScenicSpotId());
                 if(scenicSpotMPO == null){
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
                 }
