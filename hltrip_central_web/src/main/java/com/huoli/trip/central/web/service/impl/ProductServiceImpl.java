@@ -1003,6 +1003,7 @@ public class ProductServiceImpl implements ProductService {
             priceCal.setProductCode(req.getProductCode());
             priceCal.setChannelCode(channel);
             priceCal.setCategory(req.getCategory());
+            priceCal.setPackageCode(req.getPackageCode());
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
             try {
                 priceCalcResultBaseResponse = calcTotalPriceV2(priceCal);
