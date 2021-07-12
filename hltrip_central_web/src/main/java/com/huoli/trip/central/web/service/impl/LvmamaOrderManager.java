@@ -175,8 +175,8 @@ public class LvmamaOrderManager extends OrderManager {
 		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
 		validateOrderRequest.setTraceId(req.getTraceId());
 		//2021-05-31 获取产品信息
-		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
-		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(req.getProductId(), req.getBeginDate(), req.getBeginDate());
+		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getGoodsId());
+		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(req.getGoodsId(), req.getBeginDate(), req.getBeginDate());
 		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req, scenicSpotProductMPO, scenicSpotProductPriceMPOS);
 
 		LmmBaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
