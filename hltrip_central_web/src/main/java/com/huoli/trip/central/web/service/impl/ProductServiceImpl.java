@@ -1104,18 +1104,23 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<PriceCalcResult> calcTotalPriceV2(PriceCalcRequest request) {
         PriceCalcResult result = new PriceCalcResult();
         String supplierProductId = null;
-        // 计算价格前先刷新
+        String channel = null;
         if(StringUtils.equals(request.getCategory(), "d_ss_ticket")){
             ScenicSpotProductMPO productMPO = scenicSpotProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
+            channel = productMPO.getChannel();
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
             GroupTourProductMPO productMPO = groupTourProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
+            channel = productMPO.getChannel();
         } else if(StringUtils.equals(request.getCategory(), "hotel_scenicSpot")) {
             HotelScenicSpotProductMPO productMPO = hotelScenicSpotProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
+            channel = productMPO.getChannel();
         }
-        OrderManager orderManager = orderFactory.getOrderManager(request.getChannelCode());
+        request.setChannelCode(channel);
+        OrderManager orderManager = orderFactory.getOrderManager(channel);
+        // 计算价格前先刷新
         orderManager.syncPriceV2(request.getProductCode(),
                 supplierProductId,
                 DateTimeUtil.formatDate(request.getStartDate()),
