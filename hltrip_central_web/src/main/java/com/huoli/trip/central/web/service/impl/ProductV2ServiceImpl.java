@@ -317,7 +317,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     return null;
                 }else{
                     String dayOfWeekByDate = getDayOfWeekByDate(date);
-                    if(StringUtils.equals("0",dayOfWeekByDate)){
+                    if(!StringUtils.equals("0",dayOfWeekByDate)){
                         List<ScenicSpotProductPriceMPO> collect1 = collect.stream().filter(pp -> pp.getWeekDay().contains(dayOfWeekByDate)).collect(Collectors.toList());
                         if(ListUtils.isEmpty(collect1)){
                             return null;
