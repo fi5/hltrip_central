@@ -662,7 +662,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 brief.setThemeElements(productMPO.getPayInfo() == null ? 0 : productMPO.getPayInfo().getThemeElements());
                 //价格计算
                 IncreasePrice increasePrice = hotelIncreasePrice(productMPO, request, setMealMpo.getPriceStocks());
-
+                log.info("价格日历为："+ JSON.toJSONString(increasePrice));
                 brief.setPrice(increasePrice.getPrices().stream().filter(a -> StringUtils.isBlank(request.getStartDate()) ? true : StringUtils.equals(a.getDate(), request.getStartDate())).collect(Collectors.toList()).get(0).getAdtSellPrice());
                 return brief;
             }).collect(Collectors.toList());
@@ -678,8 +678,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         increasePrice.setProductCategory(productMPO.getCategory());
         List<IncreasePriceCalendar> priceCalendars = priceStocks.stream().map(item -> {
             IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-            priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
-            priceCalendar.setChdSellPrice(item.getChdSellPrice());
+            priceCalendar.setAdtSellPrice(item.getAdtPrice());
+            priceCalendar.setChdSellPrice(item.getChdPrice());
             priceCalendar.setDate(item.getDate());
             return priceCalendar;
         }).collect(Collectors.toList());
