@@ -678,8 +678,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         increasePrice.setProductCategory(productMPO.getCategory());
         List<IncreasePriceCalendar> priceCalendars = priceStocks.stream().map(item -> {
             IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-            priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
-            priceCalendar.setChdSellPrice(item.getChdSellPrice());
+            priceCalendar.setAdtSellPrice(item.getAdtPrice());
+            priceCalendar.setChdSellPrice(item.getChdPrice());
             priceCalendar.setDate(item.getDate());
             return priceCalendar;
         }).collect(Collectors.toList());
