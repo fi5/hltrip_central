@@ -747,7 +747,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 continue;
             }
             List<HotelScenicSpotPriceStock> tmpPriceStock = priceMapByDate.get(date);
-            tmpPriceStock.sort(Comparator.comparing(a -> a.getAdtSellPrice()));
+            tmpPriceStock.sort(Comparator.comparing(a -> a.getAdtPrice()));
             priceStocks.add(tmpPriceStock.get(0));
         }
         Map<String, HotelScenicSpotPriceStock> priceStocksByDate = Maps.uniqueIndex(priceStocks, a -> a.getDate());
