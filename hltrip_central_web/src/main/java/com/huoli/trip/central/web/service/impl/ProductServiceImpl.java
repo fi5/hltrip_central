@@ -1128,8 +1128,8 @@ public class ProductServiceImpl implements ProductService {
                 DateTimeUtil.formatDate(request.getStartDate()),
                 request.getEndDate() == null ? null : DateTimeUtil.formatDate(request.getEndDate()),
                 request.getTraceId());
-        int quantity = request.getQuantity();
-        Integer chdQuantity = request.getChdQuantity();
+        int quantity = request.getQuantity() == null ? 0 : request.getQuantity();
+        int chdQuantity = request.getChdQuantity() == null ? 0 : request.getChdQuantity();
         if(StringUtils.equals(request.getCategory(), "d_ss_ticket")){
             ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(request.getPackageCode());
             IncreasePrice increasePrice = increasePrice(request, priceMPO.getSellPrice(), null, priceMPO.getStartDate());
@@ -1139,7 +1139,7 @@ public class ProductServiceImpl implements ProductService {
             priceInfo.setProductCode(priceMPO.getScenicSpotProductId());
             priceInfo.setSettlePrice(priceMPO.getSettlementPrice());
             priceInfo.setStock(priceMPO.getStock());
-            checkPriceV2(Lists.newArrayList(priceInfo), request.getStartDate(), quantity, 0, result);
+            checkPriceV2(Lists.newArrayList(priceInfo), request.getStartDate(), quantity, chdQuantity, result);
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
             GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(request.getPackageCode());
             List<PriceInfo> priceInfos = setMealMPO.getGroupTourPrices().stream().map(gp -> {
@@ -1155,30 +1155,31 @@ public class ProductServiceImpl implements ProductService {
                 priceInfo.setChdStock(gp.getChdStock());
                 return priceInfo;
             }).collect(Collectors.toList());
-            checkPriceV2(priceInfos, request.getStartDate(), quantity, chdQuantity == null ? 0 : chdQuantity, result);
+            checkPriceV2(priceInfos, request.getStartDate(), quantity, chdQuantity, result);
         } else if(StringUtils.equals(request.getCategory(), "hotel_scenicSpot")){
-            HotelScenicSpotProductMPO productMPO = hotelScenicSpotProductDao.getProductById(request.getProductCode());
+//            HotelScenicSpotProductMPO productMPO = hotelScenicSpotProductDao.getProductById(request.getProductCode());
             HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicSpotProductSetMealDao.getSetMealById(request.getPackageCode());
-            // 晚数
-            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate());
-            int baseNight = productMPO.getNight();
-            if (nightDiff % baseNight != 0) {
-                String msg = String.format("日期不符合购买标准，购买晚数应该为%s的整数倍，startDate=%s, endDate=%s",
-                        baseNight,
-                        DateTimeUtil.format(request.getStartDate(), DateTimeUtil.defaultDatePattern),
-                        DateTimeUtil.format(request.getEndDate(), DateTimeUtil.defaultDatePattern));
-                log.error(msg);
-                return BaseResponse.withFail(CentralError.PRICE_CALC_DATE_INVALID_ERROR.getCode(), msg);
-            }
-            // 日期维度的份数
-            int dayQuantity = nightDiff / baseNight;
-            // 总份数 = 日期维度的份数 * 购买数量的份数
-            int quantityTotal = dayQuantity * quantity;
-            if (quantityTotal > setMealMPO.getBuyMax() || quantityTotal < setMealMPO.getBuyMin()) {
-                String msg = String.format("数量不符合购买标准，最少购买%s份，最多购买%s份， quantity=%s", setMealMPO.getBuyMin(), setMealMPO.getBuyMax(), quantityTotal);
-                log.error(msg);
-                return BaseResponse.withFail(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR.getCode(), msg);
-            }
+            // 产品说不支持日期维度选多份产品，下面的逻辑就不用了。
+//            // 晚数
+//            int nightDiff = DateTimeUtil.getDateDiffDays(request.getEndDate(), request.getStartDate());
+//            int baseNight = productMPO.getNight();
+//            if (nightDiff % baseNight != 0) {
+//                String msg = String.format("日期不符合购买标准，购买晚数应该为%s的整数倍，startDate=%s, endDate=%s",
+//                        baseNight,
+//                        DateTimeUtil.format(request.getStartDate(), DateTimeUtil.defaultDatePattern),
+//                        DateTimeUtil.format(request.getEndDate(), DateTimeUtil.defaultDatePattern));
+//                log.error(msg);
+//                return BaseResponse.withFail(CentralError.PRICE_CALC_DATE_INVALID_ERROR.getCode(), msg);
+//            }
+//            // 日期维度的份数
+//            int dayQuantity = nightDiff / baseNight;
+//            // 总份数 = 日期维度的份数 * 购买数量的份数
+//            int quantityTotal = dayQuantity * quantity;
+//            if (quantityTotal > setMealMPO.getBuyMax() || quantityTotal < setMealMPO.getBuyMin()) {
+//                String msg = String.format("数量不符合购买标准，最少购买%s份，最多购买%s份， quantity=%s", setMealMPO.getBuyMin(), setMealMPO.getBuyMax(), quantityTotal);
+//                log.error(msg);
+//                return BaseResponse.withFail(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR.getCode(), msg);
+//            }
             List<PriceInfo> priceInfos = setMealMPO.getPriceStocks().stream().map(ps -> {
                 IncreasePrice increasePrice = increasePrice(request, ps.getAdtSellPrice(), ps.getChdSellPrice(), ps.getDate());
                 PriceInfo priceInfo = new PriceInfo();
@@ -1192,11 +1193,13 @@ public class ProductServiceImpl implements ProductService {
                 priceInfo.setChdStock(ps.getChdStock());
                 return priceInfo;
             }).collect(Collectors.toList());
-            for (int i = 0; i < dayQuantity; i++) {
-                // 日期维度中每份产品的起始日期 = 第一份起始日期 + 第n份 * 基准晚数
-                Date startDate = DateTimeUtil.addDay(request.getStartDate(), i * baseNight);
-                checkPriceV2(priceInfos, startDate, quantity, chdQuantity == null ? 0 : chdQuantity, result);
-            }
+            checkPriceV2(priceInfos, request.getStartDate(), quantity, chdQuantity, result);
+            // 不支持在日历中选多份，所以这里不需要了
+//            for (int i = 0; i < dayQuantity; i++) {
+//                // 日期维度中每份产品的起始日期 = 第一份起始日期 + 第n份 * 基准晚数
+//                Date startDate = DateTimeUtil.addDay(request.getStartDate(), i * baseNight);
+//                checkPriceV2(priceInfos, startDate, quantity, chdQuantity == null ? 0 : chdQuantity, result);
+//            }
         }
         return BaseResponse.withSuccess(result);
     }
