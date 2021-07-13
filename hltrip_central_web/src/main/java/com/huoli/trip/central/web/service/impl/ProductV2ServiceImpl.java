@@ -713,7 +713,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             for (HotelScenicSpotPriceStock allPriceStock : allPriceStocks) {
                 List<HotelScenicSpotPriceStock> splitPriceStock = splitHotelScenicProductCalendar(allPriceStock, payInfo);
                 if (CollectionUtils.isNotEmpty(splitPriceStock)) {
-                    tmpPrices.addAll(tmpPrices);
+                    tmpPrices.addAll(splitPriceStock);
                 }
             }
             allPriceStocks = tmpPrices;
