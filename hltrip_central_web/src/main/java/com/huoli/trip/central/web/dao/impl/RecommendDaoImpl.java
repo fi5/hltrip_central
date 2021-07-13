@@ -33,7 +33,7 @@ public class RecommendDaoImpl implements RecommendDao {
         Criteria criteria = Criteria.where("position").is(request.getPosition().toString());
         // 按上游调用方为准，不传城市就按没城市查，这里不对结果准确性负责（原来查标签的地方是必须要有城市的）
         if(StringUtils.isNotBlank(request.getCity())){
-            criteria.and("city").is(request.getCity());
+            criteria.and("cityName").is(request.getCity());
         }
         // 按上游调用方为准，传了标签就加上标签条件（原来只有位置2的时候单独处理）
         if(StringUtils.isNotBlank(request.getTag())){
