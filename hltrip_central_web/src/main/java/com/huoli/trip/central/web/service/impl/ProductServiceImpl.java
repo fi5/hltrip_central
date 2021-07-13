@@ -847,7 +847,8 @@ public class ProductServiceImpl implements ProductService {
                     }).collect(Collectors.toList()));
                 }
                 result.setProductCode(productMPO.getId());
-                result.setProductName(scenicSpotMPO.getName());
+                result.setProductName(productMPO.getName());
+                result.setScenicspotName(scenicSpotMPO.getName());
                 result.setSupplierId(productMPO.getChannel());
                 result.setSupplierProductId(productMPO.getSupplierProductId());
                 result.setBookBeforeDay(productMPO.getScenicSpotProductTransaction().getBookBeforeDay());
