@@ -1626,7 +1626,9 @@ public class ProductServiceImpl implements ProductService {
     private void checkPriceV2(List<PriceInfo> priceInfos, Date startDate,
                             int quantityTotal, int chdQuantityTotal, PriceCalcResult result){
         // 拿到当前日期价格信息
-        PriceInfo priceInfo = priceInfos.stream().filter(price -> DateTimeUtil.parseDate(price.getSaleDate()).getTime() == startDate.getTime()).findFirst().orElse(null);
+        PriceInfo priceInfo = priceInfos.stream().filter(price ->
+                DateTimeUtil.parseDate(price.getSaleDate()).getTime() == startDate.getTime()
+                        && price.getSalePrice() != null).findFirst().orElse(null);
         String dateStr = DateTimeUtil.format(startDate, DateTimeUtil.defaultDatePattern);
         if (priceInfo == null) {
             String msg = String.format("%s的价格缺失", dateStr);
