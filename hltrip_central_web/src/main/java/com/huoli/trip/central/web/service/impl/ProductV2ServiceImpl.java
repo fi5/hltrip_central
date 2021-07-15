@@ -355,6 +355,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     if (sellType == 0) {
                         List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, null, null);
                         for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
+                            if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
+                                continue;
+                            }
                             List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate);
                             if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
                                 effective.addAll(scenicSpotProductPriceMPOS1);
@@ -363,8 +366,11 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
                     }else{
                         List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, startDate, endDate);
-                        if (CollectionUtils.isNotEmpty(priceMPOS)) {
-                            effective.addAll(priceMPOS);
+                        for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : priceMPOS){
+                            if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
+                                continue;
+                            }
+                            effective.add(scenicSpotProductPriceMPO);
                         }
                     }
 
