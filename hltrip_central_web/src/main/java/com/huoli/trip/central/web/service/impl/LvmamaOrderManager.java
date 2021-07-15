@@ -3,6 +3,7 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.dao.ScenicSpotProductPriceDao;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.*;
@@ -55,6 +56,9 @@ public class LvmamaOrderManager extends OrderManager {
 
 	@Autowired
 	private ScenicSpotDao scenicSpotDao;
+
+	@Autowired
+	private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
 
 
 	public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_LMM;
@@ -176,7 +180,7 @@ public class LvmamaOrderManager extends OrderManager {
 		validateOrderRequest.setTraceId(req.getTraceId());
 		//2021-05-31 获取产品信息
 		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getGoodsId());
-		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(req.getGoodsId(), req.getBeginDate(), req.getBeginDate());
+		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getGoodsId(), req.getPackageId(), req.getBeginDate(), req.getEndDate());
 		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req, scenicSpotProductMPO, scenicSpotProductPriceMPOS);
 
 		LmmBaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
@@ -185,12 +189,27 @@ public class LvmamaOrderManager extends OrderManager {
 		}
 		return BaseResponse.withSuccess();
 	}
+
+	private List<ScenicSpotProductPriceMPO> getPrice(String productId, String packageId, String startDate, String endDate){
+		String ruleId = null;
+		String ticketKind = null;
+		// 价格日历应该查询和packageId属于同一套餐的价格，只有productid不准确
+		if(org.apache.commons.lang3.StringUtils.isNotBlank(packageId)){
+			ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(packageId);
+			if(priceMPO != null){
+				ruleId = priceMPO.getScenicSpotRuleId();
+				ticketKind = priceMPO.getTicketKind();
+			}
+		}
+		return scenicSpotDao.queryPrice(productId, startDate, endDate, ruleId, ticketKind);
+	}
+
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
 		CreateOrderRequest request = new CreateOrderRequest();
 		request.setTraceId(req.getTraceId());
 		//2021-05-31 获取产品信息
 		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
-		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(req.getProductId(), req.getBeginDate(), req.getBeginDate());
+		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getBeginDate());
 		createOrderConverter.convertLvmamaCreateOrderRequest(request,req, scenicSpotProductMPO, scenicSpotProductPriceMPOS);
 		OrderResponse response = lvmamaOrderService.createOrder(request);
 		if(response != null && "1000".equals(response.getState().getCode())){

@@ -17,11 +17,7 @@ public interface ScenicSpotDao {
 
 	List<ProductListMPO> querySpotProductBySpotIdAndDate(String scenicSpotId,String date);
 
-	ScenicSpotPayServiceMPO querySpotPayItem(String spotPayItemId);
-
 	List<ScenicSpotProductMPO> querySpotProduct(String scenicSpotId);
-
-	List<ScenicSpotProductPriceMPO> queryProductPrice(String scenicSpotProductId,String startDate,String endDate);
 
 	List<ScenicSpotProductPriceMPO> queryProductPriceByProductId(String scenicSpotProductId);
 
@@ -32,4 +28,15 @@ public interface ScenicSpotDao {
 	ScenicSpotProductPriceMPO querySpotProductPriceById(String priceId);
 
     ScenicSpotProductBackupMPO queryBackInfoByProductId(String productId);
+
+	/**
+	 * 获取价格，产品id、规则id、票种确定唯一
+	 * @param scenicSpotProductId
+	 * @param startDate
+	 * @param endDate
+	 * @param ruleId
+	 * @param ticketKind
+	 * @return
+	 */
+	List<ScenicSpotProductPriceMPO> queryPrice(String scenicSpotProductId, String startDate, String endDate, String ruleId, String ticketKind);
 }

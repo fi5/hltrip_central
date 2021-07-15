@@ -7,10 +7,7 @@ import com.google.common.collect.Maps;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.api.ProductV2Service;
 import com.huoli.trip.central.web.constant.ColourConstants;
-import com.huoli.trip.central.web.dao.GroupTourDao;
-import com.huoli.trip.central.web.dao.HotelScenicDao;
-import com.huoli.trip.central.web.dao.ProductDao;
-import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
@@ -70,6 +67,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
 
     @Override
     public BaseResponse<ScenicSpotBase> querycScenicSpotBase(ScenicSpotRequest request) {
@@ -343,6 +343,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         String startDate = request.getStartDate();
         String productId = request.getProductId();
         String endDate = request.getEndDate();
+        String packageId = request.getPackageId();
         List<BasePrice> basePrices = null;
         List<ScenicSpotProductPriceMPO> effective = new ArrayList<>();
         if (StringUtils.isEmpty(productId)) {
@@ -372,7 +373,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }
 
         }else {
-            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productId,startDate,endDate);
+            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(productId, packageId, startDate, endDate);
             if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
                 log.info("通过产品id查询到的价格信息{}", JSON.toJSONString(scenicSpotProductPriceMPOS));
                 for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
@@ -396,7 +397,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 String startDate1 = ss.getStartDate();
                 String dayOfWeekByDate = getDayOfWeekByDate(startDate1);
                 String weekDay = ss.getWeekDay();
-                if (StringUtils.isEmpty(weekDay)) {
+                if (StringUtils.isBlank(weekDay)) {
                     weekDay = "1,2,3,4,5,6,7";
                 }
                 if (weekDay.contains(dayOfWeekByDate)) {
@@ -433,6 +434,20 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }).collect(Collectors.toList());
         }
         return BaseResponse.withSuccess(basePrices);
+    }
+
+    private List<ScenicSpotProductPriceMPO> getPrice(String productId, String packageId, String startDate, String endDate){
+        String ruleId = null;
+        String ticketKind = null;
+        // 价格日历应该查询和packageId属于同一套餐的价格，只有productid不准确
+        if(StringUtils.isNotBlank(packageId)){
+            ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(packageId);
+            if(priceMPO != null){
+                ruleId = priceMPO.getScenicSpotRuleId();
+                ticketKind = priceMPO.getTicketKind();
+            }
+        }
+        return scenicSpotDao.queryPrice(productId, startDate, endDate, ruleId, ticketKind);
     }
 
     /**
