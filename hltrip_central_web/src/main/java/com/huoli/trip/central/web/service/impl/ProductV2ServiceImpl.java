@@ -200,110 +200,109 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 Map<String, List<ScenicSpotProductPriceMPO>> priceMap = scenicSpotProductPriceMPOS.stream().collect(Collectors.groupingBy(price ->
                         String.format("%s-%s-%s", price.getScenicSpotProductId(), price.getScenicSpotRuleId(), price.getTicketKind())));
                 log.info("产品{}拆成{}个", scenicSpotProduct.getId(), priceMap.size());
-                priceMap.forEach((k, v) ->
-                    v.forEach(price -> {
-                        ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(scenicSpotProductPriceMPOS, date);
-                        if(scenicSpotProductPriceMPO == null){
-                            return;
-                        }
-                        String scenicSpotRuleId = scenicSpotProductPriceMPO.getScenicSpotRuleId();
-                        ScenicSpotRuleMPO scenicSpotRuleMPO = scenicSpotDao.queryRuleById(scenicSpotRuleId);
-                        if(scenicSpotRuleMPO == null){
-                            log.info("产品因为价格规则无数据异常被过滤,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
-                            return;
-                        }
+                priceMap.forEach((k, v) -> {
+                    ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date);
+                    if(scenicSpotProductPriceMPO == null){
+                        return;
+                    }
+                    String scenicSpotRuleId = scenicSpotProductPriceMPO.getScenicSpotRuleId();
+                    ScenicSpotRuleMPO scenicSpotRuleMPO = scenicSpotDao.queryRuleById(scenicSpotRuleId);
+                    if(scenicSpotRuleMPO == null){
+                        log.info("产品因为价格规则无数据异常被过滤,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
+                        return;
+                    }
 
-                        ScenicSpotProductBase scenicSpotProductBase = new ScenicSpotProductBase();
-                        String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
-                        BasePrice basePrice = new BasePrice();
-                        BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
-                        //需要调用加价方法
-                        IncreasePrice increasePrice = new IncreasePrice();
-                        increasePrice.setChannelCode(scenicSpotProduct.getChannel());
-                        increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
-                        increasePrice.setAppSource(request.getFrom());
-                        increasePrice.setProductCategory(category);
-                        List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
-                        IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-                        priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
-                        priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
-                        priceCalendars.add(priceCalendar);
-                        increasePrice.setPrices(priceCalendars);
-                        commonService.increasePrice(increasePrice);
-                        List<IncreasePriceCalendar> prices = increasePrice.getPrices();
-                        if(ListUtils.isEmpty(prices)){
-                            log.info("产品因为价格计算之后无价格数据返回,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
-                            return;
-                        }
-                        BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice,"sellPrice");
-                        IncreasePriceCalendar increasePriceCalendar = prices.get(0);
-                        basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
-                        basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
-                        scenicSpotProductBase.setPrice(basePrice);
+                    ScenicSpotProductBase scenicSpotProductBase = new ScenicSpotProductBase();
+                    String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
+                    BasePrice basePrice = new BasePrice();
+                    BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
+                    //需要调用加价方法
+                    IncreasePrice increasePrice = new IncreasePrice();
+                    increasePrice.setChannelCode(scenicSpotProduct.getChannel());
+                    increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
+                    increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setProductCategory(category);
+                    List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
+                    IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                    priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
+                    priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
+                    priceCalendars.add(priceCalendar);
+                    increasePrice.setPrices(priceCalendars);
+                    commonService.increasePrice(increasePrice);
+                    List<IncreasePriceCalendar> prices = increasePrice.getPrices();
+                    if(ListUtils.isEmpty(prices)){
+                        log.info("产品因为价格计算之后无价格数据返回,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
+                        return;
+                    }
+                    BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice,"sellPrice");
+                    IncreasePriceCalendar increasePriceCalendar = prices.get(0);
+                    basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
+                    basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
+                    scenicSpotProductBase.setPrice(basePrice);
 
-                        BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
-                        productBases.add(scenicSpotProductBase);
-                        scenicSpotProductBase.setCategory(category);
-                        scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
-                        scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
+                    BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
+                    productBases.add(scenicSpotProductBase);
+                    scenicSpotProductBase.setCategory(category);
+                    scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
+                    scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
 
-                        String startDate = scenicSpotProductPriceMPO.getStartDate();
-                        LocalDate localDate = LocalDate.now();
-                        LocalDate tomorrow = localDate.plusDays(1);
-                        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                        String dateStr = localDate.format(fmt);
-                        String tomorrowStr = tomorrow.format(fmt);
-                        List<Tag> bookTag = new ArrayList<>(1);
-                        Tag tag = null;
-                        if(StringUtils.equals(startDate,dateStr)) {
-                            tag = new Tag();
-                            tag.setName("可订今日");
-                            tag.setColour(ColourConstants.TICKET_BLUE);
-                            bookTag.add(tag);
-                        }else if(StringUtils.equals(startDate,tomorrowStr)){
-                            tag = new Tag();
-                            tag.setName("可订明日");
-                            tag.setColour(ColourConstants.TICKET_BLUE);
-                            bookTag.add(tag);
-                        }
-                        scenicSpotProductBase.setBookTag(bookTag);
+                    String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    LocalDate localDate = LocalDate.now();
+                    LocalDate tomorrow = localDate.plusDays(1);
+                    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    String dateStr = localDate.format(fmt);
+                    String tomorrowStr = tomorrow.format(fmt);
+                    List<Tag> bookTag = new ArrayList<>(1);
+                    Tag tag = null;
+                    if(StringUtils.equals(startDate,dateStr)) {
+                        tag = new Tag();
+                        tag.setName("可订今日");
+                        tag.setColour(ColourConstants.TICKET_BLUE);
+                        bookTag.add(tag);
+                    }else if(StringUtils.equals(startDate,tomorrowStr)){
+                        tag = new Tag();
+                        tag.setName("可订明日");
+                        tag.setColour(ColourConstants.TICKET_BLUE);
+                        bookTag.add(tag);
+                    }
+                    scenicSpotProductBase.setBookTag(bookTag);
 
-                        List<Tag> ticketkind = new ArrayList<>();
-                        String refundTag = scenicSpotRuleMPO.getRefundTag();
-                        if(StringUtils.isNotEmpty(refundTag)){
-                            Tag tag1 = new Tag();
-                            if(StringUtils.equals("随心退",refundTag)){
-                                tag1.setColour(ColourConstants.TICKET_GREEN);
-                            }
-                            tag1.setName(refundTag);
-                            ticketkind.add(tag);
-                        }
-                        int ticketType = scenicSpotRuleMPO.getTicketType();
+                    List<Tag> ticketkind = new ArrayList<>();
+                    String refundTag = scenicSpotRuleMPO.getRefundTag();
+                    if(StringUtils.isNotEmpty(refundTag)){
                         Tag tag1 = new Tag();
-                        tag1.setName(0 == ticketType?"电子票":"实体票");
-                        ticketkind.add(tag1);
+                        if(StringUtils.equals("随心退",refundTag)){
+                            tag1.setColour(ColourConstants.TICKET_GREEN);
+                        }
+                        tag1.setName(refundTag);
+                        ticketkind.add(tag);
+                    }
+                    int ticketType = scenicSpotRuleMPO.getTicketType();
+                    Tag tag1 = new Tag();
+                    tag1.setName(0 == ticketType?"电子票":"实体票");
+                    ticketkind.add(tag1);
 
-                        int limitBuy = scenicSpotRuleMPO.getLimitBuy();
-                        if(1 == limitBuy){
-                            int maxCount = scenicSpotRuleMPO.getMaxCount();
+                    int limitBuy = scenicSpotRuleMPO.getLimitBuy();
+                    if(1 == limitBuy){
+                        int maxCount = scenicSpotRuleMPO.getMaxCount();
+                        Tag tag2 = new Tag();
+                        tag2.setName("限购".concat(String.valueOf(maxCount)).concat("张/单"));
+                        tag2.setColour(ColourConstants.TICKET_BLUE);
+                        ticketkind.add(tag2);
+                    }
+                    ScenicSpotProductTransaction scenicSpotProductTransaction = scenicSpotProduct.getScenicSpotProductTransaction();
+                    if(scenicSpotProductTransaction != null){
+                        int ticketOutHour = scenicSpotProductTransaction.getTicketOutHour();
+                        int ticketOutMinute = scenicSpotProductTransaction.getTicketOutMinute();
+                        if( 0== ticketOutHour &&0 == ticketOutMinute){
                             Tag tag2 = new Tag();
-                            tag2.setName("限购".concat(String.valueOf(maxCount)).concat("张/单"));
-                            tag2.setColour(ColourConstants.TICKET_BLUE);
+                            tag2.setName("随订随用");
                             ticketkind.add(tag2);
+                            scenicSpotProductBase.setAnyTime(1);
                         }
-                        ScenicSpotProductTransaction scenicSpotProductTransaction = scenicSpotProduct.getScenicSpotProductTransaction();
-                        if(scenicSpotProductTransaction != null){
-                            int ticketOutHour = scenicSpotProductTransaction.getTicketOutHour();
-                            int ticketOutMinute = scenicSpotProductTransaction.getTicketOutMinute();
-                            if( 0== ticketOutHour &&0 == ticketOutMinute){
-                                Tag tag2 = new Tag();
-                                tag2.setName("随订随用");
-                                ticketkind.add(tag2);
-                                scenicSpotProductBase.setAnyTime(1);
-                            }
-                        }
-                        scenicSpotProductBase.setTicketkindTag(ticketkind);
-                    }));
+                    }
+                    scenicSpotProductBase.setTicketkindTag(ticketkind);
+                });
 
             }
         }
