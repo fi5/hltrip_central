@@ -270,6 +270,8 @@ public class DfyToursOrderManager extends OrderManager {
 		if(StringUtils.isBlank(req.getCategory())){
 			dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getSupplierProductId()));
 			dfyCreateOrderRequest.setStartTime(req.getBeginDate());
+			dfyCreateOrderRequest.setStartCity(req.getStartCity());
+			dfyCreateOrderRequest.setStartCityCode(req.getStartCityCode());
 		} else {
 			GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(req.getProductId());
 			GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(req.getPackageId());
