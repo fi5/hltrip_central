@@ -104,7 +104,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         return ycfBookGuests;
     }
 
-    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request, CreateOrderReq req, ScenicSpotProductMPO scenicSpotProductMPO, List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS){
+    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request, CreateOrderReq req, Long goodsId, Long productId){
         //需要场次号
         Integer adultNum = req.getAdultNum();
         Integer childNum = req.getChildNum();
@@ -126,18 +126,9 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         product.setQuantity(req.getQunatity());
         product.setVisitDate(req.getBeginDate());
         //2021-05-31 goodsid和productId从mongo拿
-        if(scenicSpotProductMPO != null){
-            product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
-            product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
-        }else{
-            product.setGoodsId(Long.parseLong(req.getGoodsId()));
-            product.setProductId(Long.parseLong(req.getProductId()));
-        }
-        if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
-            product.setSellPrice(scenicSpotProductPriceMPOS.get(0).getSettlementPrice().floatValue());
-        }else{
-            product.setSellPrice(Float.parseFloat(req.getSellPrice()));
-        }
+        product.setGoodsId(goodsId);
+        product.setProductId(productId);
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         orderInfo.setProduct(product);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
@@ -161,7 +152,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         request.setRecipient(recipient);*/
     }
 
-    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req, ScenicSpotProductMPO scenicSpotProductMPO, List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS){
+    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req, Long goodsId, Long productId){
         //需要场次号
         int count = req.getCount()+req.getChdCount();
         String sellPrice = req.getSellPrice();
@@ -175,18 +166,9 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         product.setQuantity(req.getCount());
         product.setVisitDate(req.getBeginDate());
         //2021-05-31 goodsid和productId从mongo拿
-        if(scenicSpotProductMPO != null){
-            product.setGoodsId(Long.valueOf(scenicSpotProductMPO.getSupplierProductId()));
-            product.setProductId(Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId")));
-        }else{
-            product.setGoodsId(Long.parseLong(req.getGoodsId()));
-            product.setProductId(Long.parseLong(req.getProductId()));
-        }
-        if(!CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
-            product.setSellPrice(scenicSpotProductPriceMPOS.get(0).getSettlementPrice().floatValue());
-        }else{
-            product.setSellPrice(Float.parseFloat(req.getSellPrice()));
-        }
+        product.setGoodsId(goodsId);
+        product.setProductId(productId);
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         orderInfo.setProduct(product);
 
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
