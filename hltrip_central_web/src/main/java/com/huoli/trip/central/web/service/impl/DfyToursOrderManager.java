@@ -234,8 +234,13 @@ public class DfyToursOrderManager extends OrderManager {
 		PriceCalcResult priceCalcResult = null;
 		calcRequest.setTraceId(traceId);
 		try{
-            //BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
-            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
+			BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
+			if(StringUtils.isBlank(req.getCategory())){
+				priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+			} else {
+				priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
+			}
+
 			priceCalcResult = priceCalcResultBaseResponse.getData();
 			//没有价格直接抛异常
 			if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
