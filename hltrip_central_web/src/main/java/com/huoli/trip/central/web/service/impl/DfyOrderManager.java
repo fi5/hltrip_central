@@ -315,7 +315,7 @@ public class DfyOrderManager extends OrderManager {
         DfyCreateOrderRequest dfyCreateOrderRequest = new DfyCreateOrderRequest();
         dfyCreateOrderRequest.setStartTime(req.getBeginDate());
         if(StringUtils.isBlank(req.getCategory())){
-            dfyCreateOrderRequest.setProductId(req.getProductId().split("_")[1]);
+            dfyCreateOrderRequest.setProductId(req.getSupplierProductId());
         } else {
             ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
             dfyCreateOrderRequest.setProductId(scenicSpotProductMPO.getSupplierProductId());
