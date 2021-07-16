@@ -264,29 +264,35 @@ public class DfyToursOrderManager extends OrderManager {
 	 * @return
 	 */
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
-		GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(req.getProductId());
-		GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(req.getPackageId());
-		GroupTourProductSetMealBackupMPO backupMPO = groupTourDao.queryGroupTourBackUp(req.getPackageId());
+
 		DfyCreateToursOrderRequest dfyCreateOrderRequest = new DfyCreateToursOrderRequest();
-		dfyCreateOrderRequest.setStartTime(req.getBeginDate());
-		//dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getSupplierProductId()));
-		dfyCreateOrderRequest.setProductId(Integer.valueOf(groupTourProductMPO.getSupplierProductId()));
-		dfyCreateOrderRequest.setAdultNum(req.getAdultNum());
-		dfyCreateOrderRequest.setChildNum(req.getChildNum());
-		if(backupMPO != null){
-			DfyToursDetailResponse dfyToursDetailResponse = JSONObject.parseObject(backupMPO.getOriginContent(), DfyToursDetailResponse.class);
-			List<DfyDepartCity> departCitys = dfyToursDetailResponse.getDepartCitys();
-			if (CollectionUtils.isNotEmpty(departCitys)) {
-				for (DfyDepartCity departCity : departCitys) {
-					if (StringUtils.equals(departCity.getName(), groupTourProductSetMealMPO.getDepName())) {
-						dfyCreateOrderRequest.setStartCity(departCity.getName());
-						dfyCreateOrderRequest.setStartCityCode(departCity.getCode());
-						break;
+
+		if(StringUtils.isBlank(req.getCategory())){
+			dfyCreateOrderRequest.setProductId(Integer.parseInt(req.getSupplierProductId()));
+			dfyCreateOrderRequest.setStartTime(req.getBeginDate());
+		} else {
+			GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(req.getProductId());
+			GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(req.getPackageId());
+			GroupTourProductSetMealBackupMPO backupMPO = groupTourDao.queryGroupTourBackUp(req.getPackageId());
+			dfyCreateOrderRequest.setProductId(Integer.valueOf(groupTourProductMPO.getSupplierProductId()));
+			if(backupMPO != null){
+				DfyToursDetailResponse dfyToursDetailResponse = JSONObject.parseObject(backupMPO.getOriginContent(), DfyToursDetailResponse.class);
+				List<DfyDepartCity> departCitys = dfyToursDetailResponse.getDepartCitys();
+				if (CollectionUtils.isNotEmpty(departCitys)) {
+					for (DfyDepartCity departCity : departCitys) {
+						if (StringUtils.equals(departCity.getName(), groupTourProductSetMealMPO.getDepName())) {
+							dfyCreateOrderRequest.setStartCity(departCity.getName());
+							dfyCreateOrderRequest.setStartCityCode(departCity.getCode());
+							break;
+						}
 					}
 				}
 			}
+			dfyCreateOrderRequest.setStartTime(req.getBeginDate());
 		}
-		dfyCreateOrderRequest.setStartTime(req.getBeginDate());
+		dfyCreateOrderRequest.setAdultNum(req.getAdultNum());
+		dfyCreateOrderRequest.setChildNum(req.getChildNum());
+
 
 		//出行人
 		List<CreateOrderReq.BookGuest> guests = req.getGuests();
