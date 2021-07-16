@@ -282,8 +282,12 @@ public class DfyOrderManager extends OrderManager {
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
         try{
-            //BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
-            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
+            if(StringUtils.isBlank(req.getCategory())){
+                priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            } else {
+                priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
+            }
             priceCalcResult = priceCalcResultBaseResponse.getData();
             //没有价格直接抛异常
             if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
@@ -307,11 +311,15 @@ public class DfyOrderManager extends OrderManager {
      * @return
      */
     public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
-        ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+
         DfyCreateOrderRequest dfyCreateOrderRequest = new DfyCreateOrderRequest();
         dfyCreateOrderRequest.setStartTime(req.getBeginDate());
-        //dfyCreateOrderRequest.setProductId(req.getProductId().split("_")[1]);
-        dfyCreateOrderRequest.setProductId(scenicSpotProductMPO.getSupplierProductId());
+        if(StringUtils.isBlank(req.getCategory())){
+            dfyCreateOrderRequest.setProductId(req.getProductId().split("_")[1]);
+        } else {
+            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+            dfyCreateOrderRequest.setProductId(scenicSpotProductMPO.getSupplierProductId());
+        }
         dfyCreateOrderRequest.setBookNumber(req.getQunatity());
         Contact contact  = new Contact();
         contact.setContactTel(req.getMobile());

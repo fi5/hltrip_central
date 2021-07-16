@@ -179,8 +179,13 @@ public class LvmamaOrderManager extends OrderManager {
 		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
 		validateOrderRequest.setTraceId(req.getTraceId());
 		//2021-05-31 获取产品信息
-		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
-		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getEndDate());
+		ScenicSpotProductMPO scenicSpotProductMPO = null;
+		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = null;
+		if(StringUtils.isNotBlank(req.getCategory())){
+			scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+			scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getEndDate());
+
+		}
 		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req, scenicSpotProductMPO, scenicSpotProductPriceMPOS);
 
 		LmmBaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
@@ -208,8 +213,12 @@ public class LvmamaOrderManager extends OrderManager {
 		CreateOrderRequest request = new CreateOrderRequest();
 		request.setTraceId(req.getTraceId());
 		//2021-05-31 获取产品信息
-		ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
-		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getBeginDate());
+		ScenicSpotProductMPO scenicSpotProductMPO = null;
+		List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = null;
+		if(StringUtils.isNotBlank(req.getCategory())){
+			scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+			scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getBeginDate());
+		}
 		createOrderConverter.convertLvmamaCreateOrderRequest(request,req, scenicSpotProductMPO, scenicSpotProductPriceMPOS);
 		OrderResponse response = lvmamaOrderService.createOrder(request);
 		if(response != null && "1000".equals(response.getState().getCode())){
