@@ -1140,7 +1140,7 @@ public class ProductServiceImpl implements ProductService {
             priceInfo.setProductCode(priceMPO.getScenicSpotProductId());
             priceInfo.setSettlePrice(priceMPO.getSettlementPrice());
             priceInfo.setStock(priceMPO.getStock());
-            checkPriceV2(Lists.newArrayList(priceInfo), request.getStartDate(), quantity, chdQuantity, result);
+            checkPriceV2(Lists.newArrayList(priceInfo), DateTimeUtil.parseDate(priceMPO.getStartDate()), quantity, chdQuantity, result);
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
             GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(request.getPackageCode());
             List<PriceInfo> priceInfos = setMealMPO.getGroupTourPrices().stream().map(gp -> {
