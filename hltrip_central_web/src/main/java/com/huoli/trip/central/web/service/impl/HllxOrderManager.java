@@ -78,7 +78,10 @@ public class HllxOrderManager extends OrderManager {
         //ycfBookCheckReq.setProductId(CentralUtils.getSupplierId(req.getProductId()));
         req1.setBeginDate(begin);
         req1.setEndDate(end);
+        //2021-05-31 增加packageId和category
         req1.setProductId(req.getProductId());
+        req1.setPackageId(req.getPackageId());
+        req1.setCategory(req.getCategory());
         HllxBookCheckRes hllxBookCheckRes;
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
@@ -114,16 +117,23 @@ public class HllxOrderManager extends OrderManager {
         }catch (HlCentralException e){
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
         }
+        // 价格计算
         CenterBookCheck  bookCheck = new CenterBookCheck();
         PriceCalcRequest calcRequest = new PriceCalcRequest();
         calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getCount());
+        //2021-06-02
+        calcRequest.setChannelCode(req.getChannelCode());
+        calcRequest.setFrom(req.getFrom());
+        calcRequest.setPackageCode(req.getPackageId());
+        calcRequest.setCategory(req.getCategory());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
         try{
-            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            //BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
             priceCalcResult = priceCalcResultBaseResponse.getData();
             //没有价格直接抛异常
             if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
@@ -149,7 +159,11 @@ public class HllxOrderManager extends OrderManager {
         HllxCreateOrderReq hllxCreateOrderReq = new HllxCreateOrderReq();
         hllxCreateOrderReq.setDate(req.getBeginDate());
         hllxCreateOrderReq.setProductId(req.getProductId());
+        hllxCreateOrderReq.setPackageId(req.getPackageId());
+        hllxCreateOrderReq.setCategory(req.getCategory());
         hllxCreateOrderReq.setQunatity(req.getQunatity());
+        hllxCreateOrderReq.setAdtQuantity(req.getAdultNum());
+        hllxCreateOrderReq.setChildQuantity(req.getChildNum());
         HllxBookCheckRes hllxBookCheckRes;
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){

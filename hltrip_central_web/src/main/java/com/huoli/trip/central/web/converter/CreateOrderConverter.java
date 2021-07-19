@@ -1,10 +1,11 @@
 package com.huoli.trip.central.web.converter;
 
-import com.aliyuncs.kms.transform.v20160120.ListResourceTagsResponseUnmarshaller;
 import com.huoli.eagle.eye.core.util.StringUtil;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.util.BigDecimalUtil;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.BookCheckReq;
 import com.huoli.trip.common.vo.request.CreateOrderReq;
@@ -15,15 +16,10 @@ import com.huoli.trip.supplier.self.lvmama.vo.request.ValidateOrderRequest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfBookGuest;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderReq;
 import com.huoli.trip.supplier.self.yaochufa.vo.YcfCreateOrderRes;
-import javafx.beans.binding.When;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.lang.ref.ReferenceQueue;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +104,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         return ycfBookGuests;
     }
 
-    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request,CreateOrderReq req){
+    public void convertLvmamaCreateOrderRequest(CreateOrderRequest request, CreateOrderReq req, Long goodsId, Long productId){
         //需要场次号
         Integer adultNum = req.getAdultNum();
         Integer childNum = req.getChildNum();
@@ -127,11 +123,12 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         orderInfo.setBooker(booker);
 
         Product product = new Product();
-        product.setGoodsId(Long.parseLong(req.getGoodsId()));
-        product.setProductId(Long.parseLong(req.getProductId()));
         product.setQuantity(req.getQunatity());
-        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         product.setVisitDate(req.getBeginDate());
+        //2021-05-31 goodsid和productId从mongo拿
+        product.setGoodsId(goodsId);
+        product.setProductId(productId);
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         orderInfo.setProduct(product);
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();
         if(ListUtils.isNotEmpty(guests)){
@@ -144,7 +141,6 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
                 if(StringUtil.isNotEmpty(guest.getCredential())){
                     credentialType= convertLvmamaCredentialsType(guest.getCredentialType());
                 }
-
                 Traveller traveller1 = new Traveller(guest.getCname(),guest.getMobile(),guest.getEname(),guest.getEmail(),guest.getCredential(),null,credentialType);
                 travellers.add(traveller1);
             }
@@ -156,7 +152,7 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         request.setRecipient(recipient);*/
     }
 
-    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req){
+    public void convertLvmamaBookOrderRequest(ValidateOrderRequest request, BookCheckReq req, Long goodsId, Long productId){
         //需要场次号
         int count = req.getCount()+req.getChdCount();
         String sellPrice = req.getSellPrice();
@@ -167,11 +163,12 @@ public class  CreateOrderConverter implements Converter<CreateOrderReq, YcfCreat
         orderInfo.setBooker(booker);
 
         Product product = new Product();
-        product.setGoodsId(Long.parseLong(req.getGoodsId()));
-        product.setProductId(Long.parseLong(req.getProductId()));
         product.setQuantity(req.getCount());
-        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         product.setVisitDate(req.getBeginDate());
+        //2021-05-31 goodsid和productId从mongo拿
+        product.setGoodsId(goodsId);
+        product.setProductId(productId);
+        product.setSellPrice(Float.parseFloat(req.getSellPrice()));
         orderInfo.setProduct(product);
 
         final List<CreateOrderReq.BookGuest> guests = req.getGuests();

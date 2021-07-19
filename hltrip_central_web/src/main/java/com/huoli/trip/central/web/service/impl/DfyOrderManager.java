@@ -5,10 +5,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
+import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
@@ -64,6 +66,9 @@ public class DfyOrderManager extends OrderManager {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private ScenicSpotDao scenicSpotDao;
 
 
 
@@ -226,6 +231,11 @@ public class DfyOrderManager extends OrderManager {
         req1.setBeginDate(begin);
         req1.setEndDate(end);
         req1.setProductId(req.getProductId());
+        //2021-05-31 新增packageId和category
+        req1.setPackageId(req.getPackageId());
+        req1.setCategory(req.getCategory());
+        req1.setAdtNum(req.getCount());
+        req1.setChdNum(req.getChdCount());
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
             traceId = TraceIdUtils.getTraceId();
@@ -257,16 +267,27 @@ public class DfyOrderManager extends OrderManager {
         }catch (HlCentralException e){
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_BOOK_CHECK_ORDER);
         }
+        // 价格计算需要重新调
         CenterBookCheck  bookCheck = new CenterBookCheck();
         PriceCalcRequest calcRequest = new PriceCalcRequest();
         calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
         calcRequest.setProductCode(req.getProductId());
         calcRequest.setQuantity(req.getCount());
+        //2021-06-02
+        calcRequest.setChannelCode(req.getChannelCode());
+        calcRequest.setFrom(req.getFrom());
+        calcRequest.setPackageCode(req.getPackageId());
+        calcRequest.setCategory(req.getCategory());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
         try{
-            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
+            if(StringUtils.isBlank(req.getCategory())){
+                priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
+            } else {
+                priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
+            }
             priceCalcResult = priceCalcResultBaseResponse.getData();
             //没有价格直接抛异常
             if(priceCalcResultBaseResponse.getCode()!=0||priceCalcResult==null){
@@ -290,9 +311,15 @@ public class DfyOrderManager extends OrderManager {
      * @return
      */
     public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
+
         DfyCreateOrderRequest dfyCreateOrderRequest = new DfyCreateOrderRequest();
         dfyCreateOrderRequest.setStartTime(req.getBeginDate());
-        dfyCreateOrderRequest.setProductId(req.getProductId().split("_")[1]);
+        if(StringUtils.isBlank(req.getCategory())){
+            dfyCreateOrderRequest.setProductId(req.getSupplierProductId());
+        } else {
+            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+            dfyCreateOrderRequest.setProductId(scenicSpotProductMPO.getSupplierProductId());
+        }
         dfyCreateOrderRequest.setBookNumber(req.getQunatity());
         Contact contact  = new Contact();
         contact.setContactTel(req.getMobile());

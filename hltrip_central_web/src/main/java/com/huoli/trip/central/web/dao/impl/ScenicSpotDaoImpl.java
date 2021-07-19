@@ -52,26 +52,14 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     }
 
     @Override
-    public ScenicSpotPayServiceMPO querySpotPayItem(String spotPayItemId) {
-        return null;
-    }
-
-    @Override
     public List<ScenicSpotProductMPO> querySpotProduct(String scenicSpotId) {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("scenicSpotId").is(scenicSpotId);
         criteria.and("status").is(1);
         query.addCriteria(criteria);
-
-        query.fields().include("_id").include("productId").include("productName").include("price").include("type").include("tags").include("scenicSpotOpenTimes").include("otherOpenTimeDesc").include("scenicSpotProductTransaction");
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = mongoTemplate.find(query, ScenicSpotProductMPO.class);
         return scenicSpotProductMPOS;
-    }
-
-    @Override
-    public List<ScenicSpotProductPriceMPO> queryProductPrice(String scenicSpotProductId, String startDate, String endDate) {
-        return null;
     }
 
     @Override
@@ -108,6 +96,35 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     }
 
     @Override
+    public List<ScenicSpotProductPriceMPO> queryPrice(String scenicSpotProductId, String startDate, String endDate, String ruleId, String ticketKind) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("scenicSpotProductId").is(scenicSpotProductId);
+        criteria.and("stock").gt(0);
+        if(StringUtils.isNotEmpty(startDate) && StringUtils.isNotEmpty(endDate)){
+            criteria.andOperator(
+                    Criteria.where("startDate").gte(startDate),
+                    Criteria.where("endDate").lte(endDate));
+
+        }else {
+            if (StringUtils.isNotEmpty(startDate)) {
+                criteria.and("startDate").gte(startDate);
+            }
+            if (StringUtils.isNotEmpty(endDate)) {
+                criteria.and("endDate").lte(endDate);
+            }
+        }
+        if(StringUtils.isNotBlank(ruleId)){
+            criteria.and("scenicSpotRuleId").is(ruleId);
+        }
+        if(StringUtils.isNotBlank(ruleId)){
+            criteria.and("ticketKind").is(ticketKind);
+        }
+        query.addCriteria(criteria);
+        return  mongoTemplate.find(query, ScenicSpotProductPriceMPO.class);
+    }
+
+    @Override
     public ScenicSpotRuleMPO queryRuleById(String ruleId) {
         Query query = new Query();
         Criteria criteria = new Criteria();
@@ -132,6 +149,15 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         criteria.and("_id").is(priceId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query,ScenicSpotProductPriceMPO.class);
+    }
+
+    @Override
+    public ScenicSpotProductBackupMPO queryBackInfoByProductId(String productId) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("scenicSpotProduct.id").is(productId);
+        query.addCriteria(criteria);
+        return mongoTemplate.findOne(query, ScenicSpotProductBackupMPO.class);
     }
 
 

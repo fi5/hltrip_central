@@ -1,7 +1,9 @@
 package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.entity.mpo.AddressInfo;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.ImageBase;
+import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.RecommendProductV2;
 import com.huoli.trip.common.vo.request.central.*;
@@ -124,6 +126,8 @@ public interface ProductService {
      */
     BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req);
 
+    IncreasePrice increasePrice(ProductListMPO productListMPO, String app);
+
     /**
      * 推荐列表
      * @param request
@@ -151,4 +155,18 @@ public interface ProductService {
      * @return
      */
     BaseResponse<List<String>> recommendSubjects(RecommendRequestV2 request);
+
+    /**
+     * 新版价格计算
+     * @param request
+     * @return
+     */
+    BaseResponse<PriceCalcResult> calcTotalPriceV2(PriceCalcRequest request);
+
+    /**
+     * 新版价格详情
+     * @param req
+     * @return
+     */
+    BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req);
 }

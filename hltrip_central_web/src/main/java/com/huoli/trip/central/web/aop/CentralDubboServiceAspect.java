@@ -69,7 +69,7 @@ public class CentralDubboServiceAspect {
         Span span = null;
         try {
             Object args[] = joinPoint.getArgs();
-            this.paramValidate(args);
+            //this.paramValidate(args);
             Object result;
             String params;
             if(ArrayUtils.isNotEmpty(args) && args[0] != null){

@@ -2,8 +2,17 @@ package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
+import com.huoli.trip.central.web.dao.PriceDao;
+import com.huoli.trip.central.web.dao.ProductDao;
+import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.dao.ScenicSpotProductPriceDao;
+import com.huoli.trip.common.constant.CentralError;
+import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.*;
+import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.util.UploadUtil;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
@@ -33,6 +42,7 @@ import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +57,18 @@ public class LvmamaOrderManager extends OrderManager {
 
 	@Autowired
 	private CreateOrderConverter createOrderConverter;
+
+	@Autowired
+	private ScenicSpotDao scenicSpotDao;
+
+	@Autowired
+	private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
+
+	@Autowired
+	private ProductDao productDao;
+
+	@Autowired
+	private PriceDao priceDao;
 
 
 	public final static String CHANNEL= ChannelConstant.SUPPLIER_TYPE_LMM;
@@ -166,7 +188,32 @@ public class LvmamaOrderManager extends OrderManager {
 	public BaseResponse<CenterBookCheck>  getCenterCheckInfos(BookCheckReq req){
 		ValidateOrderRequest validateOrderRequest = new ValidateOrderRequest();
 		validateOrderRequest.setTraceId(req.getTraceId());
-		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req);
+		Long goodsId = 0l;
+		Long productId = 0l;
+		BigDecimal sellPrice;
+		if(StringUtils.isNotBlank(req.getCategory())){
+			//2021-05-31 获取产品信息
+			ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+			List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getEndDate());
+			//2021-05-31 goodsid和productId从mongo拿
+			if(scenicSpotProductMPO != null){
+				goodsId = Long.valueOf(scenicSpotProductMPO.getSupplierProductId());
+				productId = Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId"));
+			}
+			if(!org.springframework.util.CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
+				sellPrice = scenicSpotProductPriceMPOS.get(0).getSettlementPrice();
+				if(sellPrice != null){
+					req.setSellPrice(sellPrice.toPlainString());
+				}
+			}
+		} else {
+			ProductPO productPO = productDao.getTripProductByCode(req.getProductId());
+			if(productPO != null){
+				goodsId = Long.valueOf(productPO.getSupplierProductId());
+				productId = Long.valueOf(productPO.getExtendParams().get("productId"));
+			}
+		}
+		createOrderConverter.convertLvmamaBookOrderRequest(validateOrderRequest,req, goodsId, productId);
 
 		LmmBaseResponse checkInfos = lvmamaOrderService.getCheckInfos(validateOrderRequest);
 		if(!"1000".equals(checkInfos.getState().getCode())){
@@ -174,10 +221,51 @@ public class LvmamaOrderManager extends OrderManager {
 		}
 		return BaseResponse.withSuccess();
 	}
+
+	private List<ScenicSpotProductPriceMPO> getPrice(String productId, String packageId, String startDate, String endDate){
+		String ruleId = null;
+		String ticketKind = null;
+		// 价格日历应该查询和packageId属于同一套餐的价格，只有productid不准确
+		if(org.apache.commons.lang3.StringUtils.isNotBlank(packageId)){
+			ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(packageId);
+			if(priceMPO != null){
+				ruleId = priceMPO.getScenicSpotRuleId();
+				ticketKind = priceMPO.getTicketKind();
+			}
+		}
+		return scenicSpotDao.queryPrice(productId, startDate, endDate, ruleId, ticketKind);
+	}
+
 	public BaseResponse<CenterCreateOrderRes> getCenterCreateOrder(CreateOrderReq req){
 		CreateOrderRequest request = new CreateOrderRequest();
 		request.setTraceId(req.getTraceId());
-		createOrderConverter.convertLvmamaCreateOrderRequest(request,req);
+		//2021-05-31 获取产品信息
+		Long goodsId = 0l;
+		Long productId = 0l;
+		BigDecimal sellPrice;
+		if(StringUtils.isNotBlank(req.getCategory())){
+			//2021-05-31 获取产品信息
+			ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+			List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getEndDate());
+			//2021-05-31 goodsid和productId从mongo拿
+			if(scenicSpotProductMPO != null){
+				goodsId = Long.valueOf(scenicSpotProductMPO.getSupplierProductId());
+				productId = Long.valueOf(scenicSpotProductMPO.getExtendParams().get("productId"));
+			}
+			if(!org.springframework.util.CollectionUtils.isEmpty(scenicSpotProductPriceMPOS)){
+				sellPrice = scenicSpotProductPriceMPOS.get(0).getSettlementPrice();
+				if(sellPrice != null){
+					req.setSellPrice(sellPrice.toPlainString());
+				}
+			}
+		} else {
+			ProductPO productPO = productDao.getTripProductByCode(req.getProductId());
+			if(productPO != null){
+				goodsId = Long.valueOf(productPO.getSupplierProductId());
+				productId = Long.valueOf(productPO.getExtendParams().get("productId"));
+			}
+		}
+		createOrderConverter.convertLvmamaCreateOrderRequest(request,req, goodsId, productId);
 		OrderResponse response = lvmamaOrderService.createOrder(request);
 		if(response != null && "1000".equals(response.getState().getCode())){
 			CenterCreateOrderRes centerCreateOrderRes = new CenterCreateOrderRes();
