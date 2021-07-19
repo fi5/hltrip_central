@@ -428,17 +428,9 @@ public class ProductServiceImpl implements ProductService {
         if(StringUtils.isNotBlank(request.getTag())){
             oriRecommendBaseInfos.removeIf(r -> !StringUtils.equals(r.getTitle(), request.getTag()));
         }
-        log.info("recommendMPO:{}", recommendMPO.size());
-        log.info("oriRecommendBaseInfos:{}", oriRecommendBaseInfos.size());
-        for (RecommendBaseInfo oriRecommendBaseInfo : oriRecommendBaseInfos) {
-            log.info("before-oriRecommendBaseInfo:{}", oriRecommendBaseInfo);
-        }
         if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
             List<RecommendBaseInfo> recommendBaseInfos;
             oriRecommendBaseInfos = resetRecommendBaseInfo(request.getAppSource(), oriRecommendBaseInfos);
-            for (RecommendBaseInfo oriRecommendBaseInfo : oriRecommendBaseInfos) {
-                log.info("after-oriRecommendBaseInfo:{}", oriRecommendBaseInfo);
-            }
             // 只有首页当地推荐需要补充逻辑
             if(request.getPosition() == 2){
                 recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> {

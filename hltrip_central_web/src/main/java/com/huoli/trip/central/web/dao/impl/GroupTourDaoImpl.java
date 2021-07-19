@@ -73,7 +73,7 @@ public class GroupTourDaoImpl implements GroupTourDao {
     public GroupTourProductSetMealBackupMPO queryGroupTourBackUp(String packageId) {
         Query query = new Query();
         Criteria criteria = new Criteria();
-        criteria.and("groupTourProductSetMealMPO.id").is(packageId);
+        criteria.and("groupTourProductSetMealMPO._id").is(packageId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, GroupTourProductSetMealBackupMPO.class);
     }
