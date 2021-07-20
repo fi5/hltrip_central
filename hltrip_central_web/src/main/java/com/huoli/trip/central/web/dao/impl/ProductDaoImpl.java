@@ -605,6 +605,7 @@ public class ProductDaoImpl implements ProductDao {
                 .first("channelName").as("channelName")
                 .first("groupTourTypeName").as("groupTourTypeName")
                 .first("groupTourType").as("groupTourType")
+                .first("sortIndex").as("sortIndex")
                 ;
     }
 
