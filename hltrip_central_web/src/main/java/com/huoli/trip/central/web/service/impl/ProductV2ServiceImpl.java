@@ -798,6 +798,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             return priceInfo;
         }).collect(Collectors.toList());
 
+        resultPrices = resultPrices.stream().sorted(Comparator.comparing(PriceInfo :: getSaleDate)).collect(Collectors.toList());
         result.setPriceInfos(resultPrices);
 
         return BaseResponse.withSuccess(result);
