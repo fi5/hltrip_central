@@ -572,14 +572,12 @@ public class ProductDaoImpl implements ProductDao {
         }
 
         MatchOperation matchOperation = Aggregation.match(criteria);
-        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex");
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "apiSellPrice");
         GroupOperation groupOperation = getNewListGroupField("scenicSpotId");
-        SortOperation priceSortOperation = Aggregation.sort(Sort.Direction.ASC, "apiSellPrice");
         groupOperation.min("apiSellPrice");
         operations.add(matchOperation);
         operations.add(groupOperation);
         operations.add(sortOperation);
-        operations.add(priceSortOperation);
         return operations;
     }
 
