@@ -577,8 +577,8 @@ public class ProductDaoImpl implements ProductDao {
         SortOperation priceSortOperation = Aggregation.sort(Sort.Direction.ASC, "apiSellPrice");
         groupOperation.min("apiSellPrice");
         operations.add(matchOperation);
-        operations.add(sortOperation);
         operations.add(groupOperation);
+        operations.add(sortOperation);
         operations.add(priceSortOperation);
         return operations;
     }
