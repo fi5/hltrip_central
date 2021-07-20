@@ -575,7 +575,7 @@ public class ProductDaoImpl implements ProductDao {
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "apiSellPrice");
         GroupOperation groupOperation = getNewListGroupField("scenicSpotId");
         operations.add(matchOperation);
-        operations.add(groupOperation.min("apiSellPrice1").as("apiSellPrice"));
+        operations.add(groupOperation);
         operations.add(sortOperation);
         return operations;
     }
@@ -587,7 +587,7 @@ public class ProductDaoImpl implements ProductDao {
                 .first("hotelId").as("hotelId")
                 .first("scenicSpotName").as("scenicSpotName")
                 .first("productImageUrl").as("productImageUrl")
-                .first("apiSellPrice").as("apiSellPrice1")
+                .min("apiSellPrice").as("apiSellPrice")
                 .first("price").as("price")
                 .first("type").as("type")
                 .first("tags").as("tags")
