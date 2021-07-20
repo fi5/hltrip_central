@@ -414,7 +414,16 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
             }
             effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
-            basePrices = effective.stream().map(p -> {
+            Map<String, List<ScenicSpotProductPriceMPO>> priceMapByDate = effective.stream().collect(Collectors.groupingBy(a -> a.getStartDate()));
+            Set<String> dates = priceMapByDate.keySet();
+            List<ScenicSpotProductPriceMPO> finalPriceList = new ArrayList<>();
+            //每日价格取最小值
+            for (String date : dates) {
+                List<ScenicSpotProductPriceMPO> priceMPOS = priceMapByDate.get(date);
+                priceMPOS.sort(Comparator.comparing(a -> a.getSellPrice()));
+                finalPriceList.add(priceMPOS.get(0));
+            }
+            basePrices = finalPriceList.stream().map(p -> {
                 BasePrice basePrice = new BasePrice();
                 BeanUtils.copyProperties(p, basePrice);
                 //需要调用加价方法
