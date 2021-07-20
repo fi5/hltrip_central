@@ -547,7 +547,8 @@ public class ProductDaoImpl implements ProductDao {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         //0门票1跟团游2酒景套餐
-        criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0).and("apiSellPrice").ne(null).and("apiSellPrice").gt(0);
+        criteria.and("category").is("d_ss_ticket").and("status").is(1).and("isDel").is(0);
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
@@ -560,9 +561,7 @@ public class ProductDaoImpl implements ProductDao {
         }
         if (StringUtils.isNotBlank(req.getThemeName())) {
             String[] themeNames = req.getThemeName().split(",");
-            for (String themeName : themeNames) {
-                criteria.and("themeName").regex(themeName);
-            }
+            criteria.and("themeName").in(themeNames);
         }
         /*if(StringUtils.isNotBlank(req.getArrCity())){
             criteria.and("arrCityNames").regex(req.getArrCity());
@@ -632,7 +631,8 @@ public class ProductDaoImpl implements ProductDao {
     private List<AggregationOperation> buildGroupTourListOperation(GroupTourListReq req) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
-        criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0).and("apiSellPrice").ne(null).and("apiSellPrice").gt(0);
+        criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0);
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
@@ -677,7 +677,8 @@ public class ProductDaoImpl implements ProductDao {
     private List<AggregationOperation> buildHotelScenicListOperations(HotelScenicListReq req) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
-        criteria.and("category").is("hotel_scenicSpot").and("status").is(1).and("isDel").is(0).and("apiSellPrice").ne(null).and("apiSellPrice").gt(0);
+        criteria.and("category").is("hotel_scenicSpot").and("status").is(1).and("isDel").is(0);
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
