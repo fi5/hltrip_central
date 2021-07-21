@@ -67,7 +67,7 @@ public class OrderServiceImpl implements OrderService {
         if(checkRes != null && checkRes.getCode() != 0) {
             log.info("预订前校验失败,唤起本地更新产品为下线状态");
             try{
-                productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
+                productService.updateStatusByCodev2(req.getProductId(), Constants.PRODUCT_STATUS_INVALID,req.getCategory());
             }catch (Exception ex){
                 log.error("调用下线本地数据接口失败");
             }
