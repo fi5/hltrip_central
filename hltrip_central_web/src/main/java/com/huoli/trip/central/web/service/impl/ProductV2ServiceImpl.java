@@ -153,6 +153,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }
         groupTourListReq.setArrCityCode(request.getArrCity());
         groupTourListReq.setGroupTourType(groupTourProductMPO.getGroupTourType());
+        groupTourListReq.setApp(request.getFrom());
         List<ProductListMPO> productListMPOS = productDao.groupTourList(groupTourListReq);
         log.info("推荐列表：{}", JSONObject.toJSONString(productListMPOS));
         if (CollectionUtils.isNotEmpty(productListMPOS)) {
@@ -413,7 +414,16 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
 
             }
-            effective = fe.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
+            Map<String, List<ScenicSpotProductPriceMPO>> priceMapByDate = fe.stream().collect(Collectors.groupingBy(a -> a.getStartDate()));
+            Set<String> dates = priceMapByDate.keySet();
+            List<ScenicSpotProductPriceMPO> finalPriceList = new ArrayList<>();
+            //每日价格取最小值
+            for (String date : dates) {
+                List<ScenicSpotProductPriceMPO> priceMPOS = priceMapByDate.get(date);
+                priceMPOS.sort(Comparator.comparing(a -> a.getSellPrice()));
+                finalPriceList.add(priceMPOS.get(0));
+            }
+            effective = finalPriceList.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
             basePrices = effective.stream().map(p -> {
                 BasePrice basePrice = new BasePrice();
                 BeanUtils.copyProperties(p, basePrice);
@@ -789,6 +799,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             return priceInfo;
         }).collect(Collectors.toList());
 
+        resultPrices = resultPrices.stream().sorted(Comparator.comparing(PriceInfo :: getSaleDate)).collect(Collectors.toList());
         result.setPriceInfos(resultPrices);
 
         return BaseResponse.withSuccess(result);

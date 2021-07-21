@@ -428,17 +428,9 @@ public class ProductServiceImpl implements ProductService {
         if(StringUtils.isNotBlank(request.getTag())){
             oriRecommendBaseInfos.removeIf(r -> !StringUtils.equals(r.getTitle(), request.getTag()));
         }
-        log.info("recommendMPO:{}", recommendMPO.size());
-        log.info("oriRecommendBaseInfos:{}", oriRecommendBaseInfos.size());
-        for (RecommendBaseInfo oriRecommendBaseInfo : oriRecommendBaseInfos) {
-            log.info("before-oriRecommendBaseInfo:{}", oriRecommendBaseInfo);
-        }
         if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
             List<RecommendBaseInfo> recommendBaseInfos;
             oriRecommendBaseInfos = resetRecommendBaseInfo(request.getAppSource(), oriRecommendBaseInfos);
-            for (RecommendBaseInfo oriRecommendBaseInfo : oriRecommendBaseInfos) {
-                log.info("after-oriRecommendBaseInfo:{}", oriRecommendBaseInfo);
-            }
             // 只有首页当地推荐需要补充逻辑
             if(request.getPosition() == 2){
                 recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> {
@@ -569,11 +561,18 @@ public class ProductServiceImpl implements ProductService {
             log.error("没有查到符合条件的主题。。");
             return BaseResponse.withSuccess();
         }
-        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
+        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream())
+                .filter(rb -> StringUtils.isNotBlank(rb.getSubjectCode())
+                        && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
         List<String> subjects = Lists.newArrayList();
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
-            subjects = baseInfos.stream().map(b -> b.getSubjectCode()).distinct().collect(Collectors.toList());
+            Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getSubjectCode));
+            map.forEach((k, v) -> {
+                if(ListUtils.isNotEmpty(v)){
+                    subjects.add(k);
+                }
+            });
         }
         return BaseResponse.withSuccess(subjects);
     }
@@ -1140,7 +1139,7 @@ public class ProductServiceImpl implements ProductService {
             priceInfo.setProductCode(priceMPO.getScenicSpotProductId());
             priceInfo.setSettlePrice(priceMPO.getSettlementPrice());
             priceInfo.setStock(priceMPO.getStock());
-            checkPriceV2(Lists.newArrayList(priceInfo), request.getStartDate(), quantity, chdQuantity, result);
+            checkPriceV2(Lists.newArrayList(priceInfo), DateTimeUtil.parseDate(priceMPO.getStartDate()), quantity, chdQuantity, result);
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
             GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(request.getPackageCode());
             List<PriceInfo> priceInfos = setMealMPO.getGroupTourPrices().stream().map(gp -> {
