@@ -17,6 +17,7 @@ import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.ProductService;
 import com.huoli.trip.supplier.api.YcfOrderService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
 import org.apache.velocity.app.event.implement.EscapeXmlReference;
@@ -67,7 +68,11 @@ public class OrderServiceImpl implements OrderService {
         if(checkRes != null && checkRes.getCode() != 0) {
             log.info("预订前校验失败,唤起本地更新产品为下线状态");
             try{
-                productService.updateStatusByCodev2(req.getProductId(), Constants.PRODUCT_STATUS_INVALID,req.getCategory());
+                if(StringUtils.isBlank(req.getCategory())){
+                    productService.updateStatusByCode(req.getProductId(), Constants.PRODUCT_STATUS_INVALID);
+                } else {
+                    productService.updateStatusByCodev2(req.getProductId(), Constants.PRODUCT_STATUS_INVALID,req.getCategory());
+                }
             }catch (Exception ex){
                 log.error("调用下线本地数据接口失败");
             }
