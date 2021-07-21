@@ -562,7 +562,8 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withSuccess();
         }
         List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream())
-                .filter(rb -> rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
+                .filter(rb -> StringUtils.isNotBlank(rb.getSubjectCode())
+                        && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
         List<String> subjects = Lists.newArrayList();
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
