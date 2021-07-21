@@ -561,11 +561,18 @@ public class ProductServiceImpl implements ProductService {
             log.error("没有查到符合条件的主题。。");
             return BaseResponse.withSuccess();
         }
-        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
+        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream())
+                .filter(rb -> StringUtils.isNotBlank(rb.getSubjectCode())
+                        && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
         List<String> subjects = Lists.newArrayList();
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
-            subjects = baseInfos.stream().map(b -> b.getSubjectCode()).distinct().collect(Collectors.toList());
+            Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getSubjectCode));
+            map.forEach((k, v) -> {
+                if(ListUtils.isNotEmpty(v)){
+                    subjects.add(k);
+                }
+            });
         }
         return BaseResponse.withSuccess(subjects);
     }
