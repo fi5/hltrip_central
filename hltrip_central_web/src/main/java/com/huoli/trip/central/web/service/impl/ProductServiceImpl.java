@@ -1153,6 +1153,7 @@ public class ProductServiceImpl implements ProductService {
                 priceInfo.setChdSalePrice(increasePrice.getPrices().get(0).getChdSellPrice());
                 priceInfo.setChdSettlePrice(gp.getChdPrice());
                 priceInfo.setChdStock(gp.getChdStock());
+                priceInfo.setRoomDiffPrice(gp.getDiffPrice());
                 return priceInfo;
             }).collect(Collectors.toList());
             checkPriceV2(priceInfos, request.getStartDate(), quantity, chdQuantity, result);
@@ -1191,6 +1192,7 @@ public class ProductServiceImpl implements ProductService {
                 priceInfo.setChdSalePrice(increasePrice.getPrices().get(0).getChdSellPrice());
                 priceInfo.setChdSettlePrice(ps.getChdPrice());
                 priceInfo.setChdStock(ps.getChdStock());
+                priceInfo.setRoomDiffPrice(ps.getDiffPrice());
                 return priceInfo;
             }).collect(Collectors.toList());
             checkPriceV2(priceInfos, request.getStartDate(), quantity, chdQuantity, result);
