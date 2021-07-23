@@ -571,7 +571,7 @@ public class ProductDaoImpl implements ProductDao {
         }
 
         MatchOperation matchOperation = Aggregation.match(criteria);
-        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "apiSellPrice");
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "apiSellPrice", "_id");
         GroupOperation groupOperation = getNewListGroupField("scenicSpotId");
         operations.add(matchOperation);
         operations.add(groupOperation);
@@ -655,7 +655,7 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("groupTourType").is(req.getGroupTourType());
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
-        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex");
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
         operations.add(matchOperation);
         operations.add(sortOperation);
         return operations;
@@ -694,7 +694,7 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("arrCity").regex(req.getArrCityCode());
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
-        SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex");
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex", "_id");
         operations.add(matchOperation);
         operations.add(sortOperation);
         return operations;
