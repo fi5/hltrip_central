@@ -425,7 +425,7 @@ public class ProductServiceImpl implements ProductService {
             oriRecommendBaseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
         }
         // 只要参数有标签就处理，不考虑哪个位置；
-        if(StringUtils.isNotBlank(request.getTag())){
+        if(StringUtils.isNotBlank(request.getTag()) && StringUtils.equals(request.getTag(), sysTag)){
             oriRecommendBaseInfos.removeIf(r -> !StringUtils.equals(r.getTitle(), request.getTag()));
         }
         if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
