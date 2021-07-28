@@ -951,6 +951,8 @@ public class ProductServiceImpl implements ProductService {
                         result.setTravellerTypes(Arrays.stream(passengerTemplatePO.getIdInfo().split(",")).map(Integer::valueOf).collect(Collectors.toList()));
                     }
                 }
+                result.setDay(String.valueOf(productMPO.getDay()));
+                result.setNight(String.valueOf(productMPO.getNight()));
                 result.setProductCode(productMPO.getId());
                 result.setPackageCode(setMealMPO.getId());
                 result.setProductName(productMPO.getProductName());
