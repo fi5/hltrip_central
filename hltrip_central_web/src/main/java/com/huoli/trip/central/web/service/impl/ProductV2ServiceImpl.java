@@ -553,8 +553,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
         ProductPriceCalendarResult result = new ProductPriceCalendarResult();
 
+        GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getProductId());
         GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
         List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
+        int beforeBookDay = groupTourProductMPO.getGroupTourProductPayInfo().getBeforeBookDay();
         //过滤日期
         Date startDate = new Date();
         if(StringUtils.isNotBlank(request.getStartDate())){
@@ -563,6 +565,11 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 startDate = reqStartDate;
             }
         }
+        //根据提前预定天数处理搜索的开始时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startDate);
+        calendar.add(Calendar.DAY_OF_MONTH, beforeBookDay);
+        startDate = calendar.getTime();
         Date endDate = null;
         if(StringUtils.isNotBlank(request.getEndDate())){
             Date reqEndDate = DateTimeUtil.parse(request.getEndDate(), DateTimeUtil.YYYYMMDD);
@@ -584,7 +591,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 return false;
             }
         }).collect(Collectors.toList());
-        GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getProductId());
         if(CollectionUtils.isNotEmpty(groupTourPrices)){
             //价格计算
             IncreasePrice increasePrice = new IncreasePrice();
