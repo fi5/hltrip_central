@@ -519,8 +519,9 @@ public class ProductServiceImpl implements ProductService {
             // 如果当前城市的标签内容数量不够就用其它城市凑，够数就算；
             if(ListUtils.isNotEmpty(shortTags)){
                 List<RecommendMPO> recommendMPOs = recommendDao.getListByTag(request.getPosition().toString(), shortTags);
-                Map<String, List<RecommendBaseInfo>> shortMap = recommendMPOs.stream().flatMap(r ->
-                        r.getRecommendBaseInfos().stream()).filter(rb ->
+                List<RecommendBaseInfo> newBaseInfos = recommendMPOs.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
+                newBaseInfos = resetRecommendBaseInfo(request.getAppSource(), newBaseInfos);
+                Map<String, List<RecommendBaseInfo>> shortMap = newBaseInfos.stream().filter(rb ->
                         shortTags.contains(rb.getTitle())).collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
                 shortMap.forEach((k, v) -> {
                     if(v.size() >= request.getPageSize()){
