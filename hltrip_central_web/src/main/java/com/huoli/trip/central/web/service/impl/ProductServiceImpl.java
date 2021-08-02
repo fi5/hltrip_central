@@ -429,6 +429,7 @@ public class ProductServiceImpl implements ProductService {
             oriRecommendBaseInfos.removeIf(r -> !StringUtils.equals(r.getTitle(), request.getTag()));
         }
         if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
+            oriRecommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> rb.getApiSellPrice() != null).collect(Collectors.toList());
             List<RecommendBaseInfo> recommendBaseInfos;
             oriRecommendBaseInfos = resetRecommendBaseInfo(request.getAppSource(), oriRecommendBaseInfos);
             // 只有首页当地推荐需要补充逻辑
@@ -499,7 +500,9 @@ public class ProductServiceImpl implements ProductService {
             tags.add("为你精选");
             return BaseResponse.withSuccess(tags);
         }
-        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
+        List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r ->
+                r.getRecommendBaseInfos().stream()).filter(bi ->
+                bi.getApiSellPrice() != null).collect(Collectors.toList());
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
             Map<String, List<RecommendBaseInfo>> map = baseInfos.stream().collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
@@ -520,6 +523,7 @@ public class ProductServiceImpl implements ProductService {
             if(ListUtils.isNotEmpty(shortTags)){
                 List<RecommendMPO> recommendMPOs = recommendDao.getListByTag(request.getPosition().toString(), shortTags);
                 List<RecommendBaseInfo> newBaseInfos = recommendMPOs.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
+                newBaseInfos = newBaseInfos.stream().filter(nbi -> nbi.getApiSellPrice() != null).collect(Collectors.toList());
                 newBaseInfos = resetRecommendBaseInfo(request.getAppSource(), newBaseInfos);
                 Map<String, List<RecommendBaseInfo>> shortMap = newBaseInfos.stream().filter(rb ->
                         shortTags.contains(rb.getTitle())).collect(Collectors.groupingBy(RecommendBaseInfo::getTitle));
@@ -565,7 +569,8 @@ public class ProductServiceImpl implements ProductService {
         }
         List<RecommendBaseInfo> baseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream())
                 .filter(rb -> StringUtils.isNotBlank(rb.getSubjectCode())
-                        && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
+                        && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()
+                        && rb.getApiSellPrice() != null).collect(Collectors.toList());
         List<String> subjects = Lists.newArrayList();
         if(ListUtils.isNotEmpty(baseInfos)){
             baseInfos = resetRecommendBaseInfo(request.getAppSource(), baseInfos);
