@@ -211,6 +211,8 @@ public class OrderInfoTranser {
 					rtnStatus = Integer.parseInt(orderStatus);
 					break;
 			}
+		} else if (type == 6) {
+			// btg todo 状态转换
 		}
 		return rtnStatus;
 	}
