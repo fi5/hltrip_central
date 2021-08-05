@@ -330,7 +330,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(current);
-        calendar.add(bookBeforeDay, Calendar.DAY_OF_MONTH);
+        calendar.add(Calendar.DAY_OF_MONTH, bookBeforeDay);
         Date canBuyDate = calendar.getTime();
         return canBuyDate;
     }
