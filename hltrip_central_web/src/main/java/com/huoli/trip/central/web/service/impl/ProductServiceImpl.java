@@ -469,6 +469,12 @@ public class ProductServiceImpl implements ProductService {
                         StringUtils.equals(rb.getSubjectCode(), request.getSubjectCode())
                                 && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
             }
+            // 活动
+            else if(request.getPosition() == 5){
+                recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> StringUtils.equals(rb.getTitle(), request.getTag()) &&
+                        StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
+            }
             // 其它位置逻辑一样
             else {
                 recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb ->
