@@ -423,6 +423,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                             if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
                                 continue;
                             }
+                            Date saleDate = DateTimeUtil.parseDate(scenicSpotProductPriceMPO.getStartDate());
+                            if(canBuyDate.compareTo(saleDate) >= 0){
+                                continue;
+                            }
                             effective.add(scenicSpotProductPriceMPO);
                         }
                     }
@@ -447,6 +451,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                             effective.addAll(scenicSpotProductPriceMPOS1);
                         }
                     } else {
+                        Date saleDate = DateTimeUtil.parseDate(s.getStartDate());
+                        if(canBuyDate.compareTo(saleDate) >= 0){
+                            continue;
+                        }
                         effective.add(s);
                     }
                 }
