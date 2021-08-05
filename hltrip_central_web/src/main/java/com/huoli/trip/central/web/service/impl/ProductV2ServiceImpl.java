@@ -249,7 +249,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
 
-                    String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    //使用最近可定日期比较
+                    //String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    String startDate = DateTimeUtil.formatDate(canBuyDate);
                     LocalDate localDate = LocalDate.now();
                     LocalDate tomorrow = localDate.plusDays(1);
                     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
