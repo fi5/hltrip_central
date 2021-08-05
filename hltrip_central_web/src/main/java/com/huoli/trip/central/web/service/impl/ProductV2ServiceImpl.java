@@ -343,7 +343,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 //List<ScenicSpotProductPriceMPO> collect = list.stream().filter(p -> StringUtils.equals(p.getStartDate(), date)).collect(Collectors.toList());
                 //2021-08-05 重新处理过滤价格，需要兼容普通日历类型库存
                 Date reqDate = DateTimeUtil.parseDate(date);
-                if(reqDate.compareTo(canBuyDate) < 0){
+                if(DateTimeUtil.getDateDiffDays(reqDate, canBuyDate) < 0){
                     //所选日期小于最近可定日期，直接忽略
                     return null;
                 }
@@ -424,7 +424,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                                 continue;
                             }
                             Date saleDate = DateTimeUtil.parseDate(scenicSpotProductPriceMPO.getStartDate());
-                            if(canBuyDate.compareTo(saleDate) >= 0){
+                            if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
                                 continue;
                             }
                             effective.add(scenicSpotProductPriceMPO);
@@ -452,7 +452,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                         }
                     } else {
                         Date saleDate = DateTimeUtil.parseDate(s.getStartDate());
-                        if(canBuyDate.compareTo(saleDate) >= 0){
+                        if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
                             continue;
                         }
                         effective.add(s);
@@ -575,7 +575,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
              while (dEnd.compareTo(calBegin.getTime())>= 0) {
                  // 根据日历的规则，为给定的日历字段添加或减去指定的时间量
                  log.info("canBuyDate:{}, calBegin:{}", DateTimeUtil.formatDate(canBuyDate), DateTimeUtil.formatDate(calBegin.getTime()));
-                 if(canBuyDate.compareTo(calBegin.getTime()) > 0){
+                 if(DateTimeUtil.getDateDiffDays(calBegin.getTime(), canBuyDate) < 0){
                      continue;
                  }
                  calBegin.add(Calendar.DAY_OF_MONTH, 1);
