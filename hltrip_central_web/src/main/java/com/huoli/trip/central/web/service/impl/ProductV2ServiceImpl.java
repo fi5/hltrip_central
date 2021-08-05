@@ -27,7 +27,6 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.v2.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.data.Json;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
@@ -196,13 +195,16 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             log.info("查询到的产品列表数据为：{}",JSON.toJSONString(scenicSpotProductMPOS));
             for (ScenicSpotProductMPO scenicSpotProduct : scenicSpotProductMPOS) {
                 String productId = scenicSpotProduct.getId();
+                //获取最近可定日期
+                int bookBeforeDay = scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeDay();
+                Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeTime());
                 List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
                 // 根据产品id、规则id、票种 拆成多个产品
                 Map<String, List<ScenicSpotProductPriceMPO>> priceMap = scenicSpotProductPriceMPOS.stream().collect(Collectors.groupingBy(price ->
                         String.format("%s-%s-%s", price.getScenicSpotProductId(), price.getScenicSpotRuleId(), price.getTicketKind())));
                 log.info("产品{}拆成{}个", scenicSpotProduct.getId(), priceMap.size());
                 priceMap.forEach((k, v) -> {
-                    ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date);
+                    ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date, canBuyDate);
                     if(scenicSpotProductPriceMPO == null){
                         return;
                     }
@@ -310,12 +312,54 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         return BaseResponse.withSuccess(productBases);
     }
 
-    private ScenicSpotProductPriceMPO filterPrice(List<ScenicSpotProductPriceMPO> list,String date){
+    private Date getCanBuyDate(int bookBeforeDay, String bookBeforeTime) {
+        Date current = new Date();
+        if (StringUtils.isNotBlank(bookBeforeTime)) {
+            if (StringUtils.equals(bookBeforeTime, "00:00")) {
+                bookBeforeDay+=1;
+            }else{
+                if(bookBeforeDay == 0){
+                    Date bookDateTime = DateTimeUtil.parse(DateTimeUtil.formatDate(current, DateTimeUtil.YYYYMMDD)+" " + bookBeforeTime, DateTimeUtil.YYYYMMDDHHmm);
+                    if(bookDateTime.compareTo(current) < 0){
+                        bookBeforeDay += 1;
+                    }
+                }
+            }
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(current);
+        calendar.add(bookBeforeDay, Calendar.DAY_OF_MONTH);
+        Date canBuyDate = calendar.getTime();
+        return canBuyDate;
+    }
+
+    private ScenicSpotProductPriceMPO filterPrice(List<ScenicSpotProductPriceMPO> list, String date, Date canBuyDate){
         if(ListUtils.isEmpty(list)){
             return null;
         }else{
             if(StringUtils.isNotEmpty(date)){
-                List<ScenicSpotProductPriceMPO> collect = list.stream().filter(p -> StringUtils.equals(p.getStartDate(), date)).collect(Collectors.toList());
+                //List<ScenicSpotProductPriceMPO> collect = list.stream().filter(p -> StringUtils.equals(p.getStartDate(), date)).collect(Collectors.toList());
+                //2021-08-05 重新处理过滤价格，需要兼容普通日历类型库存
+                Date reqDate = DateTimeUtil.parseDate(date);
+                if(reqDate.compareTo(canBuyDate) < 0){
+                    //所选日期小于最近可定日期，直接忽略
+                    return null;
+                }
+                List<ScenicSpotProductPriceMPO> collect = list.stream().filter(p -> {
+                    if (StringUtils.isNotBlank(p.getStartDate())) {
+                        Date startDate = DateTimeUtil.parseDate(p.getStartDate());
+                        if(startDate.compareTo(reqDate) > 0){
+                            return false;
+                        }
+                    }
+                    if (StringUtils.isNotBlank(p.getEndDate())) {
+                        Date endDate = DateTimeUtil.parseDate(p.getEndDate());
+                        if(endDate.compareTo(reqDate) < 0){
+                            return false;
+                        }
+                    }
+                    return true;
+                }).collect(Collectors.toList());
                 if(ListUtils.isEmpty(collect)){
                     return null;
                 }else{
@@ -354,6 +398,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
                 for (ScenicSpotProductMPO productMPO : scenicSpotProductMPOS) {
                     String productMPOId = productMPO.getId();
+                    //获取最近可定日期
+                    int bookBeforeDay = productMPO.getScenicSpotProductTransaction().getBookBeforeDay();
+                    Date canBuyDate = getCanBuyDate(bookBeforeDay, productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
                     int sellType = productMPO.getSellType();
                     //普通库存是一段时间 需要拆分
                     if (sellType == 0) {
@@ -362,7 +409,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                             if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
                                 continue;
                             }
-                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate);
+                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate, canBuyDate);
                             if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
                                 effective.addAll(scenicSpotProductPriceMPOS1);
                             }
@@ -383,13 +430,17 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
         }else {
             List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(productId, packageId, startDate, endDate);
+            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(productId);
+            //获取最近可定日期
+            int bookBeforeDay = scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeDay();
+            Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeTime());
             if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
                 log.info("通过产品id查询到的价格信息{}", JSON.toJSONString(scenicSpotProductPriceMPOS));
                 for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
                     String startDate1 = s.getStartDate();
                     String endDate1 = s.getEndDate();
                     if (!StringUtils.equals(startDate1, endDate1)) {
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(s, startDate, endDate);
+                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(s, startDate, endDate, canBuyDate);
                         if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS1)) {
                             effective.addAll(scenicSpotProductPriceMPOS1);
                         }
@@ -488,7 +539,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             return dayOfweek;
      }
 
-     private List<ScenicSpotProductPriceMPO> splitCalendar(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO,String startDate,String endDate) {
+     private List<ScenicSpotProductPriceMPO> splitCalendar(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO, String startDate, String endDate, Date canBuyDate) {
          List<ScenicSpotProductPriceMPO> list = null;
          try {
              String sdate = scenicSpotProductPriceMPO.getStartDate();
@@ -511,7 +562,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
              // 使用给定的 Date 设置此 Calendar 的时间
              calEnd.setTime(dEnd);
              // 测试此日期是否在指定日期之后
-             while (dEnd.after(calBegin.getTime())) {
+             while (dEnd.compareTo(calBegin.getTime())>= 0 && canBuyDate.compareTo(calBegin.getTime()) <= 0) {
                  // 根据日历的规则，为给定的日历字段添加或减去指定的时间量
                  calBegin.add(Calendar.DAY_OF_MONTH, 1);
                  ScenicSpotProductPriceMPO st1 = new ScenicSpotProductPriceMPO();
