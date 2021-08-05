@@ -471,7 +471,7 @@ public class ProductServiceImpl implements ProductService {
             }
             // 活动
             else if(request.getPosition() == 5){
-                recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> StringUtils.equals(rb.getTitle(), request.getTag()) &&
+                recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> StringUtils.equals(rb.getTitle(), request.getTag())).filter(rb ->
                         StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
                                 rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
             }
