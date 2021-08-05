@@ -288,7 +288,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     ticketkind.add(tag1);
 
                     int limitBuy = scenicSpotRuleMPO.getLimitBuy();
-                    if(1 == limitBuy){
+                    if(1 == limitBuy && scenicSpotRuleMPO.getMaxCount() <= 9){
                         int maxCount = scenicSpotRuleMPO.getMaxCount();
                         Tag tag2 = new Tag();
                         tag2.setName("限购".concat(String.valueOf(maxCount)).concat("张/单"));
@@ -755,6 +755,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     public BaseResponse<List<HotelScenicProductSetMealBrief>> hotelScenicProductSetMealList(CalendarRequest request) {
         List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
         HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+        Date canBuyDate = getCanBuyDate(productMPO.getPayInfo().getBeforeBookDay(), productMPO.getPayInfo().getLatestBookTime());
         List<HotelScenicProductSetMealBrief> briefList = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(setMealMpoList)){
             briefList = setMealMpoList.stream().map(setMealMpo -> {
@@ -767,7 +768,13 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 //价格计算
                 IncreasePrice increasePrice = hotelIncreasePrice(productMPO, request, setMealMpo.getPriceStocks());
                 log.info("价格日历为："+ JSON.toJSONString(increasePrice));
-                brief.setPrice(increasePrice.getPrices().stream().filter(a -> StringUtils.isBlank(request.getStartDate()) ? true : StringUtils.equals(a.getDate(), request.getStartDate())).collect(Collectors.toList()).get(0).getAdtSellPrice());
+                brief.setPrice(increasePrice.getPrices().stream().filter(a -> {
+                    Date saleDate = DateTimeUtil.parseDate(a.getDate());
+                    if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
+                        return false;
+                    }
+                    return StringUtils.isBlank(request.getStartDate()) ? true : StringUtils.equals(a.getDate(), request.getStartDate());
+                }).collect(Collectors.toList()).get(0).getAdtSellPrice());
                 return brief;
             }).collect(Collectors.toList());
         }
@@ -806,6 +813,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
         HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
         List<HotelScenicSpotPriceStock> allPriceStocks = new ArrayList<>();
+        Date canBuyDate = getCanBuyDate(productMPO.getPayInfo().getBeforeBookDay(), productMPO.getPayInfo().getLatestBookTime());
         //将所有价格整合到一起
         for (HotelScenicSpotProductSetMealMPO hotelScenicSpotProductSetMealMPO : setMealMpoList) {
             allPriceStocks.addAll(hotelScenicSpotProductSetMealMPO.getPriceStocks());
@@ -847,6 +855,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         //筛选最低价格并过滤非查询日期
         for (String date : dates) {
             Date calendarDate = DateTimeUtil.parse(date, DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(calendarDate, canBuyDate) < 0){
+                continue;
+            }
             if(DateTimeUtil.getDateDiffDays(calendarDate, startDate) < 0 || DateTimeUtil.getDateDiffDays(calendarDate, endDate) > 0){
                 continue;
             }
