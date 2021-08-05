@@ -321,9 +321,13 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 bookBeforeDay+=1;
             }else{
                 if(bookBeforeDay == 0){
-                    Date bookDateTime = DateTimeUtil.parse(DateTimeUtil.formatDate(current, DateTimeUtil.YYYYMMDD)+" " + bookBeforeTime, DateTimeUtil.YYYYMMDDHHmm);
-                    if(bookDateTime.compareTo(current) < 0){
-                        bookBeforeDay += 1;
+                    try {
+                        Date bookDateTime = DateTimeUtil.parse(DateTimeUtil.formatDate(current, DateTimeUtil.YYYYMMDD)+" " + bookBeforeTime, DateTimeUtil.YYYYMMDDHHmm);
+                        if(bookDateTime.compareTo(current) < 0){
+                            bookBeforeDay += 1;
+                        }
+                    }catch (Exception e){
+                        log.error("bookBeforeTime格式错误:{}", bookBeforeTime);
                     }
                 }
             }
