@@ -564,8 +564,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
              // 使用给定的 Date 设置此 Calendar 的时间
              calEnd.setTime(dEnd);
              // 测试此日期是否在指定日期之后
-             while (dEnd.compareTo(calBegin.getTime())>= 0 && canBuyDate.compareTo(calBegin.getTime()) <= 0) {
+             while (dEnd.compareTo(calBegin.getTime())>= 0) {
                  // 根据日历的规则，为给定的日历字段添加或减去指定的时间量
+                 log.info("canBuyDate:{}, calBegin:{}", DateTimeUtil.formatDate(canBuyDate), DateTimeUtil.formatDate(calBegin.getTime()));
+                 if(canBuyDate.compareTo(calBegin.getTime()) > 0){
+                     continue;
+                 }
                  calBegin.add(Calendar.DAY_OF_MONTH, 1);
                  ScenicSpotProductPriceMPO st1 = new ScenicSpotProductPriceMPO();
                  BeanUtils.copyProperties(scenicSpotProductPriceMPO,st1,"startDate","endDate");
