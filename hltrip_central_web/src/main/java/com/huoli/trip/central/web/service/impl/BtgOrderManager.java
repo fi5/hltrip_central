@@ -14,24 +14,19 @@ import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
-import com.huoli.trip.common.vo.request.BookCheckReq;
-import com.huoli.trip.common.vo.request.CreateOrderReq;
-import com.huoli.trip.common.vo.request.OrderOperReq;
-import com.huoli.trip.common.vo.request.PayOrderReq;
+import com.huoli.trip.common.vo.request.*;
 import com.huoli.trip.common.vo.request.central.PriceCalcRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
-import com.huoli.trip.common.vo.response.order.CenterBookCheck;
-import com.huoli.trip.common.vo.response.order.CenterCreateOrderRes;
-import com.huoli.trip.common.vo.response.order.CenterPayOrderRes;
-import com.huoli.trip.common.vo.response.order.OrderDetailRep;
+import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.UBROrderService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
 import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyBookCheckRequest;
-import com.huoli.trip.supplier.self.difengyun.vo.request.DfyPayOrderRequest;
+import com.huoli.trip.supplier.self.difengyun.vo.request.*;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyOrderStatusResponse;
+import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
 import com.huoli.trip.supplier.self.universal.vo.UBRGuest;
 import com.huoli.trip.supplier.self.universal.vo.UBROrderDetailResponse;
 import com.huoli.trip.supplier.self.universal.vo.UBRTicketEntity;
@@ -195,8 +190,7 @@ public class BtgOrderManager extends OrderManager {
             OrderDetailRep rep=new OrderDetailRep();
             rep.setOrderId(orderDetail.getOrderUid());
             //转换成consumer统一的订单状态
-            rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(orderDetail.getStatus(),3));
-            // todo 这个东西从哪儿拿
+            rep.setOrderStatus(OrderInfoTranser.genCommonOrderStringStatus(orderDetail.getStatus(),6));
 //            rep.setVochers(genVouchers(dfyOrderDetail));
             return BaseResponse.success(rep);
         } catch (Exception e) {
@@ -225,4 +219,46 @@ public class BtgOrderManager extends OrderManager {
         }
         return BaseResponse.fail(CentralError.ERROR_ORDER_PAY);
     }
+
+    /**
+     * 申请退款
+     * @param req
+     * @return
+     */
+    public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
+        BaseOrderRequest orderRequest = new BaseOrderRequest();
+        orderRequest.setTraceId(req.getTraceId());
+        orderRequest.setOrderId(req.getPartnerOrderId());
+        orderRequest.setSupplierOrderId(req.getOutOrderId());
+        UBRBaseResponse<UBRTicketOrderResponse> baseResponse = ubrOrderService.refund(orderRequest);
+        if(baseResponse != null && baseResponse.getCode() == 200){
+            CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
+            centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+            return BaseResponse.success(centerCancelOrderRes);
+        }
+        return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
+    }
+
+    /**
+     * 支付前校验
+     * @param req
+     * @return
+     */
+    public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
+        CenterPayCheckRes  payCheckRes = new CenterPayCheckRes();
+        payCheckRes.setResult(true);
+        return BaseResponse.success(payCheckRes);
+    }
+
+    /**
+     * 取消订单
+     * @param req
+     * @return
+     */
+    public  BaseResponse<CenterCancelOrderRes> getCenterCancelOrder(CancelOrderReq req){
+        CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
+        centerCancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());
+        return BaseResponse.success(centerCancelOrderRes);
+    }
+
 }
