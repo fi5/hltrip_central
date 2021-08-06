@@ -110,18 +110,12 @@ public class BtgOrderManager extends OrderManager {
             traceId = TraceIdUtils.getTraceId();
         }
         orderRequest.setTraceId(traceId);
-        UBRTicketOrderLocalRequest request = new UBRTicketOrderLocalRequest();
-        request.setOrderId(req.getPartnerOrderId());
-        request.setUbrOrderRequest(JSONObject.toJSONString(orderRequest));
-        BaseResponse baseResponse = ubrOrderService.createOrder(request);
-        if(baseResponse != null && baseResponse.getCode() == 0) {
-            CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
-            // 这里还没真下单。没有渠道订单号
+        CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
+        // 这里还没真下单。没有渠道订单号
 //            createOrderRes.setOrderId(order.getData().getOrderId());
-            createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());
-            return BaseResponse.success(createOrderRes);
-        }
-        return BaseResponse.fail(CentralError.ERROR_ORDER_TRIP_ORDER_ERROR);
+        createOrderRes.setOrderStatus(OrderStatus.TO_BE_PAID.getCode());
+        createOrderRes.setOrderExtend(JSONObject.toJSONString(orderRequest));
+        return BaseResponse.success(createOrderRes);
     }
 
     public BaseResponse<CenterBookCheck> getCenterCheckInfos(BookCheckReq req){
