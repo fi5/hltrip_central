@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
@@ -103,7 +104,7 @@ public class BtgOrderManager extends OrderManager {
             return ubrGuest;
         }).collect(Collectors.toList());
         ticketEntity.setGuest(ubrGuests);
-
+        orderRequest.setTicketEntity(Lists.newArrayList(ticketEntity));
         String traceId = req.getTraceId();
         if(org.apache.commons.lang3.StringUtils.isEmpty(traceId)){
             traceId = TraceIdUtils.getTraceId();
