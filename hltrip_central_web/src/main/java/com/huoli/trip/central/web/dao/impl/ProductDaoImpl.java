@@ -581,7 +581,7 @@ public class ProductDaoImpl implements ProductDao {
 
     private GroupOperation getNewListGroupField(String... field) {
         return Aggregation.group(field)
-                .first("productId").as("productId")
+                .min("productId").as("productId")
                 .first("scenicSpotId").as("scenicSpotId")
                 .first("hotelId").as("hotelId")
                 .first("scenicSpotName").as("scenicSpotName")
