@@ -869,7 +869,16 @@ public class ProductServiceImpl implements ProductService {
                 }
                 result.setImages(productMPO.getImages());
                 result.setIncludeDesc(ruleMPO.getFeeInclude());
-                result.setRefundType(ruleMPO.getRefundCondition());
+                // 为了兼容旧版含义对订单的影响，统一转成旧版
+                Integer type = null;
+                if(ruleMPO.getRefundCondition() == 0){
+                    type = 1;
+                } else if(ruleMPO.getRefundCondition() == 1){
+                    type = 2;
+                } else if(ruleMPO.getRefundCondition() == 2){
+                    type = 3;
+                }
+                result.setRefundType(type);
                 result.setRefundDesc(ruleMPO.getRefundRuleDesc());
                 result.setTicketInfos(ruleMPO.getTicketInfos());
                 result.setTicketCardTypes(ruleMPO.getTicketCardTypes());
