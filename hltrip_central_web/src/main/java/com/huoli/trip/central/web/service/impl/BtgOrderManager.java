@@ -113,7 +113,7 @@ public class BtgOrderManager extends OrderManager {
         request.setOrderId(req.getPartnerOrderId());
         request.setUbrOrderRequest(JSONObject.toJSONString(orderRequest));
         BaseResponse baseResponse = ubrOrderService.createOrder(request);
-        if(baseResponse != null && baseResponse.getCode() == 200) {
+        if(baseResponse != null && baseResponse.getCode() == 0) {
             CenterCreateOrderRes createOrderRes = new CenterCreateOrderRes();
             // 这里还没真下单。没有渠道订单号
 //            createOrderRes.setOrderId(order.getData().getOrderId());
