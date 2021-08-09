@@ -1,10 +1,10 @@
 package com.huoli.trip.central.web.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
-import com.huoli.trip.central.web.converter.SupplierErrorMsgTransfer;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
@@ -14,35 +14,29 @@ import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
-import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.CenterRefundCheckRequest;
 import com.huoli.trip.common.vo.request.central.PriceCalcRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.CenterRefundCheckResult;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.UBROrderService;
-import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
-import com.huoli.trip.supplier.self.difengyun.vo.DfyBookSaleInfo;
-import com.huoli.trip.supplier.self.difengyun.vo.request.*;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBaseResult;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyOrderStatusResponse;
-import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
 import com.huoli.trip.supplier.self.universal.vo.UBRGuest;
 import com.huoli.trip.supplier.self.universal.vo.UBROrderDetailResponse;
 import com.huoli.trip.supplier.self.universal.vo.UBRTicketEntity;
-import com.huoli.trip.supplier.self.universal.vo.reqeust.UBRTicketOrderLocalRequest;
 import com.huoli.trip.supplier.self.universal.vo.reqeust.UBRTicketOrderRequest;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRBaseResponse;
+import com.huoli.trip.supplier.self.universal.vo.response.UBRRefundCheckResponse;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRTicketOrderResponse;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
-import io.netty.util.internal.UnstableApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -221,6 +215,19 @@ public class BtgOrderManager extends OrderManager {
      * @return
      */
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
+        BaseOrderRequest refundCheckRequest = new BaseOrderRequest();
+        refundCheckRequest.setSupplierOrderId(refundCheckRequest.getSupplierOrderId());
+        UBRBaseResponse<UBRRefundCheckResponse> refundCheckBaseResponse = ubrOrderService.refundCheck(refundCheckRequest);
+        BigDecimal refundFee;
+        if(refundCheckBaseResponse != null && refundCheckBaseResponse.getCode() == 200
+                && refundCheckBaseResponse.getData() != null && refundCheckBaseResponse.getData().getRefundAllow() != null
+                && refundCheckBaseResponse.getData().getRefundAllow()){
+            UBRRefundCheckResponse response = refundCheckBaseResponse.getData();
+            refundFee = response.getRefundFee();
+        } else {
+            log.error("btg退款失败，btg退款检查返回：{}", refundCheckBaseResponse == null ? "null" : JSON.toJSONString(refundCheckBaseResponse));
+            return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
+        }
         BaseOrderRequest orderRequest = new BaseOrderRequest();
         orderRequest.setTraceId(req.getTraceId());
         orderRequest.setOrderId(req.getPartnerOrderId());
@@ -229,6 +236,7 @@ public class BtgOrderManager extends OrderManager {
         if(baseResponse != null && baseResponse.getCode() == 200){
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
             centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
+            centerCancelOrderRes.setRefundFee(refundFee);
             return BaseResponse.success(centerCancelOrderRes);
         }
         return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
@@ -254,6 +262,26 @@ public class BtgOrderManager extends OrderManager {
         CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
         centerCancelOrderRes.setOrderStatus(OrderStatus.CANCELLED.getCode());
         return BaseResponse.success(centerCancelOrderRes);
+    }
+
+    /**
+     * 退款检查
+     * @param request
+     * @return
+     */
+    public BaseResponse<CenterRefundCheckResult> refundCheck(CenterRefundCheckRequest request){
+        CenterRefundCheckResult result = new CenterRefundCheckResult();
+        BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
+        baseOrderRequest.setSupplierOrderId(request.getSupplierOrderId());
+        UBRBaseResponse<UBRRefundCheckResponse> refundCheckBaseResponse = ubrOrderService.refundCheck(baseOrderRequest);
+        if(refundCheckBaseResponse != null && refundCheckBaseResponse.getData() != null && refundCheckBaseResponse.getCode() == 200
+                && refundCheckBaseResponse.getData().getRefundAllow() != null
+                && refundCheckBaseResponse.getData().getRefundAllow()){
+            result.setRefundFee(refundCheckBaseResponse.getData().getRefundFee());
+            result.setAllowRefund(true);
+            return BaseResponse.withSuccess(result);
+        }
+        return BaseResponse.withFail(CentralError.ERROR_NOT_ALLOW_REFUND);
     }
 
 }

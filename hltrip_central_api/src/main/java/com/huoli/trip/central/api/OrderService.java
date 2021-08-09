@@ -2,9 +2,9 @@ package com.huoli.trip.central.api;
 
 import com.huoli.trip.common.vo.TripNotice;
 import com.huoli.trip.common.vo.request.*;
-import com.huoli.trip.common.vo.request.central.ProductPriceReq;
+import com.huoli.trip.common.vo.request.central.CenterRefundCheckRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
+import com.huoli.trip.common.vo.response.central.CenterRefundCheckResult;
 import com.huoli.trip.common.vo.response.order.*;
 
 /**
@@ -106,5 +106,12 @@ public interface OrderService {
      * 创建日期：2020/7/8<br>
      */
     BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req) ;
+
+    /**
+     * 退款前检查
+     * @param request
+     * @return
+     */
+    BaseResponse<CenterRefundCheckResult> refundCheck(CenterRefundCheckRequest request);
 
 }
