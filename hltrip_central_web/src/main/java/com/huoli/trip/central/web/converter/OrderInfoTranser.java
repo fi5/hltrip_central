@@ -216,29 +216,29 @@ public class OrderInfoTranser {
 			switch (orderStatus) {
 				// 处理中
 				case "PROCESS":
-					rtnStatus = OrderStatus.PAYMENT_TO_BE_CONFIRMED.getCode();
+					rtnStatus = OrderStatus.TO_BE_CONFIRMED.getCode();
 					break;
 				// 正常
 				case "NORMAL":
 					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();
 					break;
-					// 已退款
+				// 已退款
 				case "REFUND":
 					rtnStatus = OrderStatus.REFUNDED.getCode();
 					break;
-					// 退款处理中
+				// 退款处理中
 				case "REFUND_PROCESS":
 					rtnStatus = OrderStatus.APPLYING_FOR_REFUND.getCode();
 					break;
-					// 取消
+				// 取消
 				case "CANCEL":
-					rtnStatus = OrderStatus.CANCELLED.getCode();
+					rtnStatus = OrderStatus.REFUNDED.getCode();
 					break;
-					// 预定失败
+				// 预定失败
 				case "BUY_FILED":
-					rtnStatus = OrderStatus.CANCELLED.getCode();
+					rtnStatus = OrderStatus.REFUNDED.getCode();
 					break;
-					// 已完成
+				// 已完成
 				case "COMPLETED":
 					rtnStatus = OrderStatus.CONSUMED.getCode();
 					break;
