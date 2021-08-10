@@ -217,6 +217,7 @@ public class BtgOrderManager extends OrderManager {
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
         BaseOrderRequest refundCheckRequest = new BaseOrderRequest();
         refundCheckRequest.setSupplierOrderId(req.getOutOrderId());
+        refundCheckRequest.setTraceId(req.getTraceId());
         UBRBaseResponse<UBRRefundCheckResponse> refundCheckBaseResponse = ubrOrderService.refundCheck(refundCheckRequest);
         BigDecimal refundFee;
         if(refundCheckBaseResponse != null && refundCheckBaseResponse.getCode() == 200
@@ -272,6 +273,7 @@ public class BtgOrderManager extends OrderManager {
     public BaseResponse<CenterRefundCheckResult> refundCheck(CenterRefundCheckRequest request){
         CenterRefundCheckResult result = new CenterRefundCheckResult();
         BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
+        baseOrderRequest.setTraceId(request.getTraceId());
         baseOrderRequest.setSupplierOrderId(request.getSupplierOrderId());
         UBRBaseResponse<UBRRefundCheckResponse> refundCheckBaseResponse = ubrOrderService.refundCheck(baseOrderRequest);
         if(refundCheckBaseResponse != null && refundCheckBaseResponse.getData() != null && refundCheckBaseResponse.getCode() == 200
