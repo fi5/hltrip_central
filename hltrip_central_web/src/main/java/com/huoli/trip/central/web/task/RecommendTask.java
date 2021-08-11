@@ -65,15 +65,15 @@ public class RecommendTask {
     private PriceDao priceDao;
 
     @Async
-    @PostConstruct
-    @Scheduled(cron = "0 0/25 * * * ?")
+//    @PostConstruct
+//    @Scheduled(cron = "0 0/25 * * * ?")
     public void refreshRecommendList(){
         refreshRecommendList(0);
     }
 
     @Async
-    @PostConstruct
-    @Scheduled(cron = "0 0/3 * * * ?")
+//    @PostConstruct
+//    @Scheduled(cron = "0 0/3 * * * ?")
     public void refreshRecommendListV2(){
         refreshRecommendListV2(0);
     }
