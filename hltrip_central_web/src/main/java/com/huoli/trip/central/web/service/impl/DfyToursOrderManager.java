@@ -21,7 +21,6 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.DfyOrderService;
-import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
 import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
 import com.huoli.trip.supplier.self.difengyun.vo.*;
 import com.huoli.trip.supplier.self.difengyun.vo.request.*;
@@ -273,7 +272,7 @@ public class DfyToursOrderManager extends OrderManager {
 			dfyCreateOrderRequest.setStartCity(req.getStartCity());
 			dfyCreateOrderRequest.setStartCityCode(req.getStartCityCode());
 		} else {
-			GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(req.getProductId());
+			GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(req.getProductId(), null);
 			GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(req.getPackageId());
 			GroupTourProductSetMealBackupMPO backupMPO = groupTourDao.queryGroupTourBackUp(req.getPackageId());
 			dfyCreateOrderRequest.setProductId(Integer.valueOf(groupTourProductMPO.getSupplierProductId()));

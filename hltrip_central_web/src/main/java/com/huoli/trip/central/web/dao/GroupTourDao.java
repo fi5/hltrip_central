@@ -13,7 +13,7 @@ import java.util.List;
  */
 public interface GroupTourDao {
 
-    GroupTourProductMPO queryTourProduct(String groupTourId);
+    GroupTourProductMPO queryTourProduct(String groupTourId, List<String> channelInfo);
 
     List<GroupTourProductSetMealMPO> queryProductSetMealByProductId(String productId, List<String> depCodes, String packageId, String date);
 

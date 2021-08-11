@@ -30,10 +30,13 @@ public class GroupTourDaoImpl implements GroupTourDao {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public GroupTourProductMPO queryTourProduct(String groupTourId) {
+    public GroupTourProductMPO queryTourProduct(String groupTourId, List<String> channelInfo) {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("_id").is(groupTourId);
+        if(!CollectionUtils.isEmpty(channelInfo)){
+            criteria.and("channel").in(channelInfo);
+        }
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, GroupTourProductMPO.class);
     }

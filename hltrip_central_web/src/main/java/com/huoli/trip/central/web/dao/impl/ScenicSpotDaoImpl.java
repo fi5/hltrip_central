@@ -5,6 +5,7 @@ import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -12,9 +13,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -52,11 +50,14 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     }
 
     @Override
-    public List<ScenicSpotProductMPO> querySpotProduct(String scenicSpotId) {
+    public List<ScenicSpotProductMPO> querySpotProduct(String scenicSpotId, List<String> channelInfo) {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("scenicSpotId").is(scenicSpotId);
         criteria.and("status").is(1);
+        if (CollectionUtils.isNotEmpty(channelInfo)) {
+            criteria.and("channel").in(channelInfo);
+        }
         query.addCriteria(criteria);
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = mongoTemplate.find(query, ScenicSpotProductMPO.class);
         return scenicSpotProductMPOS;
@@ -134,10 +135,13 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     }
 
     @Override
-    public ScenicSpotProductMPO querySpotProductById(String productId) {
+    public ScenicSpotProductMPO querySpotProductById(String productId, List<String> channelInfo) {
         Query query = new Query();
         Criteria criteria = new Criteria();
         criteria.and("_id").is(productId);
+        if (CollectionUtils.isNotEmpty(channelInfo)) {
+            criteria.and("channel").in(channelInfo);
+        }
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query,ScenicSpotProductMPO.class);
     }

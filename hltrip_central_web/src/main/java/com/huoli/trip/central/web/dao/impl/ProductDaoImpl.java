@@ -18,6 +18,7 @@ import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.MongoCursor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -521,8 +522,8 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> scenicTickets(ScenicTicketListReq req) {
-        List<AggregationOperation> operations = buildScenicTicketOperations(req);
+    public List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
         operations.add(skip);
@@ -536,14 +537,14 @@ public class ProductDaoImpl implements ProductDao {
 
 
     @Override
-    public int getScenicTicketTotal(ScenicTicketListReq req) {
-        List<AggregationOperation> operations = buildScenicTicketOperations(req);
+    public int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
         return output.getMappedResults() == null ? 0 : output.getMappedResults().size();
     }
 
-    private List<AggregationOperation> buildScenicTicketOperations(ScenicTicketListReq req) {
+    private List<AggregationOperation> buildScenicTicketOperations(ScenicTicketListReq req, List<String> channelInfo) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         //0门票1跟团游2酒景套餐
@@ -568,6 +569,9 @@ public class ProductDaoImpl implements ProductDao {
         }*/
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
             criteria.and("arrCity").regex(req.getArrCityCode());
+        }
+        if (CollectionUtils.isNotEmpty(channelInfo)) {
+            criteria.and("channel").in(channelInfo);
         }
 
         MatchOperation matchOperation = Aggregation.match(criteria);
@@ -606,8 +610,8 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> groupTourList(GroupTourListReq req) {
-        List<AggregationOperation> operations = buildGroupTourListOperation(req);
+    public List<ProductListMPO> groupTourList(GroupTourListReq req, List<String> channelInfo) {
+        List<AggregationOperation> operations = buildGroupTourListOperation(req, channelInfo);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
         operations.add(skip);
@@ -620,15 +624,15 @@ public class ProductDaoImpl implements ProductDao {
 
 
     @Override
-    public int groupTourListCount(GroupTourListReq req) {
-        List<AggregationOperation> operations = buildGroupTourListOperation(req);
+    public int groupTourListCount(GroupTourListReq req, List<String> channelInfo) {
+        List<AggregationOperation> operations = buildGroupTourListOperation(req, channelInfo);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
         return  output.getMappedResults() == null ? 0 : output.getMappedResults().size();
     }
 
-    private List<AggregationOperation> buildGroupTourListOperation(GroupTourListReq req) {
+    private List<AggregationOperation> buildGroupTourListOperation(GroupTourListReq req, List<String> channelInfo) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0);
@@ -654,6 +658,9 @@ public class ProductDaoImpl implements ProductDao {
         if(StringUtils.isNotBlank(req.getGroupTourType()) && !StringUtils.equals(req.getGroupTourType(), "0")){
             criteria.and("groupTourType").is(req.getGroupTourType());
         }
+        if(CollectionUtils.isNotEmpty(channelInfo)){
+            criteria.and("channel").in(channelInfo);
+        }
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
         operations.add(matchOperation);
@@ -662,8 +669,8 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> hotelScenicList(HotelScenicListReq req) {
-        List<AggregationOperation> operations = buildHotelScenicListOperations(req);
+    public List<ProductListMPO> hotelScenicList(HotelScenicListReq req, List<String> channelInfo) {
+        List<AggregationOperation> operations = buildHotelScenicListOperations(req, channelInfo);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
         operations.add(skip);
@@ -674,7 +681,7 @@ public class ProductDaoImpl implements ProductDao {
         return  output.getMappedResults();
     }
 
-    private List<AggregationOperation> buildHotelScenicListOperations(HotelScenicListReq req) {
+    private List<AggregationOperation> buildHotelScenicListOperations(HotelScenicListReq req, List<String> channelInfo) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         criteria.and("category").is("hotel_scenicSpot").and("status").is(1).and("isDel").is(0);
@@ -693,6 +700,9 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
             criteria.and("arrCity").regex(req.getArrCityCode());
         }
+        if (CollectionUtils.isNotEmpty(channelInfo)) {
+            criteria.and("channel").in(channelInfo);
+        }
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex", "_id");
         operations.add(matchOperation);
@@ -701,8 +711,8 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public int hotelScenicListCount(HotelScenicListReq req) {
-        List<AggregationOperation> operations = buildHotelScenicListOperations(req);
+    public int hotelScenicListCount(HotelScenicListReq req, List<String> channelInfo) {
+        List<AggregationOperation> operations = buildHotelScenicListOperations(req, channelInfo);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 

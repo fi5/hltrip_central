@@ -17,19 +17,10 @@ import com.huoli.trip.common.vo.request.OrderOperReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.OrderDetailRep;
 import com.huoli.trip.supplier.api.LvmamaOrderService;
-import com.huoli.trip.supplier.self.difengyun.vo.DfyToursOrderDetail;
 import com.huoli.trip.supplier.self.lvmama.vo.LvOrderDetail;
 import com.huoli.trip.central.web.converter.CreateOrderConverter;
-import com.huoli.trip.central.web.converter.OrderInfoTranser;
-import com.huoli.trip.common.constant.CentralError;
-import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.vo.request.*;
-import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.order.*;
-import com.huoli.trip.supplier.api.DfyOrderService;
-import com.huoli.trip.supplier.api.LvmamaOrderService;
-import com.huoli.trip.supplier.self.difengyun.vo.DfyToursOrderDetail;
-import com.huoli.trip.supplier.self.lvmama.vo.OrderInfo;
 import com.huoli.trip.supplier.self.lvmama.vo.OrderPaymentInfo;
 import com.huoli.trip.supplier.self.lvmama.vo.request.*;
 import com.huoli.trip.supplier.self.lvmama.vo.response.LmmBaseResponse;
@@ -193,7 +184,7 @@ public class LvmamaOrderManager extends OrderManager {
 		BigDecimal sellPrice;
 		if(StringUtils.isNotBlank(req.getCategory())){
 			//2021-05-31 获取产品信息
-			ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+			ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
 			List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getEndDate());
 			//2021-05-31 goodsid和productId从mongo拿
 			if(scenicSpotProductMPO != null){
@@ -245,7 +236,7 @@ public class LvmamaOrderManager extends OrderManager {
 		BigDecimal sellPrice;
 		if(StringUtils.isNotBlank(req.getCategory())){
 			//2021-05-31 获取产品信息
-			ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+			ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
 			List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(req.getProductId(), req.getPackageId(), req.getBeginDate(), req.getEndDate());
 			//2021-05-31 goodsid和productId从mongo拿
 			if(scenicSpotProductMPO != null){
