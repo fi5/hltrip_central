@@ -286,7 +286,7 @@ public class BtgOrderManager extends OrderManager {
                 && refundCheckBaseResponse.getData().getRefundAllow()){
             result.setRefundFee(refundCheckBaseResponse.getData().getRefundFee());
             result.setAllowRefund(true);
-            result.setChannelRefundPrice(refundCheckBaseResponse.getData().getRefundPrice().subtract(result.getRefundFee()));
+            result.setChannelRefundPrice(refundCheckBaseResponse.getData().getRefundPrice());
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.ERROR_NOT_ALLOW_REFUND);
