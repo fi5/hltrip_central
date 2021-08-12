@@ -570,6 +570,10 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<List<String>> recommendSubjects(RecommendRequestV2 request){
         List<RecommendMPO> recommendMPO = recommendDao.getList(request);
         if(ListUtils.isEmpty(recommendMPO)){
+            // 如果带城市查不到就只按位置查
+            recommendMPO = recommendDao.getListByPosition(request);
+        }
+        if(ListUtils.isEmpty(recommendMPO)){
             log.error("没有查到符合条件的主题。。");
             return BaseResponse.withSuccess();
         }
