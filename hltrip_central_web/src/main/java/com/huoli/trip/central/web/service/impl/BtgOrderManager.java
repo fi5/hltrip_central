@@ -216,6 +216,7 @@ public class BtgOrderManager extends OrderManager {
      */
     public BaseResponse<CenterCancelOrderRes> getCenterApplyRefund(CancelOrderReq req){
         BaseOrderRequest refundCheckRequest = new BaseOrderRequest();
+        refundCheckRequest.setOrderId(req.getPartnerOrderId());
         refundCheckRequest.setSupplierOrderId(req.getOutOrderId());
         refundCheckRequest.setTraceId(req.getTraceId());
         UBRBaseResponse<UBRRefundCheckResponse> refundCheckBaseResponse = ubrOrderService.refundCheck(refundCheckRequest);
