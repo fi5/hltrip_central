@@ -28,6 +28,7 @@ import com.huoli.trip.supplier.self.universal.vo.UBRTicketEntity;
 import com.huoli.trip.supplier.self.universal.vo.reqeust.UBRTicketOrderRequest;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRBaseResponse;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRRefundCheckResponse;
+import com.huoli.trip.supplier.self.universal.vo.response.UBRRefundCheckResponseCustom;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRTicketOrderResponse;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -219,13 +220,15 @@ public class BtgOrderManager extends OrderManager {
         refundCheckRequest.setOrderId(req.getPartnerOrderId());
         refundCheckRequest.setSupplierOrderId(req.getOutOrderId());
         refundCheckRequest.setTraceId(req.getTraceId());
-        UBRBaseResponse<UBRRefundCheckResponse> refundCheckBaseResponse = ubrOrderService.refundCheck(refundCheckRequest);
+        UBRBaseResponse<UBRRefundCheckResponseCustom> refundCheckBaseResponse = ubrOrderService.refundCheck(refundCheckRequest);
         BigDecimal refundFee;
+        BigDecimal channelRefundPrice;
         if(refundCheckBaseResponse != null && refundCheckBaseResponse.getCode() == 200
                 && refundCheckBaseResponse.getData() != null && refundCheckBaseResponse.getData().getRefundAllow() != null
                 && refundCheckBaseResponse.getData().getRefundAllow()){
-            UBRRefundCheckResponse response = refundCheckBaseResponse.getData();
+            UBRRefundCheckResponseCustom response = refundCheckBaseResponse.getData();
             refundFee = response.getRefundFee();
+            channelRefundPrice = response.getRefundPrice();
         } else {
             log.error("btg退款失败，btg退款检查返回：{}", refundCheckBaseResponse == null ? "null" : JSON.toJSONString(refundCheckBaseResponse));
             return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
@@ -239,6 +242,7 @@ public class BtgOrderManager extends OrderManager {
             CenterCancelOrderRes centerCancelOrderRes = new CenterCancelOrderRes();
             centerCancelOrderRes.setOrderStatus(OrderStatus.APPLYING_FOR_REFUND.getCode());
             centerCancelOrderRes.setRefundFee(refundFee);
+            centerCancelOrderRes.setChannelRefundPrice(channelRefundPrice);
             return BaseResponse.success(centerCancelOrderRes);
         }
         return BaseResponse.fail(CentralError.ERROR_SUPPLIER_APPLYREFUND_ORDER);
@@ -276,12 +280,13 @@ public class BtgOrderManager extends OrderManager {
         BaseOrderRequest baseOrderRequest = new BaseOrderRequest();
         baseOrderRequest.setTraceId(request.getTraceId());
         baseOrderRequest.setSupplierOrderId(request.getSupplierOrderId());
-        UBRBaseResponse<UBRRefundCheckResponse> refundCheckBaseResponse = ubrOrderService.refundCheck(baseOrderRequest);
+        UBRBaseResponse<UBRRefundCheckResponseCustom> refundCheckBaseResponse = ubrOrderService.refundCheck(baseOrderRequest);
         if(refundCheckBaseResponse != null && refundCheckBaseResponse.getData() != null && refundCheckBaseResponse.getCode() == 200
                 && refundCheckBaseResponse.getData().getRefundAllow() != null
                 && refundCheckBaseResponse.getData().getRefundAllow()){
             result.setRefundFee(refundCheckBaseResponse.getData().getRefundFee());
             result.setAllowRefund(true);
+            result.setChannelRefundPrice(refundCheckBaseResponse.getData().getRefundPrice());
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.ERROR_NOT_ALLOW_REFUND);
