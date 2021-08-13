@@ -39,4 +39,6 @@ public interface ScenicSpotDao {
 	 * @return
 	 */
 	List<ScenicSpotProductPriceMPO> queryPrice(String scenicSpotProductId, String startDate, String endDate, String ruleId, String ticketKind);
+
+    List<ScenicSpotProductPriceMPO> queryPriceByProductIds(List<String> productIds, String startDate, String endDate);
 }

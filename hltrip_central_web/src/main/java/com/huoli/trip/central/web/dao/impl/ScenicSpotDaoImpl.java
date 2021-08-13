@@ -12,9 +12,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -121,6 +118,29 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
             criteria.and("ticketKind").is(ticketKind);
         }
         query.addCriteria(criteria);
+        return  mongoTemplate.find(query, ScenicSpotProductPriceMPO.class);
+    }
+
+    @Override
+    public List<ScenicSpotProductPriceMPO> queryPriceByProductIds(List<String> productIds, String startDate, String endDate) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        criteria.and("scenicSpotProductId").in(productIds);
+        criteria.and("stock").gt(0);
+        query.addCriteria(criteria);
+        if(StringUtils.isNotEmpty(startDate) && StringUtils.isNotEmpty(endDate)){
+            criteria.andOperator(
+                    Criteria.where("startDate").gte(startDate),
+                    Criteria.where("endDate").lte(endDate));
+
+        }else {
+            if (StringUtils.isNotEmpty(startDate)) {
+                criteria.and("startDate").gte(startDate);
+            }
+            if (StringUtils.isNotEmpty(endDate)) {
+                criteria.and("endDate").lte(endDate);
+            }
+        }
         return  mongoTemplate.find(query, ScenicSpotProductPriceMPO.class);
     }
 

@@ -403,8 +403,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         if (StringUtils.isEmpty(productId)) {
             List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(scenicSpotId);
             if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
+                List<String> productIds = scenicSpotProductMPOS.stream().map(a -> a.getId()).collect(Collectors.toList());
+                List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIds(productIds, startDate, endDate);
+                Map<String, List<ScenicSpotProductPriceMPO>> priceMapByProductId = priceMPOS.stream().collect(Collectors.groupingBy(a -> a.getScenicSpotProductId()));
                 for (ScenicSpotProductMPO productMPO : scenicSpotProductMPOS) {
                     String productMPOId = productMPO.getId();
+                    List<ScenicSpotProductPriceMPO> priceMPOList = priceMapByProductId.get(productMPOId);
                     //获取最近可定日期
                     int bookBeforeDay = productMPO.getScenicSpotProductTransaction().getBookBeforeDay();
                     Date canBuyDate = getCanBuyDate(bookBeforeDay, productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
@@ -412,8 +416,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     int sellType = productMPO.getSellType();
                     //普通库存是一段时间 需要拆分
                     if (sellType == 0) {
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, null, null);
-                        for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
+                        //List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, null, null);
+                        for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : priceMPOList) {
                             if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
                                 continue;
                             }
@@ -424,18 +428,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                         }
 
                     }else{
-                        List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, trueStartDate, endDate);
-                        effective.addAll(priceMPOS);
-                        /*for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : priceMPOS){
-                            *//*if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
+                        //List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, trueStartDate, endDate);
+                        //effective.addAll(priceMPOS);
+                        for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : priceMPOS){
+                            if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
                                 continue;
-                            }*//*
+                            }
                             Date saleDate = DateTimeUtil.parseDate(scenicSpotProductPriceMPO.getStartDate());
                             if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
                                 continue;
                             }
                             effective.add(scenicSpotProductPriceMPO);
-                        }*/
+                        }
                     }
 
                 }
