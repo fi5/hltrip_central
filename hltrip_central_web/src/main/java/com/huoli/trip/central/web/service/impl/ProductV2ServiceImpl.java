@@ -424,9 +424,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     }else{
                         List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, startDate, endDate);
                         for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : priceMPOS){
-                            if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
+                            /*if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
                                 continue;
-                            }
+                            }*/
                             Date saleDate = DateTimeUtil.parseDate(scenicSpotProductPriceMPO.getStartDate());
                             if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
                                 continue;
