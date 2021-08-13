@@ -578,7 +578,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
              // 测试此日期是否在指定日期之后
              while (dEnd.compareTo(calBegin.getTime())>= 0) {
                  // 根据日历的规则，为给定的日历字段添加或减去指定的时间量
-                 log.info("canBuyDate:{}, calBegin:{}", DateTimeUtil.formatDate(canBuyDate), DateTimeUtil.formatDate(calBegin.getTime()));
                  if(DateTimeUtil.getDateDiffDays(calBegin.getTime(), canBuyDate) < 0){
                      continue;
                  }
