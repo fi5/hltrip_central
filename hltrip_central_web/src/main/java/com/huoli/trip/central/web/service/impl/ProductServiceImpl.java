@@ -932,6 +932,7 @@ public class ProductServiceImpl implements ProductService {
                             StringUtils.isNotBlank(arr.getCityCode())).map(arr ->
                             arr.getCityCode()).collect(Collectors.joining(",")));
                 }
+                result.setDepCityName(setMealMPO.getDepName());
                 result.setGroupTourTripInfos(setMealMPO.getGroupTourTripInfos());
                 if(ListUtils.isNotEmpty(productMPO.getGroupTourRefundRules())){
                     result.setRefundRuleVOs(productMPO.getGroupTourRefundRules().stream().map(grr -> {
