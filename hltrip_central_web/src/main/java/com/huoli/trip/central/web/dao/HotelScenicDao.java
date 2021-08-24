@@ -21,7 +21,7 @@ public interface HotelScenicDao {
 
     List<HotelScenicSpotProductSetMealMPO> queryHotelScenicSetMealList(CalendarRequest request);
 
-    HotelScenicSpotProductMPO queryHotelScenicProductMpoById(String productId);
+    HotelScenicSpotProductMPO queryHotelScenicProductMpoById(String productId, List<String> channelInfo);
 
     HotelScenicSpotProductSetMealMPO queryHotelScenicSetMealById(HotelScenicSetMealRequest request);
 

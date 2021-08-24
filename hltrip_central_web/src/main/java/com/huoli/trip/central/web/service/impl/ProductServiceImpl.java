@@ -15,13 +15,13 @@ import com.huoli.trip.central.web.task.RecommendTask;
 import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
+import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendBaseInfo;
 import com.huoli.trip.common.entity.mpo.recommend.RecommendMPO;
-import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
@@ -43,9 +43,12 @@ import com.huoli.trip.common.vo.response.goods.*;
 import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import com.huoli.trip.common.vo.v2.BaseRefundRuleVO;
 import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
+import com.huoli.trip.data.api.DataService;
+import com.huoli.trip.data.vo.ChannelInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,6 +139,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private PassengerTemplateMapper passengerTemplateMapper;
+
+    @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
+    DataService dataService;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -301,8 +307,14 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req) {
-        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req);
-        int count = productDao.getScenicTicketTotal(req);
+
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo);
+        int count = productDao.getScenicTicketTotal(req, channelInfo);
         ScenicTicketListResult result=new ScenicTicketListResult();
         if(count > req.getPageSize() * req.getPageIndex()){
             result.setMore(1);
@@ -333,8 +345,13 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public BaseResponse<GroupTourListResult> groupTourList(GroupTourListReq req) {
-        List<ProductListMPO> productListMPOS = productDao.groupTourList(req);
-        int count = productDao.groupTourListCount(req);
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        List<ProductListMPO> productListMPOS = productDao.groupTourList(req, channelInfo);
+        int count = productDao.groupTourListCount(req, channelInfo );
         GroupTourListResult result=new GroupTourListResult();
         if(count > req.getPageIndex() * req.getPageSize()){
             result.setMore(1);
@@ -365,8 +382,14 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req) {
-        List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req);
-        int count = productDao.hotelScenicListCount(req);
+
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        List<ProductListMPO> productListMPOS = productDao.hotelScenicList(req, channelInfo);
+        int count = productDao.hotelScenicListCount(req, channelInfo);
         HotelScenicListResult result=new HotelScenicListResult();
         if(count > req.getPageIndex() * req.getPageSize()){
             result.setMore(1);
@@ -469,6 +492,12 @@ public class ProductServiceImpl implements ProductService {
                         StringUtils.equals(rb.getSubjectCode(), request.getSubjectCode())
                                 && rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode()).collect(Collectors.toList());
             }
+            // 活动
+            else if(request.getPosition() == 5){
+                recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb -> StringUtils.equals(rb.getTitle(), request.getTag())).filter(rb ->
+                        StringUtils.equals(rb.getCategory(), "d_ss_ticket") ? rb.getPoiStatus() == ScenicSpotStatus.REVIEWED.getCode() :
+                                rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
+            }
             // 其它位置逻辑一样
             else {
                 recommendBaseInfos = oriRecommendBaseInfos.stream().filter(rb ->
@@ -563,6 +592,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse<List<String>> recommendSubjects(RecommendRequestV2 request){
         List<RecommendMPO> recommendMPO = recommendDao.getList(request);
+        if(ListUtils.isEmpty(recommendMPO)){
+            // 如果带城市查不到就只按位置查
+            recommendMPO = recommendDao.getListByPosition(request);
+        }
         if(ListUtils.isEmpty(recommendMPO)){
             log.error("没有查到符合条件的主题。。");
             return BaseResponse.withSuccess();
