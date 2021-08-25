@@ -99,11 +99,11 @@ public class YcfOrderManger extends OrderManager {
         } else {
             switch (req.getCategory()){
                 case "d_ss_ticket":
-                    ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+                    ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
                     ycfBookCheckReq.setProductId(scenicSpotProductMPO.getSupplierProductId());
                     break;
                 case "hotel_scenicSpot":
-                    HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(req.getProductId());
+                    HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(req.getProductId(), null);
                     ycfBookCheckReq.setProductId(productMPO.getSupplierProductId());
                     break;
             }
@@ -280,11 +280,11 @@ public class YcfOrderManger extends OrderManager {
         } else {
             switch (req.getCategory()){
                 case "d_ss_ticket":
-                    ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+                    ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
                     bookCheckReq.setProductId(scenicSpotProductMPO.getSupplierProductId());
                     break;
                 case "hotel_scenicSpot":
-                    HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(req.getProductId());
+                    HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(req.getProductId(), null);
                     bookCheckReq.setProductId(productMPO.getSupplierProductId());
                     break;
             }

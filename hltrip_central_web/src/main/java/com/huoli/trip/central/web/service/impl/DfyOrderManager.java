@@ -1,6 +1,5 @@
 package com.huoli.trip.central.web.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
@@ -20,8 +19,6 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.DfyOrderService;
-import com.huoli.trip.supplier.api.YcfOrderService;
-import com.huoli.trip.supplier.api.YcfSyncService;
 import com.huoli.trip.supplier.self.difengyun.DfyOrderDetail;
 import com.huoli.trip.supplier.self.difengyun.constant.DfyCertificateType;
 import com.huoli.trip.supplier.self.difengyun.vo.Contact;
@@ -33,7 +30,6 @@ import com.huoli.trip.supplier.self.difengyun.vo.response.DfyBookCheckResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyCreateOrderResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.DfyRefundTicketResponse;
 import com.huoli.trip.supplier.self.difengyun.vo.response.*;
-import com.huoli.trip.supplier.self.hllx.vo.*;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -317,7 +313,7 @@ public class DfyOrderManager extends OrderManager {
         if(StringUtils.isBlank(req.getCategory())){
             dfyCreateOrderRequest.setProductId(req.getSupplierProductId());
         } else {
-            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
             dfyCreateOrderRequest.setProductId(scenicSpotProductMPO.getSupplierProductId());
         }
         dfyCreateOrderRequest.setBookNumber(req.getQunatity());

@@ -9,6 +9,7 @@ import com.huoli.trip.central.api.ProductV2Service;
 import com.huoli.trip.central.web.constant.ColourConstants;
 import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.CommonService;
+import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
@@ -26,10 +27,12 @@ import com.huoli.trip.common.vo.request.v2.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.v2.*;
+import com.huoli.trip.data.api.DataService;
+import com.huoli.trip.data.vo.ChannelInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.data.Json;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +74,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     @Autowired
     private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
 
+    @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
+    DataService dataService;
+
     @Override
     public BaseResponse<ScenicSpotBase> querycScenicSpotBase(ScenicSpotRequest request) {
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
@@ -92,8 +98,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<GroupTourBody> queryGroupTourById(GroupTourRequest request) {
+        List<String> channelInfo = new ArrayList<>();
+        if (!StringUtils.equals(request.getFrom(), "order")) {
+            BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+            if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+                channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+            }
+        }
         GroupTourBody groupTourProductBody = null;
-        final GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getGroupTourId());
+        final GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getGroupTourId(), channelInfo);
+        if(groupTourProductMPO == null){
+            return BaseResponse.fail(CentralError.ERROR_NO_PRODUCT_WITHDRAW_SUPPLIER);
+        }
         List<String> depCodes = Lists.newArrayList();
         String cityCode = request.getCityCode();
         if(CollectionUtils.isNotEmpty(groupTourProductMPO.getDepInfos()) && StringUtils.isNotBlank(cityCode)){
@@ -154,7 +170,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         groupTourListReq.setArrCityCode(request.getArrCity());
         groupTourListReq.setGroupTourType(groupTourProductMPO.getGroupTourType());
         groupTourListReq.setApp(request.getFrom());
-        List<ProductListMPO> productListMPOS = productDao.groupTourList(groupTourListReq);
+        List<ProductListMPO> productListMPOS = productDao.groupTourList(groupTourListReq, channelInfo);
         log.info("推荐列表：{}", JSONObject.toJSONString(productListMPOS));
         if (CollectionUtils.isNotEmpty(productListMPOS)) {
             List<GroupTourRecommend> groupTourRecommends = productListMPOS.stream().map(a -> {
@@ -189,20 +205,29 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
     @Override
     public BaseResponse<List<ScenicSpotProductBase>> queryScenicSpotProduct(ScenicSpotProductRequest request) {
-        List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId());
+
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId(), channelInfo);
         String date = request.getDate();
         List<ScenicSpotProductBase> productBases = Lists.newArrayList();
         if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
             log.info("查询到的产品列表数据为：{}",JSON.toJSONString(scenicSpotProductMPOS));
             for (ScenicSpotProductMPO scenicSpotProduct : scenicSpotProductMPOS) {
                 String productId = scenicSpotProduct.getId();
+                //获取最近可定日期
+                int bookBeforeDay = scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeDay();
+                Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeTime());
                 List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
                 // 根据产品id、规则id、票种 拆成多个产品
                 Map<String, List<ScenicSpotProductPriceMPO>> priceMap = scenicSpotProductPriceMPOS.stream().collect(Collectors.groupingBy(price ->
                         String.format("%s-%s-%s", price.getScenicSpotProductId(), price.getScenicSpotRuleId(), price.getTicketKind())));
                 log.info("产品{}拆成{}个", scenicSpotProduct.getId(), priceMap.size());
                 priceMap.forEach((k, v) -> {
-                    ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date);
+                    ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date, canBuyDate);
                     if(scenicSpotProductPriceMPO == null){
                         return;
                     }
@@ -247,7 +272,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
 
-                    String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    //使用最近可定日期比较
+                    //String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    String startDate = DateTimeUtil.formatDate(canBuyDate);
                     LocalDate localDate = LocalDate.now();
                     LocalDate tomorrow = localDate.plusDays(1);
                     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -276,7 +303,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                             tag1.setColour(ColourConstants.TICKET_GREEN);
                         }
                         tag1.setName(refundTag);
-                        ticketkind.add(tag);
+                        ticketkind.add(tag1);
                     }
                     int ticketType = scenicSpotRuleMPO.getTicketType();
                     Tag tag1 = new Tag();
@@ -284,7 +311,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     ticketkind.add(tag1);
 
                     int limitBuy = scenicSpotRuleMPO.getLimitBuy();
-                    if(1 == limitBuy){
+                    if(1 == limitBuy && scenicSpotRuleMPO.getMaxCount() <= 9){
                         int maxCount = scenicSpotRuleMPO.getMaxCount();
                         Tag tag2 = new Tag();
                         tag2.setName("限购".concat(String.valueOf(maxCount)).concat("张/单"));
@@ -310,12 +337,58 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         return BaseResponse.withSuccess(productBases);
     }
 
-    private ScenicSpotProductPriceMPO filterPrice(List<ScenicSpotProductPriceMPO> list,String date){
+    private Date getCanBuyDate(int bookBeforeDay, String bookBeforeTime) {
+        Date current = new Date();
+        if (StringUtils.isNotBlank(bookBeforeTime)) {
+            if (StringUtils.equals(bookBeforeTime, "00:00")) {
+                bookBeforeDay+=1;
+            }else{
+                if(bookBeforeDay == 0){
+                    try {
+                        Date bookDateTime = DateTimeUtil.parse(DateTimeUtil.formatDate(current, DateTimeUtil.YYYYMMDD)+" " + bookBeforeTime, DateTimeUtil.YYYYMMDDHHmm);
+                        if(bookDateTime.compareTo(current) < 0){
+                            bookBeforeDay += 1;
+                        }
+                    }catch (Exception e){
+                        log.error("bookBeforeTime格式错误:{}", bookBeforeTime);
+                    }
+                }
+            }
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(current);
+        calendar.add(Calendar.DAY_OF_MONTH, bookBeforeDay);
+        Date canBuyDate = calendar.getTime();
+        return canBuyDate;
+    }
+
+    private ScenicSpotProductPriceMPO filterPrice(List<ScenicSpotProductPriceMPO> list, String date, Date canBuyDate){
         if(ListUtils.isEmpty(list)){
             return null;
         }else{
             if(StringUtils.isNotEmpty(date)){
-                List<ScenicSpotProductPriceMPO> collect = list.stream().filter(p -> StringUtils.equals(p.getStartDate(), date)).collect(Collectors.toList());
+                //List<ScenicSpotProductPriceMPO> collect = list.stream().filter(p -> StringUtils.equals(p.getStartDate(), date)).collect(Collectors.toList());
+                //2021-08-05 重新处理过滤价格，需要兼容普通日历类型库存
+                Date reqDate = DateTimeUtil.parseDate(date);
+                if(DateTimeUtil.getDateDiffDays(reqDate, canBuyDate) < 0){
+                    //所选日期小于最近可定日期，直接忽略
+                    return null;
+                }
+                List<ScenicSpotProductPriceMPO> collect = list.stream().filter(p -> {
+                    if (StringUtils.isNotBlank(p.getStartDate())) {
+                        Date startDate = DateTimeUtil.parseDate(p.getStartDate());
+                        if(startDate.compareTo(reqDate) > 0){
+                            return false;
+                        }
+                    }
+                    if (StringUtils.isNotBlank(p.getEndDate())) {
+                        Date endDate = DateTimeUtil.parseDate(p.getEndDate());
+                        if(endDate.compareTo(reqDate) < 0){
+                            return false;
+                        }
+                    }
+                    return true;
+                }).collect(Collectors.toList());
                 if(ListUtils.isEmpty(collect)){
                     return null;
                 }else{
@@ -344,34 +417,54 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     public BaseResponse<List<BasePrice>> queryCalendar(CalendarRequest request) {
         String scenicSpotId = request.getScenicSpotId();
         String startDate = request.getStartDate();
+        Date start = DateTimeUtil.parseDate(startDate);
         String productId = request.getProductId();
         String endDate = request.getEndDate();
         String packageId = request.getPackageId();
         List<BasePrice> basePrices = null;
         List<ScenicSpotProductPriceMPO> effective = new ArrayList<>();
+
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
         if (StringUtils.isEmpty(productId)) {
-            List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(scenicSpotId);
+            List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(scenicSpotId, channelInfo);
             if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
+                List<String> productIds = scenicSpotProductMPOS.stream().map(a -> a.getId()).collect(Collectors.toList());
+                List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIds(productIds, startDate, endDate);
+                Map<String, List<ScenicSpotProductPriceMPO>> priceMapByProductId = priceMPOS.stream().collect(Collectors.groupingBy(a -> a.getScenicSpotProductId()));
                 for (ScenicSpotProductMPO productMPO : scenicSpotProductMPOS) {
                     String productMPOId = productMPO.getId();
+                    List<ScenicSpotProductPriceMPO> priceMPOList = priceMapByProductId.get(productMPOId);
+                    //获取最近可定日期
+                    int bookBeforeDay = productMPO.getScenicSpotProductTransaction().getBookBeforeDay();
+                    Date canBuyDate = getCanBuyDate(bookBeforeDay, productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                    String trueStartDate = DateTimeUtil.getDateDiffDays(start, canBuyDate) < 0 ? DateTimeUtil.formatDate(canBuyDate) : startDate;
                     int sellType = productMPO.getSellType();
                     //普通库存是一段时间 需要拆分
                     if (sellType == 0) {
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, null, null);
-                        for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : scenicSpotProductPriceMPOS) {
+                        //List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, null, null);
+                        for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : priceMPOList) {
                             if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
                                 continue;
                             }
-                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, startDate, endDate);
+                            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(scenicSpotProductPriceMPO, trueStartDate, endDate, canBuyDate);
                             if (ListUtils.isNotEmpty(scenicSpotProductMPOS)) {
                                 effective.addAll(scenicSpotProductPriceMPOS1);
                             }
                         }
 
                     }else{
-                        List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, startDate, endDate);
+                        //List<ScenicSpotProductPriceMPO> priceMPOS = scenicSpotDao.queryPriceByProductIdAndDate(productMPOId, trueStartDate, endDate);
+                        //effective.addAll(priceMPOS);
                         for (ScenicSpotProductPriceMPO scenicSpotProductPriceMPO : priceMPOS){
                             if (StringUtils.isNotBlank(request.getPackageId()) && !scenicSpotProductPriceMPO.getId().equals(request.getPackageId())){
+                                continue;
+                            }
+                            Date saleDate = DateTimeUtil.parseDate(scenicSpotProductPriceMPO.getStartDate());
+                            if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
                                 continue;
                             }
                             effective.add(scenicSpotProductPriceMPO);
@@ -382,18 +475,27 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }
 
         }else {
-            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(productId, packageId, startDate, endDate);
+            //获取最近可定日期
+            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(productId, channelInfo);
+            int bookBeforeDay = scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeDay();
+            Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+            String trueStartDate = DateTimeUtil.getDateDiffDays(start, canBuyDate) < 0 ? DateTimeUtil.formatDate(canBuyDate) : startDate;
+            List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(productId, packageId, trueStartDate, endDate);
             if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
                 log.info("通过产品id查询到的价格信息{}", JSON.toJSONString(scenicSpotProductPriceMPOS));
                 for (ScenicSpotProductPriceMPO s : scenicSpotProductPriceMPOS) {
                     String startDate1 = s.getStartDate();
                     String endDate1 = s.getEndDate();
                     if (!StringUtils.equals(startDate1, endDate1)) {
-                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(s, startDate, endDate);
+                        List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS1 = splitCalendar(s, startDate, endDate, canBuyDate);
                         if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS1)) {
                             effective.addAll(scenicSpotProductPriceMPOS1);
                         }
                     } else {
+                        Date saleDate = DateTimeUtil.parseDate(s.getStartDate());
+                        if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
+                            continue;
+                        }
                         effective.add(s);
                     }
                 }
@@ -424,12 +526,13 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 finalPriceList.add(priceMPOS.get(0));
             }
             effective = finalPriceList.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
+            List<String> finalChannelInfo = channelInfo;
             basePrices = effective.stream().map(p -> {
                 BasePrice basePrice = new BasePrice();
                 BeanUtils.copyProperties(p, basePrice);
                 //需要调用加价方法
                 IncreasePrice increasePrice = new IncreasePrice();
-                ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(p.getScenicSpotProductId());
+                ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(p.getScenicSpotProductId(), finalChannelInfo);
                 if(scenicSpotProductMPO != null){
                     increasePrice.setChannelCode(scenicSpotProductMPO.getChannel());
                 }
@@ -488,7 +591,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             return dayOfweek;
      }
 
-     private List<ScenicSpotProductPriceMPO> splitCalendar(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO,String startDate,String endDate) {
+     private List<ScenicSpotProductPriceMPO> splitCalendar(ScenicSpotProductPriceMPO scenicSpotProductPriceMPO, String startDate, String endDate, Date canBuyDate) {
          List<ScenicSpotProductPriceMPO> list = null;
          try {
              String sdate = scenicSpotProductPriceMPO.getStartDate();
@@ -511,8 +614,11 @@ public class ProductV2ServiceImpl implements ProductV2Service {
              // 使用给定的 Date 设置此 Calendar 的时间
              calEnd.setTime(dEnd);
              // 测试此日期是否在指定日期之后
-             while (dEnd.after(calBegin.getTime())) {
+             while (dEnd.compareTo(calBegin.getTime())>= 0) {
                  // 根据日历的规则，为给定的日历字段添加或减去指定的时间量
+                 if(DateTimeUtil.getDateDiffDays(calBegin.getTime(), canBuyDate) < 0){
+                     continue;
+                 }
                  calBegin.add(Calendar.DAY_OF_MONTH, 1);
                  ScenicSpotProductPriceMPO st1 = new ScenicSpotProductPriceMPO();
                  BeanUtils.copyProperties(scenicSpotProductPriceMPO,st1,"startDate","endDate");
@@ -553,7 +659,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
         ProductPriceCalendarResult result = new ProductPriceCalendarResult();
 
-        GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getProductId());
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        GroupTourProductMPO groupTourProductMPO = groupTourDao.queryTourProduct(request.getProductId(), channelInfo);
         GroupTourProductSetMealMPO groupTourProductSetMealMPO = groupTourDao.queryGroupSetMealBySetId(request.getSetMealId());
         List<GroupTourPrice> groupTourPrices = groupTourProductSetMealMPO.getGroupTourPrices();
         int beforeBookDay = groupTourProductMPO.getGroupTourProductPayInfo().getBeforeBookDay();
@@ -630,8 +741,16 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
     @Override
     public BaseResponse<ScenicSpotProductDetail> queryScenicSpotProductDetail(ScenicSpotProductRequest request) {
+
+        List<String> channelInfo = new ArrayList<>();
+        if (!StringUtils.equals(request.getFrom(), "order")) {
+            BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+            if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+                channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+            }
+        }
         ScenicSpotProductDetail scenucSpotProductDetail =null;
-        ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(request.getProductId());
+        ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(request.getProductId(), channelInfo);
         ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = scenicSpotDao.querySpotProductPriceById(request.getPriceId());
         if(scenicSpotProductMPO != null) {
             scenucSpotProductDetail =new ScenicSpotProductDetail();
@@ -669,7 +788,15 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<HotelScenicProductDetail> hotelScenicProductDetail(HotelScenicProductRequest request) {
-        HotelScenicSpotProductMPO hotelScenicSpotProductMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+
+        List<String> channelInfo = new ArrayList<>();
+        if(!StringUtils.equals(request.getFrom(), "order")){
+            BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+            if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+                channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+            }
+        }
+        HotelScenicSpotProductMPO hotelScenicSpotProductMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId(), channelInfo);
 
         HotelScenicProductDetail hotelScenicProductDetail = new HotelScenicProductDetail();
         BeanUtils.copyProperties(hotelScenicSpotProductMPO, hotelScenicProductDetail);
@@ -688,9 +815,18 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<List<HotelScenicProductSetMealBrief>> hotelScenicProductSetMealList(CalendarRequest request) {
-        List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
-        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId(), channelInfo);
+        Date canBuyDate = getCanBuyDate(productMPO.getPayInfo().getBeforeBookDay(), productMPO.getPayInfo().getLatestBookTime());
         List<HotelScenicProductSetMealBrief> briefList = new ArrayList<>();
+        if(productMPO == null){
+            return BaseResponse.withSuccess();
+        }
+        List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
         if(CollectionUtils.isNotEmpty(setMealMpoList)){
             briefList = setMealMpoList.stream().map(setMealMpo -> {
                 HotelScenicProductSetMealBrief brief = new HotelScenicProductSetMealBrief();
@@ -702,7 +838,13 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 //价格计算
                 IncreasePrice increasePrice = hotelIncreasePrice(productMPO, request, setMealMpo.getPriceStocks());
                 log.info("价格日历为："+ JSON.toJSONString(increasePrice));
-                brief.setPrice(increasePrice.getPrices().stream().filter(a -> StringUtils.isBlank(request.getStartDate()) ? true : StringUtils.equals(a.getDate(), request.getStartDate())).collect(Collectors.toList()).get(0).getAdtSellPrice());
+                brief.setPrice(increasePrice.getPrices().stream().filter(a -> {
+                    Date saleDate = DateTimeUtil.parseDate(a.getDate());
+                    if(DateTimeUtil.getDateDiffDays(saleDate, canBuyDate) < 0){
+                        return false;
+                    }
+                    return StringUtils.isBlank(request.getStartDate()) ? true : StringUtils.equals(a.getDate(), request.getStartDate());
+                }).collect(Collectors.toList()).get(0).getAdtSellPrice());
                 return brief;
             }).collect(Collectors.toList());
         }
@@ -737,10 +879,19 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<ProductPriceCalendarResult> queryHotelScenicPriceCalendar(CalendarRequest request) {
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
         ProductPriceCalendarResult result = new ProductPriceCalendarResult();
+        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId(), channelInfo);
+        if(productMPO == null){
+            return BaseResponse.withSuccess();
+        }
         List<HotelScenicSpotProductSetMealMPO> setMealMpoList = hotelScenicDao.queryHotelScenicSetMealList(request);
-        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
         List<HotelScenicSpotPriceStock> allPriceStocks = new ArrayList<>();
+        Date canBuyDate = getCanBuyDate(productMPO.getPayInfo().getBeforeBookDay(), productMPO.getPayInfo().getLatestBookTime());
         //将所有价格整合到一起
         for (HotelScenicSpotProductSetMealMPO hotelScenicSpotProductSetMealMPO : setMealMpoList) {
             allPriceStocks.addAll(hotelScenicSpotProductSetMealMPO.getPriceStocks());
@@ -782,6 +933,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         //筛选最低价格并过滤非查询日期
         for (String date : dates) {
             Date calendarDate = DateTimeUtil.parse(date, DateTimeUtil.YYYYMMDD);
+            if(DateTimeUtil.getDateDiffDays(calendarDate, canBuyDate) < 0){
+                continue;
+            }
             if(DateTimeUtil.getDateDiffDays(calendarDate, startDate) < 0 || DateTimeUtil.getDateDiffDays(calendarDate, endDate) > 0){
                 continue;
             }
@@ -868,8 +1022,19 @@ public class ProductV2ServiceImpl implements ProductV2Service {
      */
     @Override
     public BaseResponse<HotelScenicProductSetMealDetail> queryHotelScenicSetMealDetail(HotelScenicSetMealRequest request) {
+
+        List<String> channelInfo = new ArrayList<>();
+        if (!StringUtils.equals(request.getFrom(), "order")) {
+            BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+            if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+                channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+            }
+        }
+        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId(), channelInfo);
+        if(productMPO == null){
+            return BaseResponse.withSuccess();
+        }
         HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicDao.queryHotelScenicSetMealById(request);
-        HotelScenicSpotProductMPO productMPO = hotelScenicDao.queryHotelScenicProductMpoById(request.getProductId());
         HotelScenicProductSetMealDetail result = new HotelScenicProductSetMealDetail();
         BeanUtils.copyProperties(setMealMPO, result);
         result.setProductId(setMealMPO.getHotelScenicSpotProductId());
