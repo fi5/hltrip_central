@@ -3,12 +3,16 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.PageHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.mapper.PassengerTemplateMapper;
+import com.huoli.trip.central.web.mapper.TripPromotionInvitationAcceptMapper;
+import com.huoli.trip.central.web.mapper.TripPromotionInvitationMapper;
+import com.huoli.trip.central.web.mapper.TripPromotionMapper;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
@@ -37,9 +41,15 @@ import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
 import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
+import com.huoli.trip.common.vo.request.promotion.CouponSendReq;
+import com.huoli.trip.common.vo.request.promotion.PromotionDetailReq;
+import com.huoli.trip.common.vo.request.promotion.PromotionInvitationReq;
+import com.huoli.trip.common.vo.request.promotion.PromotionListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.*;
+import com.huoli.trip.common.vo.response.promotion.PromotionDetailResult;
+import com.huoli.trip.common.vo.response.promotion.PromotionListResult;
 import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import com.huoli.trip.common.vo.v2.BaseRefundRuleVO;
 import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
@@ -50,6 +60,7 @@ import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 
 import javax.script.ScriptEngine;
@@ -136,6 +147,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private PassengerTemplateMapper passengerTemplateMapper;
+
+    @Autowired
+    private TripPromotionMapper tripPromotionMapper;
+
+    @Autowired
+    private TripPromotionInvitationMapper tripPromotionInvitationMapper;
+
+    @Autowired
+    private TripPromotionInvitationAcceptMapper tripPromotionInvitationAcceptMapper;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -1765,4 +1785,189 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setSeq(rb.getSeq());
         return recommendProduct;
     }
+
+    @Override
+    public BaseResponse tripPromotionList(PromotionListReq request) {
+        PageHelper.startPage(request.getPageNum(), request.getPageSize());
+        List<PromotionListResult> list = tripPromotionMapper.getList();
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        return BaseResponse.withSuccess(list);
+    }
+
+    @Override
+    public BaseResponse tripPromotionDetail(PromotionDetailReq request) {
+        PromotionDetailResult result = tripPromotionMapper.getResultById(request.getPromotionId());
+        if (result == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        String phoneId = request.getPhoneId();
+        String inviteePhoneId = request.getInviteePhoneId();
+        long promotionId = request.getPromotionId();
+        // 发起人自己点击
+        if (phoneId.equals(inviteePhoneId)) {
+            List<TripPromotionInvitation> tripPromotionInvitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(phoneId, promotionId);
+            int surplus = 0;
+            int couponStatus = 0;
+            List<PromotionDetailResult.Friend> friendList = new ArrayList<>();
+            // 查询好友列表
+            if (ListUtils.isNotEmpty(tripPromotionInvitations)) {
+                // 获取最新的
+                TripPromotionInvitation tripPromotionInvitation = tripPromotionInvitations.get(0);
+                int inviteNum = tripPromotionInvitation.getInviteNum();
+                int assistNum = tripPromotionInvitation.getAssistNum();
+                if (inviteNum != 0) {
+                    friendList = tripPromotionInvitationAcceptMapper.getFriends(phoneId, promotionId);
+                    if (friendList == null) {
+                        friendList = Collections.emptyList();
+                    }
+                }
+                surplus = assistNum - inviteNum;
+                couponStatus = tripPromotionInvitation.getCouponStatus();
+            }
+            result.setCouponStatus(couponStatus);
+            result.setFriends(friendList);
+            result.setSurplus(surplus);
+        } else {//受邀人点击
+            // 查询助力结果
+            TripPromotionInvitation invitation = tripPromotionInvitationMapper.getById(request.getInvitationId());
+            if (invitation == null) {
+                return BaseResponse.withFail(CentralError.NO_PROMOTION);
+            }
+            if (invitation.getPromotionId() != promotionId || !invitation.getPhoneId().equals(phoneId)) {
+                return BaseResponse.withFail(CentralError.PROMOTION_NOT_MATCH);
+            }
+            int inviteNum = invitation.getInviteNum();
+            int assistNum = invitation.getAssistNum();
+            // 发起人已成功赢取优惠
+            if (Objects.equals(inviteNum, assistNum)) {
+                result.setStatus("2");
+                return BaseResponse.withSuccess(result);
+            }
+            // 已经助力
+            TripPromotionInvitationAccept invitationAccept = tripPromotionInvitationAcceptMapper.getByInvitationIdAndPhoneId(invitation.getId(), inviteePhoneId);
+            if (invitationAccept != null) {
+                result.setStatus("4");
+                return BaseResponse.withSuccess(result);
+            }
+            // 助力次数已用完
+            Date today = new Date();
+            Date start = DateTimeUtil.getAnyDayStart(today, 0);
+            Date end = DateTimeUtil.getAnyDayEnd(today, 0);
+            Integer count = tripPromotionInvitationAcceptMapper.countByPhoneId(inviteePhoneId, start, end);
+            if (count >= result.getAssistTimes()) {
+                result.setStatus("3");
+                return BaseResponse.withSuccess(result);
+            }
+            // 超时
+            long hourDiff = DateTimeUtil.dateDiff(invitation.getTimer(), System.currentTimeMillis());
+            if (hourDiff >= invitation.getValidTime()) {
+                result.setStatus("1");
+                return BaseResponse.withSuccess(result);
+            }
+            // 成功
+            insertAcceptAndUpdateInvitation(invitation, request);
+            result.setStatus("0");
+            return BaseResponse.withSuccess(result);
+        }
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Transactional
+    public void insertAcceptAndUpdateInvitation(TripPromotionInvitation invitation, PromotionDetailReq request) {
+        TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
+        accept.setInvitationId(invitation.getId());
+        accept.setInviteePhoneId(request.getInviteePhoneId());
+        accept.setInviteeAvatar(request.getAvatar());
+        accept.setInviteeNickname(request.getNickname());
+        accept.setCreateTime(new Date());
+        accept.setUpdateTime(new Date());
+        tripPromotionInvitationAcceptMapper.insert(accept);
+        int inviteNum = invitation.getInviteNum();
+        int assistNum = invitation.getAssistNum();
+        inviteNum = inviteNum + 1;
+        if (inviteNum != assistNum) {// 更新数量
+            tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum);
+        } else {// 更新数量和领券状态
+            tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, 1, 0);
+        }
+    }
+
+    @Override
+    public BaseResponse tripPromotionInvitation(PromotionInvitationReq request) {
+        Long invitationId = 0L;
+        String phoneId = request.getPhoneId();
+        long promotionId = request.getPromotionId();
+        List<TripPromotionInvitation> tripPromotionInvitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(phoneId, promotionId);
+        TripPromotion promotion = tripPromotionMapper.getById(promotionId);
+        if (promotion == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        if (ListUtils.isEmpty(tripPromotionInvitations)) {
+            TripPromotionInvitation tripPromotionInvitation = new TripPromotionInvitation();
+            tripPromotionInvitation.setPromotionId(promotionId);
+            tripPromotionInvitation.setStatus(0);
+            tripPromotionInvitation.setCouponStatus(0);
+            tripPromotionInvitation.setInviteNum(0);
+            tripPromotionInvitation.setPhoneId(phoneId);
+            tripPromotionInvitation.setAssistNum(promotion.getAssistNum());
+            tripPromotionInvitation.setValidTime(promotion.getValidTime());
+            tripPromotionInvitation.setTimer(System.currentTimeMillis());
+            tripPromotionInvitation.setCreateTime(new Date());
+            tripPromotionInvitation.setUpdateTime((new Date()));
+            invitationId = tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+        } else {
+            // 如果有成功的直接返回
+            Optional<TripPromotionInvitation> find = tripPromotionInvitations.stream().filter(s -> s.getStatus() == 1).findFirst();
+            if (find.isPresent()) {
+                return BaseResponse.withFail(CentralError.NO_REPEAT_PROMOTION);
+            }
+            // 获取最新创建的
+            TripPromotionInvitation tripPromotionInvitation = tripPromotionInvitations.get(0);
+            long timer = tripPromotionInvitation.getTimer();
+            long currentTimeMillis = System.currentTimeMillis();
+            long hourDiff = DateTimeUtil.dateDiff(timer, currentTimeMillis);
+            // 如果超过规定小时数则新建TripPromotionInvitation
+            if (hourDiff >= promotion.getValidTime()) {
+                tripPromotionInvitation = new TripPromotionInvitation();
+                tripPromotionInvitation.setPromotionId(promotionId);
+                tripPromotionInvitation.setStatus(0);
+                tripPromotionInvitation.setCouponStatus(0);
+                tripPromotionInvitation.setInviteNum(0);
+                tripPromotionInvitation.setPhoneId(phoneId);
+                tripPromotionInvitation.setAssistNum(promotion.getAssistNum());
+                tripPromotionInvitation.setValidTime(promotion.getValidTime());
+                tripPromotionInvitation.setTimer(System.currentTimeMillis());
+                tripPromotionInvitation.setCreateTime(new Date());
+                tripPromotionInvitation.setUpdateTime((new Date()));
+                invitationId = tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+            } else {
+                invitationId = tripPromotionInvitation.getId();
+            }
+        }
+        return BaseResponse.withSuccess(invitationId);
+    }
+
+    @Override
+    public BaseResponse tripPromotionCheckCoupon(CouponSendReq req) {
+        TripPromotion promotion = tripPromotionMapper.getById(req.getPromotionId());
+        if (promotion == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        List<TripPromotionInvitation> invitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(req.getPhoneId(), req.getPromotionId());
+        if (ListUtils.isEmpty(invitations)) {
+            return BaseResponse.withFail(CentralError.PROMOTION_NOT_SUCCESS);
+        }
+        TripPromotionInvitation invitation = invitations.get(0);
+        if (invitation.getStatus() != 1) {
+            return BaseResponse.withFail(CentralError.PROMOTION_NOT_SUCCESS);
+        }
+        Integer count = tripPromotionInvitationAcceptMapper.countByInvitationId(invitation.getId());
+        if (count < promotion.getAssistNum()) {
+            return BaseResponse.withFail(CentralError.PROMOTION_NOT_SUCCESS);
+        }
+        return BaseResponse.withSuccess(promotion.getActiveFlag());
+    }
+
 }
