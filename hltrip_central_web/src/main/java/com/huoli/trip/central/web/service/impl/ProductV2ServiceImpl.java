@@ -303,7 +303,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                             tag1.setColour(ColourConstants.TICKET_GREEN);
                         }
                         tag1.setName(refundTag);
-                        ticketkind.add(tag);
+                        ticketkind.add(tag1);
                     }
                     int ticketType = scenicSpotRuleMPO.getTicketType();
                     Tag tag1 = new Tag();
