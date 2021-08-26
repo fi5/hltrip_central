@@ -23,6 +23,8 @@ public interface TripPromotionInvitationMapper {
     @Select("select ifnull(invite_num,0) from trip_promotion_invitation where id=#{id}")
     Integer getInviteNumById(long id);
 
+
+
     @Insert("insert into trip_promotion_invitation (phone_id,promotion_id,assist_num,invite_num,valid_time,timer,status,create_time,update_time)" +
             " values (#{phoneId},#{promotionId},#{assistNum},#{inviteNum},#{validTime},#{timer},#{status},#{createTime},#{updateTime})")
     @SelectKey(before = false, keyProperty = "id", resultType = Long.class, statement = "SELECT last_insert_id() as id", statementType = StatementType.STATEMENT)
@@ -36,4 +38,7 @@ public interface TripPromotionInvitationMapper {
 
     @Update("update trip_promotion_invitation set coupon_status=#{newCouponStatus} where id=#{id} and coupon_status=#{oldCouponStatus}")
     void updateCouponStatus(long id, int newCouponStatus, int oldCouponStatus);
+
+    @Select("select ifnull(count(1),0) from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId}")
+    int countByPhoneIdAndId(String phoneId, long promotionId);
 }

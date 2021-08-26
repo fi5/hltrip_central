@@ -1824,6 +1824,14 @@ public class ProductServiceImpl implements ProductService {
         if (list == null) {
             list = Collections.emptyList();
         }
+        for (PromotionListResult result : list) {
+            int count = tripPromotionInvitationMapper.countByPhoneIdAndId(request.getPhoneId(), result.getPromotionId());
+            if (count > 0) {
+                result.setStatus(1);
+            } else {
+                result.setStatus(0);
+            }
+        }
         return BaseResponse.withSuccess(list);
     }
 
