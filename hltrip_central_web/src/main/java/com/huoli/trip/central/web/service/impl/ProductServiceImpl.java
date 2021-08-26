@@ -1973,7 +1973,8 @@ public class ProductServiceImpl implements ProductService {
             tripPromotionInvitation.setTimer(System.currentTimeMillis());
             tripPromotionInvitation.setCreateTime(new Date());
             tripPromotionInvitation.setUpdateTime((new Date()));
-            invitationId = tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+            tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+            invitationId = tripPromotionInvitation.getId();
         } else {
             // 如果有成功的直接返回
             Optional<TripPromotionInvitation> find = tripPromotionInvitations.stream().filter(s -> s.getStatus() == 1).findFirst();
@@ -1998,10 +1999,9 @@ public class ProductServiceImpl implements ProductService {
                 tripPromotionInvitation.setTimer(System.currentTimeMillis());
                 tripPromotionInvitation.setCreateTime(new Date());
                 tripPromotionInvitation.setUpdateTime((new Date()));
-                invitationId = tripPromotionInvitationMapper.insert(tripPromotionInvitation);
-            } else {
-                invitationId = tripPromotionInvitation.getId();
+                tripPromotionInvitationMapper.insert(tripPromotionInvitation);
             }
+            invitationId = tripPromotionInvitation.getId();
         }
         return BaseResponse.withSuccess(invitationId);
     }
