@@ -20,6 +20,9 @@ public interface TripPromotionInvitationMapper {
     @Select("select * from trip_promotion_invitation where id=#{id}")
     TripPromotionInvitation getById(long id);
 
+    @Select("select ifnull(invite_num,0) from trip_promotion_invitation where id=#{id}")
+    Integer getInviteNumById(long id);
+
     @Insert("insert into trip_promotion_invitation (phone_id,promotion_id,assist_num,invite_num,valid_time,timer,status,create_time,update_time)" +
             " values (#{phoneId},#{promotionId},#{assistNum},#{inviteNum},#{validTime},#{timer},#{status},#{createTime},#{updateTime})")
     @SelectKey(before = false, keyProperty = "id", resultType = Long.class, statement = "SELECT last_insert_id() as id", statementType = StatementType.STATEMENT)

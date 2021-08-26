@@ -6,6 +6,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.huoli.flight.server.api.CouponDeliveryService;
+import com.huoli.flight.server.api.vo.flight.CouponSendParam;
+import com.huoli.flight.server.api.vo.flight.CouponSuccess;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
@@ -60,6 +63,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
+import org.apache.kafka.common.errors.ApiException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -162,6 +166,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
     DataService dataService;
+
+    @Reference(group = "${flight_dubbo_group}", timeout = 30000, check = false, retries = 3)
+    CouponDeliveryService couponDeliveryService;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -1891,7 +1898,11 @@ public class ProductServiceImpl implements ProductService {
                 return BaseResponse.withSuccess(result);
             }
             // 成功
-            insertAcceptAndUpdateInvitation(invitation, request);
+            try {
+                insertAcceptAndUpdateInvitation(result, invitation, request);
+            } catch (Exception e) {
+                return BaseResponse.withFail(CentralError.SEND_COUPON_FAIL);
+            }
             result.setStatus("0");
             return BaseResponse.withSuccess(result);
         }
@@ -1899,7 +1910,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Transactional
-    public void insertAcceptAndUpdateInvitation(TripPromotionInvitation invitation, PromotionDetailReq request) {
+    public void insertAcceptAndUpdateInvitation(PromotionDetailResult result, TripPromotionInvitation invitation, PromotionDetailReq request) {
         TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
         accept.setInvitationId(invitation.getId());
         accept.setInviteePhoneId(request.getInviteePhoneId());
@@ -1915,6 +1926,18 @@ public class ProductServiceImpl implements ProductService {
             tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum);
         } else {// 更新数量和领券状态
             tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, 1, 0);
+        }
+        // 如果达到助力人数则发券
+        Integer newInviteNum = tripPromotionInvitationMapper.getInviteNumById(invitation.getId());
+        if (newInviteNum == assistNum) {
+            CouponSendParam couponSendParam = new CouponSendParam();
+            couponSendParam.setCouponid(String.valueOf(invitation.getPromotionId()));
+            couponSendParam.setActiveflag(result.getActiveFlag());
+            couponSendParam.setPhoneid(request.getPhoneId());
+            CouponSuccess couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+            if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
+                throw new RuntimeException("发券异常");
+            }
         }
     }
 
