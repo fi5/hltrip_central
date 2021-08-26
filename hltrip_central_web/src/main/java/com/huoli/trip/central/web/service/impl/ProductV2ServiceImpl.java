@@ -441,7 +441,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                         List<ScenicSpotProductPriceMPO> priceMPOList = priceMapByProductId.get(productMPOId);
                         //获取最近可定日期
                         int bookBeforeDay = productMPO.getScenicSpotProductTransaction() == null ? 0 : productMPO.getScenicSpotProductTransaction().getBookBeforeDay();
-                        Date canBuyDate = getCanBuyDate(bookBeforeDay, productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                        Date canBuyDate = getCanBuyDate(bookBeforeDay, productMPO.getScenicSpotProductTransaction() == null ? null : productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
                         String trueStartDate = DateTimeUtil.getDateDiffDays(start, canBuyDate) < 0 ? DateTimeUtil.formatDate(canBuyDate) : startDate;
                         int sellType = productMPO.getSellType();
                         //普通库存是一段时间 需要拆分
@@ -478,8 +478,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }else {
                 //获取最近可定日期
                 ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(productId, channelInfo);
-                int bookBeforeDay = scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeDay();
-                Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                int bookBeforeDay = scenicSpotProductMPO.getScenicSpotProductTransaction() == null ? 0 : scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeDay();
+                Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProductMPO.getScenicSpotProductTransaction() == null ? null : scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeTime());
                 String trueStartDate = DateTimeUtil.getDateDiffDays(start, canBuyDate) < 0 ? DateTimeUtil.formatDate(canBuyDate) : startDate;
                 List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = getPrice(productId, packageId, trueStartDate, endDate);
                 if (ListUtils.isNotEmpty(scenicSpotProductPriceMPOS)) {
