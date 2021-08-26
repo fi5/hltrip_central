@@ -890,8 +890,10 @@ public class ProductServiceImpl implements ProductService {
                 result.setScenicspotName(scenicSpotMPO.getName());
                 result.setSupplierId(productMPO.getChannel());
                 result.setSupplierProductId(productMPO.getSupplierProductId());
-                result.setBookBeforeDay(productMPO.getScenicSpotProductTransaction().getBookBeforeDay());
-                result.setBookBeforeTime(productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                if(productMPO.getScenicSpotProductTransaction() != null){
+                    result.setBookBeforeDay(productMPO.getScenicSpotProductTransaction().getBookBeforeDay());
+                    result.setBookBeforeTime(productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                }
                 result.setBuyMax(ruleMPO.getMaxCount());
                 result.setBuyMin(1);
                 result.setDescription(productMPO.getPcDescription());
