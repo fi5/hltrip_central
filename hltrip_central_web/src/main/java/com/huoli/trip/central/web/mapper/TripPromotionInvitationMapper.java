@@ -28,9 +28,12 @@ public interface TripPromotionInvitationMapper {
     @SelectKey(before = false, keyProperty = "id", resultType = Long.class, statement = "SELECT last_insert_id() as id", statementType = StatementType.STATEMENT)
     Long insert(TripPromotionInvitation tripPromotionInvitation);
 
-    @Update("update trip_promotion_invitation set invite_num=#{inviteNum} where id=#{id}")
-    void updateInviteNum(long id, int inviteNum);
+    @Update("update trip_promotion_invitation set invite_num=#{newInviteNum} where id=#{id} and invite_num=#{oldInviteNum}")
+    void updateInviteNum(long id, int newInviteNum, int oldInviteNum);
 
-    @Update("update trip_promotion_invitation set invite_num=#{inviteNum},coupon_status=#{newCouponStatus} where id=#{id} and coupon_status=#{oldCouponStatus}")
-    void updateInviteNumAndCouponStatus(long id, int inviteNum, int newCouponStatus, int oldCouponStatus);
+    @Update("update trip_promotion_invitation set invite_num=#{newInviteNum},coupon_status=#{newCouponStatus} where id=#{id} and invite_num=#{inviteNum} and coupon_status=#{oldCouponStatus}")
+    void updateInviteNumAndCouponStatus(long id, int newInviteNum, int inviteNum, int newCouponStatus, int oldCouponStatus);
+
+    @Update("update trip_promotion_invitation set coupon_status=#{newCouponStatus} where id=#{id} and coupon_status=#{oldCouponStatus}")
+    void updateCouponStatus(long id, int newCouponStatus, int oldCouponStatus);
 }

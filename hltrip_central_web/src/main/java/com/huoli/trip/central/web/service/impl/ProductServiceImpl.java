@@ -1820,7 +1820,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse tripPromotionList(PromotionListReq request) {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
-        List<PromotionListResult> list = tripPromotionMapper.getList();
+        List<PromotionListResult> list = tripPromotionMapper.getList(1);
         if (list == null) {
             list = Collections.emptyList();
         }
@@ -1829,7 +1829,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse tripPromotionDetail(PromotionDetailReq request) {
-        PromotionDetailResult result = tripPromotionMapper.getResultById(request.getPromotionId());
+        PromotionDetailResult result = tripPromotionMapper.getResultById(request.getPromotionId(), 1);
         if (result == null) {
             return BaseResponse.withFail(CentralError.NO_PROMOTION);
         }
@@ -1921,15 +1921,15 @@ public class ProductServiceImpl implements ProductService {
         tripPromotionInvitationAcceptMapper.insert(accept);
         int inviteNum = invitation.getInviteNum();
         int assistNum = invitation.getAssistNum();
-        inviteNum = inviteNum + 1;
+        int newInviteNum = inviteNum + 1;
         if (inviteNum != assistNum) {// 更新数量
-            tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum);
+            tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), newInviteNum, inviteNum);
         } else {// 更新数量和领券状态
-            tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, 1, 0);
+            tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), newInviteNum, inviteNum, 1, 0);
         }
         // 如果达到助力人数则发券
-        Integer newInviteNum = tripPromotionInvitationMapper.getInviteNumById(invitation.getId());
-        if (newInviteNum == assistNum) {
+        Integer newDbInviteNum = tripPromotionInvitationMapper.getInviteNumById(invitation.getId());
+        if (newDbInviteNum == assistNum) {
             CouponSendParam couponSendParam = new CouponSendParam();
             couponSendParam.setCouponid(String.valueOf(invitation.getPromotionId()));
             couponSendParam.setActiveflag(result.getActiveFlag());
@@ -1938,6 +1938,8 @@ public class ProductServiceImpl implements ProductService {
             if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
                 throw new RuntimeException("发券异常");
             }
+            // 更新领券状态
+            tripPromotionInvitationMapper.updateCouponStatus(invitation.getId(), 2, 1);
         }
     }
 
@@ -1947,7 +1949,7 @@ public class ProductServiceImpl implements ProductService {
         String phoneId = request.getPhoneId();
         long promotionId = request.getPromotionId();
         List<TripPromotionInvitation> tripPromotionInvitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(phoneId, promotionId);
-        TripPromotion promotion = tripPromotionMapper.getById(promotionId);
+        TripPromotion promotion = tripPromotionMapper.getById(promotionId, 1);
         if (promotion == null) {
             return BaseResponse.withFail(CentralError.NO_PROMOTION);
         }
@@ -1998,7 +2000,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse tripPromotionCheckCoupon(CouponSendReq req) {
-        TripPromotion promotion = tripPromotionMapper.getById(req.getPromotionId());
+        TripPromotion promotion = tripPromotionMapper.getById(req.getPromotionId(), 1);
         if (promotion == null) {
             return BaseResponse.withFail(CentralError.NO_PROMOTION);
         }
