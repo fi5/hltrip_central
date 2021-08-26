@@ -440,7 +440,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                         String productMPOId = productMPO.getId();
                         List<ScenicSpotProductPriceMPO> priceMPOList = priceMapByProductId.get(productMPOId);
                         //获取最近可定日期
-                        int bookBeforeDay = productMPO.getScenicSpotProductTransaction().getBookBeforeDay();
+                        int bookBeforeDay = productMPO.getScenicSpotProductTransaction() == null ? 0 : productMPO.getScenicSpotProductTransaction().getBookBeforeDay();
                         Date canBuyDate = getCanBuyDate(bookBeforeDay, productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
                         String trueStartDate = DateTimeUtil.getDateDiffDays(start, canBuyDate) < 0 ? DateTimeUtil.formatDate(canBuyDate) : startDate;
                         int sellType = productMPO.getSellType();
