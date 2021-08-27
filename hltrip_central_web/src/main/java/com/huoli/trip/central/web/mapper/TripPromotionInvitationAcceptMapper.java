@@ -12,15 +12,8 @@ import java.util.List;
 @Repository
 public interface TripPromotionInvitationAcceptMapper {
 
-    @Select("SELECT" +
-            " a.invitee_avatar avatar,a.invitee_nickname nickname" +
-            " FROM" +
-            " trip_promotion_invitation i" +
-            " LEFT JOIN trip_promotion_invitation_accept a ON i.id = a.invitation_id" +
-            " WHERE" +
-            " i.phone_id = #{phoneId} " +
-            " AND i.promotion_id = #{promotionId}")
-    List<PromotionDetailResult.Friend> getFriends(String phoneId, long promotionId);
+    @Select("SELECT invitee_avatar avatar,invitee_nickname nickname FROM trip_promotion_invitation_accept WHERE invitation_id=#{invitationId}")
+    List<PromotionDetailResult.Friend> getFriends(long invitationId);
 
     @Select("select * from trip_promotion_invitation_accept where invitation_id=#{id} and invitee_phone_id=#{phoneId}")
     TripPromotionInvitationAccept getByInvitationIdAndPhoneId(long id, String phoneId);
@@ -28,7 +21,7 @@ public interface TripPromotionInvitationAcceptMapper {
     @Select("select ifnull(count(1),0) from trip_promotion_invitation_accept where invitee_phone_id=#{phoneId} and create_time between #{start} and #{end}")
     Integer countByPhoneId(String phoneId, Date start, Date end);
 
-    @Insert("insert into trip_promotion_invitation_accept (invitationId,inviteePhoneId,inviteeNickname,inviteeAvatar,createTime,updateTime)" +
+    @Insert("insert into trip_promotion_invitation_accept (invitation_id,invitee_phone_id,invitee_nickname,invitee_avatar,create_time,update_time)" +
             " values (#{invitationId},#{inviteePhoneId},#{inviteeNickname},#{inviteeAvatar},#{createTime},#{updateTime})")
     void insert(TripPromotionInvitationAccept accept);
 

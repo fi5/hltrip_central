@@ -1857,7 +1857,7 @@ public class ProductServiceImpl implements ProductService {
                 int inviteNum = tripPromotionInvitation.getInviteNum();
                 int assistNum = tripPromotionInvitation.getAssistNum();
                 if (inviteNum != 0) {
-                    friendList = tripPromotionInvitationAcceptMapper.getFriends(phoneId, promotionId);
+                    friendList = tripPromotionInvitationAcceptMapper.getFriends(tripPromotionInvitation.getId());
                     if (friendList == null) {
                         friendList = Collections.emptyList();
                     }
@@ -1930,7 +1930,7 @@ public class ProductServiceImpl implements ProductService {
         int inviteNum = invitation.getInviteNum();
         int assistNum = invitation.getAssistNum();
         int newInviteNum = inviteNum + 1;
-        if (inviteNum != assistNum) {// 更新数量
+        if (newInviteNum != assistNum) {// 更新数量
             tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), newInviteNum, inviteNum);
         } else {// 更新数量和领券状态
             tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), newInviteNum, inviteNum, 1, 0);
