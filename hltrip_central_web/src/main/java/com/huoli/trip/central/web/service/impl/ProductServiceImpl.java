@@ -1827,6 +1827,8 @@ public class ProductServiceImpl implements ProductService {
         for (PromotionListResult result : list) {
             int count = tripPromotionInvitationMapper.countByPhoneIdAndId(request.getPhoneId(), result.getPromotionId());
             if (count > 0) {
+                long id = tripPromotionInvitationMapper.getIdByPhoneId(request.getPhoneId(), result.getPromotionId());
+                result.setInvitationId(String.valueOf(id));
                 result.setStatus(1);
             } else {
                 result.setStatus(0);
@@ -1864,6 +1866,19 @@ public class ProductServiceImpl implements ProductService {
                 }
                 surplus = assistNum - inviteNum;
                 couponStatus = tripPromotionInvitation.getCouponStatus();
+            } else {
+                TripPromotionInvitation tripPromotionInvitation = new TripPromotionInvitation();
+                tripPromotionInvitation.setPromotionId(promotionId);
+                tripPromotionInvitation.setStatus(0);
+                tripPromotionInvitation.setCouponStatus(0);
+                tripPromotionInvitation.setInviteNum(0);
+                tripPromotionInvitation.setPhoneId(phoneId);
+                tripPromotionInvitation.setAssistNum(result.getAssistNum());
+                tripPromotionInvitation.setValidTime(result.getValidTime());
+                tripPromotionInvitation.setTimer(System.currentTimeMillis());
+                tripPromotionInvitation.setCreateTime(new Date());
+                tripPromotionInvitation.setUpdateTime((new Date()));
+                tripPromotionInvitationMapper.insert(tripPromotionInvitation);
             }
             result.setCouponStatus(couponStatus);
             result.setFriends(friendList);
