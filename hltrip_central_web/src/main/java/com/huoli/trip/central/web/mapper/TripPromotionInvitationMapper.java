@@ -14,7 +14,7 @@ import java.util.Map;
 @Repository
 public interface TripPromotionInvitationMapper {
 
-    @Select("select * from trip_promotion_invitation where phone_Id=#{phoneId} and promotion_id=#{promotionId} order by create_time desc")
+    @Select("select * from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId} order by create_time desc")
     List<TripPromotionInvitation> getByPhoneIdPromotionId(String phoneId, long promotionId);
 
     @Select("select * from trip_promotion_invitation where id=#{id}")
