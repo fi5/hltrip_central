@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface TripPromotionMapper {
 
-    @Select("select id as promotionId,discount_type,title,tips,discount,brief_desc,image from trip_promotion where status=#{status}")
+    @Select("select id as promotionId,discount_type,title,tips,discount,brief_desc,image,valid_time from trip_promotion where status=#{status}")
     List<PromotionListResult> getList(int status);
 
     @Select("select id as promotionId,discount_type,title,tips,discount,detail_desc,image,rule_desc,assist_num,assist_times,active_flag,valid_time from trip_promotion where id=#{id} and status=#{status}")
