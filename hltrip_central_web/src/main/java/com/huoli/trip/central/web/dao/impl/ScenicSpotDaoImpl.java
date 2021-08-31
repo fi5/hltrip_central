@@ -155,7 +155,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     public List<ScenicSpotMPO> queryScenicSpotByPoint(double longitude,double latitude) {
         Query query = new Query();
         Point point = new Point(longitude,latitude);
-        Sphere sphere = new Sphere(point, new Distance(5, Metrics.KILOMETERS));
+        Sphere sphere = new Sphere(point, new Distance(30, Metrics.KILOMETERS));
         Criteria criteria = Criteria.where("coordinate").within(sphere);
         query.addCriteria(criteria);
         return  mongoTemplate.find(query, ScenicSpotMPO.class);

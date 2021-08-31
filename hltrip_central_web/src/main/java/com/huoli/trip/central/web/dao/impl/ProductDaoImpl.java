@@ -573,7 +573,7 @@ public class ProductDaoImpl implements ProductDao {
         if (CollectionUtils.isNotEmpty(channelInfo)) {
             criteria.and("channel").in(channelInfo);
         }
-        if (!CollectionUtils.isEmpty(req.getScenicSpotIds())) {
+        if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
             criteria.and("scenicSpotId").in(req.getScenicSpotIds());
         }
         MatchOperation matchOperation = Aggregation.match(criteria);
