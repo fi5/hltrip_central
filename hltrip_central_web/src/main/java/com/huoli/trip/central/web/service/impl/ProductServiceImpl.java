@@ -315,6 +315,7 @@ public class ProductServiceImpl implements ProductService {
         }
         if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
             List<ScenicSpotMPO> scenicSpotMPOs =  scenicSpotDao.queryScenicSpotByPoint(Double.parseDouble(req.getLongitude()),Double.parseDouble(req.getLatitude()));
+            log.info("scenicSpotMPOs = {}",scenicSpotMPOs);
             if (!CollectionUtils.isEmpty(scenicSpotMPOs)){
                 List<String> scenicSpotIds = scenicSpotMPOs.stream().map(ScenicSpotMPO::getId).collect(Collectors.toList());
                 log.info("scenicSpotIds = {}" ,scenicSpotIds);
