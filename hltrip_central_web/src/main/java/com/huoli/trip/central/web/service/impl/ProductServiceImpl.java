@@ -314,7 +314,7 @@ public class ProductServiceImpl implements ProductService {
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
         }
         if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
-            List<ScenicSpotMPO> scenicSpotMPOs =  scenicSpotDao.queryScenicSpotByPoint(Double.parseDouble(req.getLongitude()),Double.parseDouble(req.getLatitude());
+            List<ScenicSpotMPO> scenicSpotMPOs =  scenicSpotDao.queryScenicSpotByPoint(Double.parseDouble(req.getLongitude()),Double.parseDouble(req.getLatitude()));
             if (!CollectionUtils.isEmpty(scenicSpotMPOs)){
                 List<String> scenicSpotIds = scenicSpotMPOs.stream().map(ScenicSpotMPO::getId).collect(Collectors.toList());
                 req.setScenicSpotIds(scenicSpotIds);
