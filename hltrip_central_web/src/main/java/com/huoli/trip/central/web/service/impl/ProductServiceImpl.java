@@ -1876,6 +1876,14 @@ public class ProductServiceImpl implements ProductService {
             if (ListUtils.isNotEmpty(tripPromotionInvitations)) {
                 // 获取最新的
                 TripPromotionInvitation tripPromotionInvitation = tripPromotionInvitations.get(0);
+                // 判断是否超时
+                long hourDiff = DateTimeUtil.dateDiff(tripPromotionInvitation.getTimer(), System.currentTimeMillis());
+                // 超时
+                if (hourDiff >= tripPromotionInvitation.getValidTime()) {
+                    result.setTimeStatus("1");
+                    return BaseResponse.withSuccess(result);
+                }
+                result.setTimeStatus("0");
                 int inviteNum = tripPromotionInvitation.getInviteNum();
                 int assistNum = tripPromotionInvitation.getAssistNum();
                 if (inviteNum != 0) {
@@ -1907,6 +1915,7 @@ public class ProductServiceImpl implements ProductService {
                 tripPromotionInvitation.setUpdateTime((new Date()));
                 tripPromotionInvitation.setIsFirst("0");
                 tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+                result.setTimeStatus("0");
             }
             result.setCouponStatus(couponStatus);
             result.setFriends(friendList);
