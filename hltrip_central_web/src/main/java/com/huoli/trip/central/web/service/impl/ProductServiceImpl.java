@@ -1933,6 +1933,9 @@ public class ProductServiceImpl implements ProductService {
         if (invitation == null) {
             return BaseResponse.withFail(CentralError.NO_PROMOTION);
         }
+        if (phoneId.equals(invitation.getPhoneId())) {
+            return BaseResponse.withFail(CentralError.NO_SELF);
+        }
         int inviteNum = invitation.getInviteNum();
         int assistNum = invitation.getAssistNum();
         result.setRole(2);
