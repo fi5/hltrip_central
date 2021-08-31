@@ -1934,7 +1934,7 @@ public class ProductServiceImpl implements ProductService {
             return BaseResponse.withFail(CentralError.NO_PROMOTION);
         }
         if (phoneId.equals(invitation.getPhoneId())) {
-            return BaseResponse.withFail(CentralError.NO_SELF);
+            return BaseResponse.withSuccess(result);
         }
         int inviteNum = invitation.getInviteNum();
         int assistNum = invitation.getAssistNum();
