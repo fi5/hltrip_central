@@ -55,6 +55,7 @@ import com.huoli.trip.common.vo.v2.BaseRefundRuleVO;
 import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
 import com.huoli.trip.data.api.DataService;
 import com.huoli.trip.data.vo.ChannelInfo;
+import jdk.internal.org.objectweb.asm.commons.StaticInitMerger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1825,9 +1826,15 @@ public class ProductServiceImpl implements ProductService {
             if (StringUtils.isNotEmpty(request.getPhoneId())) {
                 int count = tripPromotionInvitationMapper.countByPhoneIdAndId(request.getPhoneId(), result.getPromotionId());
                 if (count > 0) {
-                    long id = tripPromotionInvitationMapper.getIdByPhoneId(request.getPhoneId(), result.getPromotionId());
-                    result.setInvitationId(String.valueOf(id));
-                    result.setStatus(1);
+                    long timer = System.currentTimeMillis() - (long) result.getValidTime() * 60 * 60 * 1000;
+                    int num = tripPromotionInvitationMapper.countByPhoneIdAndIdAndTime(request.getPhoneId(), result.getPromotionId(), timer);
+                    if (num > 0) {
+                        long id = tripPromotionInvitationMapper.getIdByPhoneId(request.getPhoneId(), result.getPromotionId());
+                        result.setInvitationId(String.valueOf(id));
+                        result.setStatus(1);
+                    } else {
+                        result.setStatus(2);
+                    }
                 } else {
                     result.setStatus(0);
                 }

@@ -42,6 +42,9 @@ public interface TripPromotionInvitationMapper {
     @Select("select ifnull(count(1),0) from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId}")
     int countByPhoneIdAndId(String phoneId, long promotionId);
 
+    @Select("select ifnull(count(1),0) from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId} and timer>#{timer}")
+    int countByPhoneIdAndIdAndTime(String phoneId, long promotionId, long timer);
+
     @Select("select id from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId} order by create_time desc limit 1")
     long getIdByPhoneId(String phoneId, long promotionId);
 
