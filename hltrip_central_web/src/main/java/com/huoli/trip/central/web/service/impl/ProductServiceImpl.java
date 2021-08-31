@@ -455,7 +455,7 @@ public class ProductServiceImpl implements ProductService {
             oriRecommendBaseInfos = recommendMPO.stream().flatMap(r -> r.getRecommendBaseInfos().stream()).collect(Collectors.toList());
         }
         // 只要参数有标签就处理，不考虑哪个位置；
-        if(StringUtils.isNotBlank(request.getTag()) && StringUtils.equals(request.getTag(), sysTag)){
+        if(StringUtils.isNotBlank(request.getTag()) && !StringUtils.equals(request.getTag(), sysTag)){
             oriRecommendBaseInfos.removeIf(r -> !StringUtils.equals(r.getTitle(), request.getTag()));
         }
         if(recommendMPO != null && ListUtils.isNotEmpty(oriRecommendBaseInfos)){
@@ -897,8 +897,10 @@ public class ProductServiceImpl implements ProductService {
                 result.setScenicspotName(scenicSpotMPO.getName());
                 result.setSupplierId(productMPO.getChannel());
                 result.setSupplierProductId(productMPO.getSupplierProductId());
-                result.setBookBeforeDay(productMPO.getScenicSpotProductTransaction().getBookBeforeDay());
-                result.setBookBeforeTime(productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                if(productMPO.getScenicSpotProductTransaction() != null){
+                    result.setBookBeforeDay(productMPO.getScenicSpotProductTransaction().getBookBeforeDay());
+                    result.setBookBeforeTime(productMPO.getScenicSpotProductTransaction().getBookBeforeTime());
+                }
                 result.setBuyMax(ruleMPO.getMaxCount());
                 result.setBuyMin(1);
                 result.setDescription(productMPO.getPcDescription());
