@@ -10,10 +10,7 @@ import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
 import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
-import com.huoli.trip.common.vo.request.promotion.CouponSendReq;
-import com.huoli.trip.common.vo.request.promotion.PromotionDetailReq;
-import com.huoli.trip.common.vo.request.promotion.PromotionInvitationReq;
-import com.huoli.trip.common.vo.request.promotion.PromotionListReq;
+import com.huoli.trip.common.vo.request.promotion.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
@@ -205,4 +202,10 @@ public interface ProductService {
      */
     BaseResponse<String> tripPromotionCheckCoupon(CouponSendReq req);
 
+    /**
+     * 助力
+     * @param req
+     * @return
+     */
+    BaseResponse<String> acceptPromotionInvitation(AcceptPromotionInvitationReq req);
 }

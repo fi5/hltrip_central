@@ -25,8 +25,8 @@ public interface TripPromotionInvitationMapper {
 
 
 
-    @Insert("insert into trip_promotion_invitation (phone_id,promotion_id,assist_num,invite_num,valid_time,timer,status,create_time,update_time)" +
-            " values (#{phoneId},#{promotionId},#{assistNum},#{inviteNum},#{validTime},#{timer},#{status},#{createTime},#{updateTime})")
+    @Insert("insert into trip_promotion_invitation (phone_id,promotion_id,assist_num,invite_num,valid_time,timer,status,create_time,update_time,is_first)" +
+            " values (#{phoneId},#{promotionId},#{assistNum},#{inviteNum},#{validTime},#{timer},#{status},#{createTime},#{updateTime},#{isFirst})")
     @SelectKey(before = false, keyProperty = "id", resultType = Long.class, statement = "SELECT last_insert_id() as id", statementType = StatementType.STATEMENT)
     Long insert(TripPromotionInvitation tripPromotionInvitation);
 
@@ -36,12 +36,15 @@ public interface TripPromotionInvitationMapper {
     @Update("update trip_promotion_invitation set invite_num=#{newInviteNum},coupon_status=#{newCouponStatus} where id=#{id} and invite_num=#{inviteNum} and coupon_status=#{oldCouponStatus}")
     void updateInviteNumAndCouponStatus(long id, int newInviteNum, int inviteNum, int newCouponStatus, int oldCouponStatus);
 
-    @Update("update trip_promotion_invitation set coupon_status=#{newCouponStatus} where id=#{id} and coupon_status=#{oldCouponStatus}")
-    void updateCouponStatus(long id, int newCouponStatus, int oldCouponStatus);
+    @Update("update trip_promotion_invitation set coupon_status=#{newCouponStatus},is_first=#{newIsFirst} where id=#{id} and coupon_status=#{oldCouponStatus} and is_first=#{oldIsFirst}")
+    void updateCouponStatus(long id, int newCouponStatus, int oldCouponStatus, String newIsFirst, String oldIsFirst);
 
     @Select("select ifnull(count(1),0) from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId}")
     int countByPhoneIdAndId(String phoneId, long promotionId);
 
     @Select("select id from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId} order by create_time desc limit 1")
     long getIdByPhoneId(String phoneId, long promotionId);
+
+    @Update("update trip_promotion_invitation set is_first=#{newIsFirst} where id=#{id} and is_first=#{oldIsFirst}")
+    void updateIsFirst(long id, String newIsFirst, String oldIsFirst);
 }
