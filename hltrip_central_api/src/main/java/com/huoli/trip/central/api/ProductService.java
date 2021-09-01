@@ -1,5 +1,6 @@
 package com.huoli.trip.central.api;
 
+import com.huoli.trip.common.entity.TripPromotionInvitation;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.ImageBase;
@@ -208,4 +209,6 @@ public interface ProductService {
      * @return
      */
     BaseResponse<String> acceptPromotionInvitation(AcceptPromotionInvitationReq req);
+
+    void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation);
 }
