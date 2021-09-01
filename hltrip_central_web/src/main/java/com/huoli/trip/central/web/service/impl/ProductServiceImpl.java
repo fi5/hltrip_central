@@ -1999,7 +1999,14 @@ public class ProductServiceImpl implements ProductService {
             TripPromotion promotion = tripPromotionMapper.getById(invitation.getPromotionId(), 1);
             couponSendParam.setActiveflag(promotion.getActiveFlag());
             couponSendParam.setPhoneid(invitation.getPhoneId());
-            CouponSuccess couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+            log.info("couponSendParam:{}", JSONObject.toJSONString(couponSendParam));
+            CouponSuccess couponSuccess = new CouponSuccess();
+            try {
+                couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+            } catch (Exception e) {
+                log.error("发券异常:", e);
+                throw new RuntimeException("发券异常");
+            }
             log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
             if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
                 throw new RuntimeException("发券异常");
