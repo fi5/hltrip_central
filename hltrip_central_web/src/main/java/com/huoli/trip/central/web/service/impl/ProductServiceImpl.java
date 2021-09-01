@@ -166,9 +166,6 @@ public class ProductServiceImpl implements ProductService {
     @Reference(group = "${flight_dubbo_group}", timeout = 30000, check = false, retries = 3)
     CouponDeliveryService couponDeliveryService;
 
-    @Autowired
-    private ProductService productService;
-
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
@@ -1977,7 +1974,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Transactional
-    @Override
     public void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation) {
         TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
         accept.setInvitationId(invitation.getId());
@@ -2119,7 +2115,7 @@ public class ProductServiceImpl implements ProductService {
         }
         // 可以助力
         try {
-            productService.insertAcceptAndUpdateInvitation(req, invitation);
+            insertAcceptAndUpdateInvitation(req, invitation);
         } catch (Exception e) {
             return BaseResponse.withFail(CentralError.SEND_COUPON_FAIL);
         }

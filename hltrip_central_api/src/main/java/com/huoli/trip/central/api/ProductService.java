@@ -210,5 +210,4 @@ public interface ProductService {
      */
     BaseResponse<String> acceptPromotionInvitation(AcceptPromotionInvitationReq req);
 
-    void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation);
 }
