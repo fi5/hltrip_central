@@ -33,6 +33,7 @@ import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
+import com.huoli.trip.common.vo.request.HomeSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -40,7 +41,7 @@ import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.*;
-import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
+import com.huoli.trip.common.vo.response.recommend.*;
 import com.huoli.trip.common.vo.v2.BaseRefundRuleVO;
 import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
 import com.huoli.trip.data.api.DataService;
@@ -1790,5 +1791,30 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setTags(rb.getTags());
         recommendProduct.setSeq(rb.getSeq());
         return recommendProduct;
+    }
+
+    @Override
+    public BaseResponse<List<HomeRecommendTypeRes>> homeRecommendType() {
+        return null;
+    }
+
+    @Override
+    public BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend() {
+        return null;
+    }
+
+    @Override
+    public BaseResponse<List<HomeSearchRes>> homeSearchRecommend(HomeSearchReq req) {
+        return null;
+    }
+
+    @Override
+    public BaseResponse<List<ScenicSpotProductSearchRecommendRes>> scenicSpotProductSearchDefaultRecommend() {
+        return null;
+    }
+
+    @Override
+    public BaseResponse<List<ScenicSpotProductSearchRes>> scenicSpotProductSearchRecommend(HomeSearchReq req) {
+        return null;
     }
 }

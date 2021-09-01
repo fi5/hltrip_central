@@ -6,6 +6,7 @@ import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.RecommendProductV2;
+import com.huoli.trip.common.vo.request.HomeSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -15,7 +16,7 @@ import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
 import com.huoli.trip.common.vo.response.goods.HotelScenicListResult;
 import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
-import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
+import com.huoli.trip.common.vo.response.recommend.*;
 
 import java.util.List;
 
@@ -169,4 +170,40 @@ public interface ProductService {
      * @return
      */
     BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req);
+
+    /**
+     * 首页搜索推荐类型标签字典
+     *
+     * @return
+     */
+    BaseResponse<List<HomeRecommendTypeRes>> homeRecommendType();
+
+    /**
+     * 首页搜索默认推荐
+     *
+     * @return
+     */
+    BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend();
+
+    /**
+     * 首页搜索推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<HomeSearchRes>> homeSearchRecommend(HomeSearchReq req);
+
+    /**
+     * 门票搜索默认推荐
+     *
+     * @return
+     */
+    BaseResponse<List<ScenicSpotProductSearchRecommendRes>> scenicSpotProductSearchDefaultRecommend();
+
+    /**
+     * 门票搜索推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<ScenicSpotProductSearchRes>> scenicSpotProductSearchRecommend(HomeSearchReq req);
+
 }
