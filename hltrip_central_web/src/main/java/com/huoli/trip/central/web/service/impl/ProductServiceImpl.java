@@ -163,7 +163,7 @@ public class ProductServiceImpl implements ProductService {
     @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
     DataService dataService;
 
-    @Reference(group = "${flight_dubbo_group}", timeout = 30000, check = false, retries = 3)
+    @Reference(group = "${flight-dubbo-qa}", timeout = 30000, check = false, retries = 3)
     CouponDeliveryService couponDeliveryService;
 
     @Override
