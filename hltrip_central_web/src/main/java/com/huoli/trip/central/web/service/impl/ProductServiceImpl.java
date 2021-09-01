@@ -313,6 +313,15 @@ public class ProductServiceImpl implements ProductService {
         if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
         }
+        if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
+            List<ScenicSpotMPO> scenicSpotMPOs =  scenicSpotDao.queryScenicSpotByPoint(Double.parseDouble(req.getLongitude()),Double.parseDouble(req.getLatitude()));
+            log.info("scenicSpotMPOs = {}",scenicSpotMPOs);
+            if (!CollectionUtils.isEmpty(scenicSpotMPOs)){
+                List<String> scenicSpotIds = scenicSpotMPOs.stream().map(ScenicSpotMPO::getId).collect(Collectors.toList());
+                log.info("scenicSpotIds = {}" ,scenicSpotIds);
+                req.setScenicSpotIds(scenicSpotIds);
+            }
+        }
         List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo);
         int count = productDao.getScenicTicketTotal(req, channelInfo);
         ScenicTicketListResult result=new ScenicTicketListResult();
