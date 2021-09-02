@@ -81,7 +81,7 @@ public class BtgOrderManager extends OrderManager {
         ubrContact.setName(req.getCname());
         ubrContact.setTelephone(req.getMobile());
         orderRequest.setContact(ubrContact);
-        ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId());
+        ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
         UBRTicketEntity ticketEntity = new UBRTicketEntity();
         ticketEntity.setCode(scenicSpotProductMPO.getSupplierProductId());
         ticketEntity.setDatetime(String.format("%sT08:00:00", DateTimeUtil.formatDate(DateTimeUtil.trancateToDate(DateTimeUtil.parseDate(req.getBeginDate())))));
