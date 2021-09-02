@@ -2015,7 +2015,7 @@ public class ProductServiceImpl implements ProductService {
                 throw new RuntimeException("发券异常");
             }
             // 更新领券状态
-            tripPromotionInvitationMapper.updateCouponStatus(invitation.getId(), 2, 1, "1", "0");
+            tripPromotionInvitationMapper.updateCouponStatus(invitation.getId(), 2, 1, "1", "0", 1, 0);
         }
     }
 

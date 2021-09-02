@@ -36,8 +36,8 @@ public interface TripPromotionInvitationMapper {
     @Update("update trip_promotion_invitation set invite_num=#{newInviteNum},coupon_status=#{newCouponStatus} where id=#{id} and invite_num=#{inviteNum} and coupon_status=#{oldCouponStatus}")
     void updateInviteNumAndCouponStatus(long id, int newInviteNum, int inviteNum, int newCouponStatus, int oldCouponStatus);
 
-    @Update("update trip_promotion_invitation set coupon_status=#{newCouponStatus},is_first=#{newIsFirst} where id=#{id} and coupon_status=#{oldCouponStatus} and is_first=#{oldIsFirst}")
-    void updateCouponStatus(long id, int newCouponStatus, int oldCouponStatus, String newIsFirst, String oldIsFirst);
+    @Update("update trip_promotion_invitation set coupon_status=#{newCouponStatus},is_first=#{newIsFirst},status=#{newStatus} where id=#{id} and coupon_status=#{oldCouponStatus} and is_first=#{oldIsFirst} and status=#{oldStatus}")
+    void updateCouponStatus(long id, int newCouponStatus, int oldCouponStatus, String newIsFirst, String oldIsFirst, int newStatus, int oldStatus);
 
     @Select("select ifnull(count(1),0) from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId}")
     int countByPhoneIdAndId(String phoneId, long promotionId);
