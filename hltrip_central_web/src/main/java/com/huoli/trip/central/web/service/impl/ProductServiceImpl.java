@@ -2011,7 +2011,7 @@ public class ProductServiceImpl implements ProductService {
                 throw new RuntimeException("发券异常");
             }
             log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
-            if (couponSuccess == null || !couponSuccess.getMessage().equals("success")) {
+            if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
                 throw new RuntimeException("发券异常");
             }
             // 更新领券状态
