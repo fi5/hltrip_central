@@ -1973,7 +1973,7 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
-    @Transactional
+//    @Transactional
     public void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation) {
         TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
         accept.setInvitationId(invitation.getId());
@@ -1986,6 +1986,8 @@ public class ProductServiceImpl implements ProductService {
         int inviteNum = invitation.getInviteNum();
         int assistNum = invitation.getAssistNum();
         int newInviteNum = inviteNum + 1;
+        log.info("newInviteNum:{}", newInviteNum);
+        log.info("assistNum:{}", assistNum);
         if (newInviteNum != assistNum) {// 更新数量
             tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), newInviteNum, inviteNum);
         } else {// 更新数量和领券状态
@@ -1993,10 +1995,12 @@ public class ProductServiceImpl implements ProductService {
         }
         // 如果达到助力人数则发券
         Integer newDbInviteNum = tripPromotionInvitationMapper.getInviteNumById(invitation.getId());
+        log.info("newDbInviteNum:{}", newDbInviteNum);
         if (newDbInviteNum == assistNum) {
             CouponSendParam couponSendParam = new CouponSendParam();
             TripPromotion promotion = tripPromotionMapper.getById(invitation.getPromotionId(), 1);
             couponSendParam.setActiveflag(promotion.getActiveFlag());
+            log.info("getPhoneId:{}", invitation.getPhoneId());
             couponSendParam.setPhoneid(invitation.getPhoneId());
             log.info("couponSendParam:{}", JSONObject.toJSONString(couponSendParam));
             CouponSuccess couponSuccess = new CouponSuccess();
@@ -2007,7 +2011,7 @@ public class ProductServiceImpl implements ProductService {
                 throw new RuntimeException("发券异常");
             }
             log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
-            if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
+            if (couponSuccess == null || !couponSuccess.getMessage().equals("success")) {
                 throw new RuntimeException("发券异常");
             }
             // 更新领券状态
