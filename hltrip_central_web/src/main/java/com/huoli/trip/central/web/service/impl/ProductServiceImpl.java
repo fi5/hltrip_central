@@ -1849,8 +1849,9 @@ public class ProductServiceImpl implements ProductService {
         }
         String phoneId = request.getPhoneId();
         // 游客
-        if (StringUtils.isEmpty(phoneId)) {
+        if (StringUtils.isEmpty(phoneId) || phoneId.equals("0")) {
             result.setSurplus(result.getAssistNum());
+            result.setStatus("5");
             result.setRole(0);
             return BaseResponse.withSuccess(result);
         }
@@ -1939,6 +1940,12 @@ public class ProductServiceImpl implements ProductService {
         int inviteNum = invitation.getInviteNum();
         int assistNum = invitation.getAssistNum();
         result.setRole(2);
+        // 成功助力了
+        TripPromotionInvitationAccept invitationAccept = tripPromotionInvitationAcceptMapper.getByInvitationIdAndPhoneId(invitation.getId(), phoneId);
+        if (invitationAccept != null) {
+            result.setStatus("0");
+            return BaseResponse.withSuccess(result);
+        }
         // 发起人已成功赢取优惠
         if (Objects.equals(inviteNum, assistNum)) {
             result.setStatus("2");
@@ -1959,17 +1966,8 @@ public class ProductServiceImpl implements ProductService {
             result.setStatus("3");
             return BaseResponse.withSuccess(result);
         }
-        // 是否已经助力
-        TripPromotionInvitationAccept invitationAccept = tripPromotionInvitationAcceptMapper.getByInvitationIdAndPhoneId(invitation.getId(), phoneId);
-        if (invitationAccept != null) {
-            result.setStatus("4");
-        }
-        if (invitationAccept == null && isDetail) {
-            result.setStatus("5");
-        }
-        if (invitationAccept == null && !isDetail) {
-            result.setStatus("0");
-        }
+        // 未助力
+        result.setStatus("5");
         return BaseResponse.withSuccess(result);
     }
 
@@ -2113,7 +2111,7 @@ public class ProductServiceImpl implements ProductService {
         String data = JSONObject.toJSONString(baseResponse.getData());
         PromotionDetailResult result1 = JSONObject.toJavaObject(JSONObject.parseObject(data), PromotionDetailResult.class);
         // 不能助力
-        if (!baseResponse.isSuccess() || !result1.getStatus().equals("0")) {
+        if (!baseResponse.isSuccess() || !result1.getStatus().equals("5")) {
             return baseResponse;
         }
         // 可以助力
