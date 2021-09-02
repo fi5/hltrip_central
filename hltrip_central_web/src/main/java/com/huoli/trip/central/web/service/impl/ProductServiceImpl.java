@@ -2021,6 +2021,9 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse tripPromotionInvitation(PromotionInvitationReq request) {
         Long invitationId = 0L;
         String phoneId = request.getPhoneId();
+        if (StringUtils.isEmpty(phoneId) || phoneId.equals("0")) {
+            return BaseResponse.withFail(CentralError.NO_LOGIN);
+        }
         long promotionId = request.getPromotionId();
         List<TripPromotionInvitation> tripPromotionInvitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(phoneId, promotionId);
         TripPromotion promotion = tripPromotionMapper.getById(promotionId, 1);
