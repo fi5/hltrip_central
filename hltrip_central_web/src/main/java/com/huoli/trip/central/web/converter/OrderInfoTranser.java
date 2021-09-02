@@ -211,6 +211,38 @@ public class OrderInfoTranser {
 					rtnStatus = Integer.parseInt(orderStatus);
 					break;
 			}
+		} else if (type == 6) {
+			// btg
+			switch (orderStatus) {
+				// 处理中
+				case "PROCESS":
+					rtnStatus = OrderStatus.TO_BE_CONFIRMED.getCode();
+					break;
+				// 正常
+				case "NORMAL":
+					rtnStatus = OrderStatus.WAITING_TO_TRAVEL.getCode();
+					break;
+				// 已退款
+				case "REFUND":
+					rtnStatus = OrderStatus.REFUNDED.getCode();
+					break;
+				// 退款处理中
+				case "REFUND_PROCESS":
+					rtnStatus = OrderStatus.APPLYING_FOR_REFUND.getCode();
+					break;
+				// 取消
+				case "CANCEL":
+					rtnStatus = OrderStatus.REFUNDED.getCode();
+					break;
+				// 预定失败
+				case "BUY_FILED":
+					rtnStatus = OrderStatus.REFUNDED.getCode();
+					break;
+				// 已完成
+				case "COMPLETED":
+					rtnStatus = OrderStatus.CONSUMED.getCode();
+					break;
+			}
 		}
 		return rtnStatus;
 	}

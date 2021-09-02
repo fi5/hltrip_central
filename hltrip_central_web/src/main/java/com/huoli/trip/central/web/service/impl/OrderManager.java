@@ -1,11 +1,11 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.CenterRefundCheckRequest;
 import com.huoli.trip.common.vo.request.central.ProductPriceReq;
 import com.huoli.trip.common.vo.response.BaseResponse;
-import com.huoli.trip.common.vo.response.central.ProductPriceDetialResult;
+import com.huoli.trip.common.vo.response.central.CenterRefundCheckResult;
 import com.huoli.trip.common.vo.response.order.*;
-import com.huoli.trip.supplier.self.yaochufa.vo.YcfGetPriceRequest;
 
 /**
  * 描述：desc<br>
@@ -86,6 +86,15 @@ public abstract class OrderManager {
      */
     public void syncPriceV2(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
         return;
+    }
+
+    /**
+     * 退款检查
+     * @param request
+     * @return
+     */
+    BaseResponse<CenterRefundCheckResult> refundCheck(CenterRefundCheckRequest request){
+        return null;
     }
 
 }
