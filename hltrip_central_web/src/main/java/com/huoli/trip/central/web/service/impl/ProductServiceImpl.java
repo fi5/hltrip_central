@@ -1995,7 +1995,6 @@ public class ProductServiceImpl implements ProductService {
         Integer newDbInviteNum = tripPromotionInvitationMapper.getInviteNumById(invitation.getId());
         if (newDbInviteNum == assistNum) {
             CouponSendParam couponSendParam = new CouponSendParam();
-            couponSendParam.setCouponid(String.valueOf(invitation.getPromotionId()));
             TripPromotion promotion = tripPromotionMapper.getById(invitation.getPromotionId(), 1);
             couponSendParam.setActiveflag(promotion.getActiveFlag());
             couponSendParam.setPhoneid(invitation.getPhoneId());
