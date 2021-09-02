@@ -8,6 +8,8 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
+import com.huoli.trip.central.web.mapper.HomeRecommendConfigMapper;
+import com.huoli.trip.central.web.mapper.HomeRecommendTypeConfigMapper;
 import com.huoli.trip.central.web.mapper.PassengerTemplateMapper;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
@@ -143,6 +145,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
     DataService dataService;
+
+    @Autowired
+    private HomeRecommendTypeConfigMapper homeRecommendTypeConfigMapper;
+
+    @Autowired
+    private HomeRecommendConfigMapper homeRecommendConfigMapper;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -1795,7 +1803,11 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<List<HomeRecommendTypeRes>> homeRecommendType() {
-        return null;
+        List<HomeRecommendTypeRes> list = homeRecommendTypeConfigMapper.list(0);
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        return BaseResponse.withSuccess(list);
     }
 
     @Override
