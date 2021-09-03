@@ -1,5 +1,6 @@
 package com.huoli.trip.central.api;
 
+import com.huoli.trip.common.entity.TripPromotionInvitation;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.ImageBase;
@@ -10,11 +11,14 @@ import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
 import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
+import com.huoli.trip.common.vo.request.promotion.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
 import com.huoli.trip.common.vo.response.goods.HotelScenicListResult;
 import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
+import com.huoli.trip.common.vo.response.promotion.PromotionDetailResult;
+import com.huoli.trip.common.vo.response.promotion.PromotionListResult;
 import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 
 import java.util.List;
@@ -169,4 +173,41 @@ public interface ProductService {
      * @return
      */
     BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req);
+
+
+    /**
+     * 助力折扣列表
+     * @param request
+     * @return
+     */
+    BaseResponse<List<PromotionListResult>> tripPromotionList(PromotionListReq request);
+
+    /**
+     * 助力折扣详情
+     * @param request
+     * @return
+     */
+    BaseResponse<PromotionDetailResult> tripPromotionDetail(PromotionDetailReq request);
+
+    /**
+     * 发起助力折扣邀请
+     * @param request
+     * @return
+     */
+    BaseResponse<String> tripPromotionInvitation(PromotionInvitationReq request);
+
+    /**
+     * 检查优惠券是否可以发放
+     * @param req
+     * @return
+     */
+    BaseResponse<String> tripPromotionCheckCoupon(CouponSendReq req);
+
+    /**
+     * 助力
+     * @param req
+     * @return
+     */
+    BaseResponse<String> acceptPromotionInvitation(AcceptPromotionInvitationReq req);
+
 }
