@@ -2,6 +2,7 @@ package com.huoli.trip.central.web.dao.impl;
 
 
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.*;
 import lombok.extern.slf4j.Slf4j;
@@ -185,6 +186,21 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         criteria.and("scenicSpotProduct.id").is(productId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, ScenicSpotProductBackupMPO.class);
+    }
+
+    @Override
+    public List<ScenicSpotMPO> queryByKeyword(String keyword, int count) {
+        Query query = new Query();
+        Criteria criteria = new Criteria();
+        if (CentralUtils.isChinese(keyword.charAt(0))) {
+            query = new Query(Criteria.where("name").regex(keyword));
+        } else {
+            query = new Query(Criteria.where("pinyin").regex(keyword));
+        }
+        criteria.and("del").is(0);
+        query.fields().include("_id").include("name");
+        query.limit(count);
+        return mongoTemplate.find(query, ScenicSpotMPO.class);
     }
 
 

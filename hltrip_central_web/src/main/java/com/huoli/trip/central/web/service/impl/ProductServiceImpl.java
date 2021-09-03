@@ -1829,4 +1829,18 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse<List<ScenicSpotProductSearchRes>> scenicSpotProductSearchRecommend(HomeSearchReq req) {
         return null;
     }
+
+    /**
+     * 模糊搜索景点
+     * @param keyword
+     * @param count
+     * @return
+     */
+    private List<ScenicSpotMPO> getByKeyword(String keyword, int count) {
+        List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count);
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        return list;
+    }
 }
