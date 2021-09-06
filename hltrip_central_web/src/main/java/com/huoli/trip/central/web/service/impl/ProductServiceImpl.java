@@ -1854,6 +1854,7 @@ public class ProductServiceImpl implements ProductService {
 //                        result.setStatus(2);
 //                    }
                     TripPromotionInvitation invitation = tripPromotionInvitationMapper.getOneByPhoneIdPromotionId(request.getPhoneId(), result.getPromotionId());
+                    result.setInvitationId(String.valueOf(invitation.getId()));
                     long hourDiff = DateTimeUtil.dateDiff(invitation.getTimer(), System.currentTimeMillis());
                     //TODO result.getValidTime()
                     if (hourDiff >= 0.1) {
