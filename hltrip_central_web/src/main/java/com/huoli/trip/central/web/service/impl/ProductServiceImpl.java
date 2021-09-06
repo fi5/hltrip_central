@@ -1855,7 +1855,8 @@ public class ProductServiceImpl implements ProductService {
 //                    }
                     TripPromotionInvitation invitation = tripPromotionInvitationMapper.getOneByPhoneIdPromotionId(request.getPhoneId(), result.getPromotionId());
                     long hourDiff = DateTimeUtil.dateDiff(invitation.getTimer(), System.currentTimeMillis());
-                    if (hourDiff >= result.getValidTime()) {
+                    //TODO result.getValidTime()
+                    if (hourDiff >= 0.1) {
                         if (invitation.getInviteNum() == invitation.getAssistNum()) {
                             result.setStatus(2);
                         } else {
@@ -1932,7 +1933,8 @@ public class ProductServiceImpl implements ProductService {
                 // 判断是否超时
                 long hourDiff = DateTimeUtil.dateDiff(tripPromotionInvitation.getTimer(), System.currentTimeMillis());
                 // 超时
-                if (hourDiff >= tripPromotionInvitation.getValidTime()) {
+                //TODO tripPromotionInvitation.getValidTime()
+                if (hourDiff >= 0.1) {
                     if (inviteNum == assistNum) {
                         result.setTimeStatus("1");
                     } else {
@@ -1993,7 +1995,8 @@ public class ProductServiceImpl implements ProductService {
         }
         // 超时
         long hourDiff = DateTimeUtil.dateDiff(invitation.getTimer(), System.currentTimeMillis());
-        if (hourDiff >= invitation.getValidTime()) {
+        //TODO invitation.getValidTime()
+        if (hourDiff >= 0.1) {
             result.setStatus("1");
             return BaseResponse.withSuccess(result);
         }
@@ -2097,7 +2100,8 @@ public class ProductServiceImpl implements ProductService {
             long currentTimeMillis = System.currentTimeMillis();
             long hourDiff = DateTimeUtil.dateDiff(timer, currentTimeMillis);
             // 如果超过规定小时数则新建TripPromotionInvitation
-            if (hourDiff >= promotion.getValidTime()) {
+            //TODO promotion.getValidTime()
+            if (hourDiff >= 0.1) {
                 tripPromotionInvitation = new TripPromotionInvitation();
                 tripPromotionInvitation.setPromotionId(promotionId);
                 tripPromotionInvitation.setStatus(0);
