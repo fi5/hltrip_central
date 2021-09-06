@@ -39,4 +39,21 @@ public class CityDaoImpl implements CityDao{
 		List<CityPO> citys = mongoTemplate.find(query, CityPO.class);
 		return  citys;
 	}
+
+	@Override
+	public List<CityPO> queryCitys(String keyWord, int limit) {
+		Query query = new Query();
+		if(StringUtils.isNotBlank(keyWord)){
+			if(CentralUtils.isChinese(keyWord.charAt(0))){
+				query=new Query(Criteria.where("cityName").regex(keyWord));
+			}else{
+				Criteria criteria = new Criteria();
+				criteria.orOperator(Criteria.where("pinyin").regex(keyWord),Criteria.where("jianpin").regex(keyWord),Criteria.where("code").regex(keyWord));
+				query.addCriteria(criteria);
+			}
+		}
+		query.limit(limit);
+		List<CityPO> citys = mongoTemplate.find(query, CityPO.class);
+		return  citys;
+	}
 }

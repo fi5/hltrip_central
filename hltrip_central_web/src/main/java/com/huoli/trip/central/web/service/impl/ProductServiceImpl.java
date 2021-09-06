@@ -8,9 +8,7 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
-import com.huoli.trip.central.web.mapper.HomeRecommendConfigMapper;
-import com.huoli.trip.central.web.mapper.HomeRecommendTypeConfigMapper;
-import com.huoli.trip.central.web.mapper.PassengerTemplateMapper;
+import com.huoli.trip.central.web.mapper.*;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
@@ -36,6 +34,7 @@ import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
 import com.huoli.trip.common.vo.request.HomeSearchReq;
+import com.huoli.trip.common.vo.request.TicketSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -151,6 +150,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private HomeRecommendConfigMapper homeRecommendConfigMapper;
+
+    @Autowired
+    private CityDao cityDao;
+
+    @Autowired
+    private TicketRecommendTypeConfigMapper ticketRecommendTypeConfigMapper;
+
+    @Autowired
+    private TicketRecommendConfigMapper ticketRecommendConfigMapper;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -1812,22 +1820,129 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend() {
-        return null;
+        List<HomeRecommendTypeRes> typeList = homeRecommendTypeConfigMapper.list(0);
+        if (typeList == null) {
+            typeList = Collections.emptyList();
+        }
+        List<HomeRecommendConfig> list = homeRecommendConfigMapper.list(0);
+        Map<Integer, List<HomeRecommendConfig>> recommendGroupMap
+                = list.stream().collect(Collectors.groupingBy(HomeRecommendConfig::getTypeId));
+        List<HomeRecommendRes> result = new ArrayList<>();
+        for (Map.Entry entry : recommendGroupMap.entrySet()) {
+            Integer type = (Integer) entry.getKey();
+            List<HomeRecommendConfig> configs = (List<HomeRecommendConfig>) entry.getValue();
+            List<HomeRecommendRes.Recommendation> recommendationList = new ArrayList<>();
+            HomeRecommendRes homeRecommendRes = new HomeRecommendRes();
+            homeRecommendRes.setType(type);
+            switch (type) {
+                // 景点
+                case 1:
+                    for (HomeRecommendConfig config : configs) {
+                        HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
+                        recommendation.setContent(config.getName());
+                        recommendationList.add(recommendation);
+                    }
+                    break;
+                // 目的地
+                case 2:
+                    for (HomeRecommendConfig config : configs) {
+                        HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
+                        recommendation.setContent(config.getName());
+                        List<CityPO> cityPOS = cityDao.queryCitys(config.getName());
+                        recommendation.setCityCode(cityPOS.get(0).getCode());
+                        recommendation.setCity(cityPOS.get(0).getCityName());
+                        recommendationList.add(recommendation);
+                    }
+                    break;
+            }
+            result.add(homeRecommendRes);
+        }
+        return BaseResponse.withSuccess(result);
     }
 
     @Override
     public BaseResponse<List<HomeSearchRes>> homeSearchRecommend(HomeSearchReq req) {
-        return null;
+        List<HomeSearchRes> result = new ArrayList<>();
+        List<CityPO> cityPOS = cityDao.queryCitys(req.getKeyword(), 5);
+        for (CityPO cityPO : cityPOS) {
+            HomeSearchRes homeSearchRes = new HomeSearchRes();
+            homeSearchRes.setCity(cityPO.getCityName());
+            homeSearchRes.setCityCode(cityPO.getCityName());
+            homeSearchRes.setContent(cityPO.getCityName());
+            homeSearchRes.setTypeName("0");
+            result.add(homeSearchRes);
+        }
+        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(req.getKeyword(), 5);
+        for (ScenicSpotMPO mpo : scenicSpotMPOS) {
+            HomeSearchRes homeSearchRes = new HomeSearchRes();
+            homeSearchRes.setContent(mpo.getName());
+            homeSearchRes.setScenicSpotId(mpo.getId());
+            homeSearchRes.setTypeName("1");
+            result.add(homeSearchRes);
+        }
+        return BaseResponse.withSuccess(result);
     }
 
     @Override
-    public BaseResponse<List<ScenicSpotProductSearchRecommendRes>> scenicSpotProductSearchDefaultRecommend() {
-        return null;
+    public BaseResponse<List<ScenicSpotProductSearchRecommendRes>> scenicSpotProductSearchDefaultRecommend(TicketSearchReq req) {
+        List<TicketRecommendConfig> list = ticketRecommendConfigMapper.list(0);
+        Map<Integer, List<TicketRecommendConfig>> recommendGroup
+                = list.stream().collect(Collectors.groupingBy(TicketRecommendConfig::getTypeId));
+        List<ScenicSpotProductSearchRecommendRes> result = new ArrayList<>();
+        for (Map.Entry entry : recommendGroup.entrySet()) {
+            Integer type = (Integer) entry.getKey();
+            ScenicSpotProductSearchRecommendRes recommendRes = new ScenicSpotProductSearchRecommendRes();
+            List<HomeRecommendRes.Recommendation> recommendations = new ArrayList<>();
+            recommendRes.setType(String.valueOf(type));
+            List<TicketRecommendConfig> configs = (List<TicketRecommendConfig>) entry.getValue();
+            for (TicketRecommendConfig config : configs) {
+                HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
+                List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(config.getName(), 1);
+                recommendation.setScenicSpotId(scenicSpotMPOS.get(0).getId());
+                recommendation.setContent(scenicSpotMPOS.get(0).getName());
+                recommendations.add(recommendation);
+            }
+            result.add(recommendRes);
+        }
+        return BaseResponse.withSuccess(result);
     }
 
     @Override
     public BaseResponse<List<ScenicSpotProductSearchRes>> scenicSpotProductSearchRecommend(HomeSearchReq req) {
-        return null;
+        List<ScenicSpotProductSearchRes> result = new ArrayList<>();
+        String keyword = req.getKeyword();
+        List<CityPO> cityPOS = cityDao.queryCitys(keyword);
+        boolean cityFullMatch = false;
+        List<CityPO> collect = cityPOS.stream().filter(s -> s.getCityName().equals(keyword)).collect(Collectors.toList());
+        if (ListUtils.isNotEmpty(collect)) {
+            cityFullMatch = true;
+            ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
+            CityPO cityPO = collect.get(0);
+            res.setCity(cityPO.getCityName());
+            res.setCityCode(cityPO.getCode());
+            res.setContent(cityPO.getCityName());
+            res.setTypeName("0");
+            result.add(res);
+        }
+        List<ScenicSpotMPO> list = getByKeyword(keyword, 10);
+        for (ScenicSpotMPO mpo : list) {
+            ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
+            res.setContent(mpo.getName());
+            res.setScenicSpotId(mpo.getId());
+            res.setTypeName("1");
+            result.add(res);
+        }
+        if (!cityFullMatch) {
+            for (CityPO cityPO : cityPOS) {
+                ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
+                res.setCity(cityPO.getCityName());
+                res.setCityCode(cityPO.getCode());
+                res.setContent(cityPO.getCityName());
+                res.setTypeName("0");
+                result.add(res);
+            }
+        }
+        return BaseResponse.withSuccess(result);
     }
 
     /**

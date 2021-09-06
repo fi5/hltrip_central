@@ -7,6 +7,7 @@ import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.Product;
 import com.huoli.trip.common.vo.RecommendProductV2;
 import com.huoli.trip.common.vo.request.HomeSearchReq;
+import com.huoli.trip.common.vo.request.TicketSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -197,7 +198,7 @@ public interface ProductService {
      *
      * @return
      */
-    BaseResponse<List<ScenicSpotProductSearchRecommendRes>> scenicSpotProductSearchDefaultRecommend();
+    BaseResponse<List<ScenicSpotProductSearchRecommendRes>> scenicSpotProductSearchDefaultRecommend(TicketSearchReq req);
 
     /**
      * 门票搜索推荐

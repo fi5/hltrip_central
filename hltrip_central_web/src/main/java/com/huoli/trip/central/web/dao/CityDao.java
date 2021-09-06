@@ -11,4 +11,6 @@ import java.util.List;
  **/
 public interface CityDao {
 	List<CityPO> queryCitys(String keyWord);
+
+	List<CityPO> queryCitys(String keyWord, int limit);
 }

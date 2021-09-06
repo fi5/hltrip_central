@@ -192,11 +192,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     public List<ScenicSpotMPO> queryByKeyword(String keyword, int count) {
         Query query = new Query();
         Criteria criteria = new Criteria();
-        if (CentralUtils.isChinese(keyword.charAt(0))) {
-            query = new Query(Criteria.where("name").regex(keyword));
-        } else {
-            query = new Query(Criteria.where("pinyin").regex(keyword));
-        }
+        query = new Query(Criteria.where("name").regex(keyword));
         criteria.and("del").is(0);
         query.fields().include("_id").include("name");
         query.limit(count);
