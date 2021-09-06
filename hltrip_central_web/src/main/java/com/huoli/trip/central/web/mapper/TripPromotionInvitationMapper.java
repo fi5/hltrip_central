@@ -50,4 +50,10 @@ public interface TripPromotionInvitationMapper {
 
     @Update("update trip_promotion_invitation set is_first=#{newIsFirst} where id=#{id} and is_first=#{oldIsFirst}")
     void updateIsFirst(long id, String newIsFirst, String oldIsFirst);
+
+    @Update("update trip_promotion_invitation set status=#{status} where id=#{id}")
+    void updateStatus(long id, int status);
+
+    @Select("select * from trip_promotion_invitation where phone_id=#{phoneId} and promotion_id=#{promotionId} order by create_time desc limit 1")
+    TripPromotionInvitation getOneByPhoneIdPromotionId(String phoneId, long promotionId);
 }
