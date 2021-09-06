@@ -1844,14 +1844,29 @@ public class ProductServiceImpl implements ProductService {
             if (StringUtils.isNotEmpty(request.getPhoneId())) {
                 int count = tripPromotionInvitationMapper.countByPhoneIdAndId(request.getPhoneId(), result.getPromotionId());
                 if (count > 0) {
-                    long timer = System.currentTimeMillis() - (long) result.getValidTime() * 60 * 60 * 1000;
-                    int num = tripPromotionInvitationMapper.countByPhoneIdAndIdAndTime(request.getPhoneId(), result.getPromotionId(), timer);
-                    if (num > 0) {
-                        long id = tripPromotionInvitationMapper.getIdByPhoneId(request.getPhoneId(), result.getPromotionId());
-                        result.setInvitationId(String.valueOf(id));
-                        result.setStatus(1);
+//                    long timer = System.currentTimeMillis() - (long) result.getValidTime() * 60 * 60 * 1000;
+//                    int num = tripPromotionInvitationMapper.countByPhoneIdAndIdAndTime(request.getPhoneId(), result.getPromotionId(), timer);
+//                    long id = tripPromotionInvitationMapper.getIdByPhoneId(request.getPhoneId(), result.getPromotionId());
+//                    result.setInvitationId(String.valueOf(id));
+//                    if (num > 0) {
+//                        result.setStatus(1);
+//                    } else {
+//                        result.setStatus(2);
+//                    }
+                    TripPromotionInvitation invitation = tripPromotionInvitationMapper.getOneByPhoneIdPromotionId(request.getPhoneId(), result.getPromotionId());
+                    long hourDiff = DateTimeUtil.dateDiff(invitation.getTimer(), System.currentTimeMillis());
+                    if (hourDiff >= result.getValidTime()) {
+                        if (invitation.getInviteNum() == invitation.getAssistNum()) {
+                            result.setStatus(2);
+                        } else {
+                            result.setStatus(3);
+                        }
                     } else {
-                        result.setStatus(2);
+                        if (invitation.getInviteNum() == invitation.getAssistNum()) {
+                            result.setStatus(2);
+                        } else {
+                            result.setStatus(1);
+                        }
                     }
                 } else {
                     result.setStatus(0);
@@ -1897,14 +1912,6 @@ public class ProductServiceImpl implements ProductService {
             if (ListUtils.isNotEmpty(tripPromotionInvitations)) {
                 // 获取最新的
                 TripPromotionInvitation tripPromotionInvitation = tripPromotionInvitations.get(0);
-                // 判断是否超时
-                long hourDiff = DateTimeUtil.dateDiff(tripPromotionInvitation.getTimer(), System.currentTimeMillis());
-                // 超时
-                if (hourDiff >= tripPromotionInvitation.getValidTime()) {
-                    result.setTimeStatus("1");
-                    return BaseResponse.withSuccess(result);
-                }
-                result.setTimeStatus("0");
                 int inviteNum = tripPromotionInvitation.getInviteNum();
                 int assistNum = tripPromotionInvitation.getAssistNum();
                 if (inviteNum != 0) {
@@ -1921,6 +1928,19 @@ public class ProductServiceImpl implements ProductService {
                     tripPromotionInvitationMapper.updateIsFirst(tripPromotionInvitation.getId(), "2", "1");
                 } else if (couponStatus == 2 && isFirst.equals("2")) {
                     result.setIsFirst("2");
+                }
+                // 判断是否超时
+                long hourDiff = DateTimeUtil.dateDiff(tripPromotionInvitation.getTimer(), System.currentTimeMillis());
+                // 超时
+                if (hourDiff >= tripPromotionInvitation.getValidTime()) {
+                    if (inviteNum == assistNum) {
+                        result.setTimeStatus("1");
+                    } else {
+                        result.setTimeStatus("2");
+                        tripPromotionInvitationMapper.updateStatus(tripPromotionInvitation.getId(), 2);
+                    }
+                } else {
+                    result.setTimeStatus("0");
                 }
             } else {
                 TripPromotionInvitation tripPromotionInvitation = new TripPromotionInvitation();
