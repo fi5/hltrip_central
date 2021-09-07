@@ -1832,7 +1832,7 @@ public class ProductServiceImpl implements ProductService {
         List<CityPO> cityPOS = cityDao.queryCitys(req.getKeyword(), 5);
         for (CityPO cityPO : cityPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
-            homeSearchRes.setCity(cityPO.getCityName());
+            homeSearchRes.setCityName(cityPO.getCityName());
             homeSearchRes.setCityCode(cityPO.getCode());
             homeSearchRes.setContent(cityPO.getCityName());
             homeSearchRes.setType(1);
@@ -1887,7 +1887,7 @@ public class ProductServiceImpl implements ProductService {
             cityFullMatch = true;
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
             CityPO cityPO = collect.get(0);
-            res.setCity(cityPO.getCityName());
+            res.setCityName(cityPO.getCityName());
             res.setCityCode(cityPO.getCode());
             res.setContent(cityPO.getCityName());
             res.setType(1);
@@ -1905,7 +1905,7 @@ public class ProductServiceImpl implements ProductService {
         if (!cityFullMatch) {
             for (CityPO cityPO : cityPOS) {
                 ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
-                res.setCity(cityPO.getCityName());
+                res.setCityName(cityPO.getCityName());
                 res.setCityCode(cityPO.getCode());
                 res.setContent(cityPO.getCityName());
                 res.setType(1);
