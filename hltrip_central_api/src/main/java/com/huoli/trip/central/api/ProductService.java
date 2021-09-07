@@ -173,18 +173,11 @@ public interface ProductService {
     BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req);
 
     /**
-     * 首页搜索推荐类型标签字典
-     *
-     * @return
-     */
-    BaseResponse<List<HomeRecommendTypeRes>> homeRecommendType();
-
-    /**
      * 首页搜索默认推荐
      *
      * @return
      */
-    BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend();
+    BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend(String traceId);
 
     /**
      * 首页搜索推荐
