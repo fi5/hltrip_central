@@ -5,6 +5,7 @@ import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.vo.request.GroupTourSearchReq;
 import com.huoli.trip.common.vo.request.HomeSearchReq;
 import com.huoli.trip.common.vo.request.TicketSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
@@ -198,5 +199,26 @@ public interface ProductService {
      * @return
      */
     BaseResponse<List<ScenicSpotProductSearchRes>> scenicSpotProductSearchRecommend(HomeSearchReq req);
+
+    /**
+     * 跟团游搜索推荐左侧标题
+     * @param traceId
+     * @return
+     */
+    BaseResponse<List<String>> groupTourSearchRecommendAddress(String traceId);
+
+    /**
+     * 跟团游搜索默认推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<GroupTourRecommendRes>> groupTourSearchDefaultRecommend(GroupTourSearchReq req);
+
+    /**
+     * 跟团游搜索推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<HomeSearchRes>> groupTourSearchRecommend(HomeSearchReq req);
 
 }

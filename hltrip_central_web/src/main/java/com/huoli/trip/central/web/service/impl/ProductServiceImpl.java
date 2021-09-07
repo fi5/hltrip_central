@@ -33,6 +33,7 @@ import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
+import com.huoli.trip.common.vo.request.GroupTourSearchReq;
 import com.huoli.trip.common.vo.request.HomeSearchReq;
 import com.huoli.trip.common.vo.request.TicketSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
@@ -1913,6 +1914,21 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<List<String>> groupTourSearchRecommendAddress(String traceId) {
+        return null;
+    }
+
+    @Override
+    public BaseResponse<List<GroupTourRecommendRes>> groupTourSearchDefaultRecommend(GroupTourSearchReq req) {
+        return null;
+    }
+
+    @Override
+    public BaseResponse<List<HomeSearchRes>> groupTourSearchRecommend(HomeSearchReq req) {
+        return null;
     }
 
     /**
