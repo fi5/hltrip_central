@@ -1802,19 +1802,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse homeSearchDefaultRecommend(String traceId) {
-        List<TripSearchRecommend> list = tripSearchRecommendMapper.listByPosition(1);
+        List<TripSearchRecommendDetail> list = tripSearchRecommendMapper.listByPosition(1);
         if (list == null) {
             list = Collections.emptyList();
         }
         List<HomeRecommendRes> result = new ArrayList<>();
-        Map<String, List<TripSearchRecommend>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommend::getTitle));
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getTitle));
         for (Map.Entry entry : recommendGroup.entrySet()) {
             String title = (String) entry.getKey();
-            List<TripSearchRecommend> recommendList = (List<TripSearchRecommend>) entry.getValue();
-            recommendList = recommendList.stream().sorted(Comparator.comparing(TripSearchRecommend::getSort)).collect(Collectors.toList());
+            List<TripSearchRecommendDetail> recommendList = (List<TripSearchRecommendDetail>) entry.getValue();
+            recommendList = recommendList.stream().sorted(Comparator.comparing(TripSearchRecommendDetail::getSort)).collect(Collectors.toList());
             HomeRecommendRes res = new HomeRecommendRes();
             List<HomeRecommendRes.Recommendation> recommendationList = new ArrayList<>();
-            for (TripSearchRecommend recommend : recommendList) {
+            for (TripSearchRecommendDetail recommend : recommendList) {
                 HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
                 BeanUtils.copyProperties(recommend, recommendation);
                 recommendationList.add(recommendation);
@@ -1852,19 +1852,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse scenicSpotProductSearchDefaultRecommend(TicketSearchReq req) {
-        List<TripSearchRecommend> list = tripSearchRecommendMapper.listByPositionAndCityCode(3, req.getDepCityCode());
+        List<TripSearchRecommendDetail> list = tripSearchRecommendMapper.listByPositionAndCityCode(3, req.getDepCityCode());
         if (list == null) {
             list = Collections.emptyList();
         }
-        Map<String, List<TripSearchRecommend>> recommendGroup
-                = list.stream().collect(Collectors.groupingBy(TripSearchRecommend::getTitle));
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup
+                = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getTitle));
         List<ScenicSpotProductSearchRecommendRes> result = new ArrayList<>();
         for (Map.Entry entry : recommendGroup.entrySet()) {
             String title = (String) entry.getKey();
-            List<TripSearchRecommend> recommends = (List<TripSearchRecommend>) entry.getValue();
+            List<TripSearchRecommendDetail> recommends = (List<TripSearchRecommendDetail>) entry.getValue();
             ScenicSpotProductSearchRecommendRes recommendRes = new ScenicSpotProductSearchRecommendRes();
             List<HomeRecommendRes.Recommendation> recommendationList = new ArrayList<>();
-            for (TripSearchRecommend recommend : recommends) {
+            for (TripSearchRecommendDetail recommend : recommends) {
                 HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
                 BeanUtils.copyProperties(recommend, recommendation);
                 recommendationList.add(recommendation);
