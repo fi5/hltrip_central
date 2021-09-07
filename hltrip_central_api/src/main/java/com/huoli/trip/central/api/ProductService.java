@@ -5,7 +5,6 @@ import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.Product;
-import com.huoli.trip.common.vo.RecommendProductV2;
 import com.huoli.trip.common.vo.request.HomeSearchReq;
 import com.huoli.trip.common.vo.request.TicketSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
