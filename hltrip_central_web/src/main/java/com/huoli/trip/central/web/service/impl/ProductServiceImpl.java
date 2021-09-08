@@ -2208,8 +2208,14 @@ public class ProductServiceImpl implements ProductService {
         if (StringUtils.isEmpty(keyword)) {
             return BaseResponse.withSuccess(result);
         }
+        keyword = keyword.toLowerCase();
         String condition = "%".concat(keyword).concat("%");
-        List<ChinaCity> cityPOS = chinaCityMapper.queryCityByCondition(condition, 2, 5);
+        List<ChinaCity> cityPOS = new ArrayList<>();
+        if (CentralUtils.isChinese(keyword.charAt(0))) {
+            cityPOS = chinaCityMapper.queryCityByNameCondition(condition, 2, 5);
+        } else {
+            cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 5);
+        }
         cityPOS = cityPOS.stream()
                 .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
         for (ChinaCity cityPO : cityPOS) {
@@ -2273,12 +2279,18 @@ public class ProductServiceImpl implements ProductService {
         if (StringUtils.isEmpty(keyword)) {
             return BaseResponse.withSuccess(result);
         }
-        String condition = "%" + keyword + "%";
-        List<ChinaCity> cityPOS = chinaCityMapper.queryCityByCondition(condition, 2, 10);
+        keyword = keyword.toLowerCase();
+        String condition = "%".concat(keyword).concat("%");
+        List<ChinaCity> cityPOS = new ArrayList<>();
+        if (CentralUtils.isChinese(keyword.charAt(0))) {
+            cityPOS = chinaCityMapper.queryCityByNameCondition(condition, 2, 10);
+        } else {
+            cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 10);
+        }
         cityPOS = cityPOS.stream()
                 .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
         boolean cityFullMatch = false;
-        List<ChinaCity> collect = cityPOS.stream().filter(s -> s.getName().equals(keyword)).collect(Collectors.toList());
+        List<ChinaCity> collect = cityPOS.stream().filter(s -> s.getName().equals(req.getKeyword())).collect(Collectors.toList());
         if (ListUtils.isNotEmpty(collect)) {
             cityFullMatch = true;
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();

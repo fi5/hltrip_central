@@ -9,6 +9,9 @@ import java.util.List;
 @Repository
 public interface ChinaCityMapper {
 
-    @Select("SELECT code,name FROM china_city where name LIKE #{condition} or pinying LIKE #{condition} AND type = #{type} limit #{count}")
-    List<ChinaCity> queryCityByCondition(String condition, int type, int count);
+    @Select("SELECT code,name FROM china_city where name LIKE #{condition} AND type = #{type} limit #{count}")
+    List<ChinaCity> queryCityByNameCondition(String condition, int type, int count);
+
+    @Select("SELECT code,name FROM china_city where pinying LIKE #{condition} AND type = #{type} limit #{count}")
+    List<ChinaCity> queryCityByPinyinCondition(String condition, int type, int count);
 }
