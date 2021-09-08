@@ -212,14 +212,14 @@ public interface ProductService {
     BaseResponse<String> acceptPromotionInvitation(AcceptPromotionInvitationReq req);
 
     /**
-     * 首页搜索默认推荐
-     *
+     * 首页和综合页搜索默认推荐
+     * @param req
      * @return
      */
-    BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend(String traceId);
+    BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend(HomeSearchReq req);
 
     /**
-     * 首页搜索推荐
+     * 首页和综合页搜索推荐
      * @param req
      * @return
      */
@@ -238,13 +238,6 @@ public interface ProductService {
      * @return
      */
     BaseResponse<List<ScenicSpotProductSearchRes>> scenicSpotProductSearchRecommend(HomeSearchReq req);
-
-    /**
-     * 跟团游搜索推荐左侧标题
-     * @param traceId
-     * @return
-     */
-    BaseResponse<List<String>> groupTourSearchRecommendAddress(String traceId);
 
     /**
      * 跟团游搜索默认推荐

@@ -42,7 +42,7 @@ public interface ScenicSpotDao {
 
     List<ScenicSpotProductPriceMPO> queryPriceByProductIds(List<String> productIds, String startDate, String endDate);
 
-    List<ScenicSpotMPO> queryByKeyword(String keyword, int count);
+    List<ScenicSpotMPO> queryByKeyword(String keyword, Integer count);
 
 	List<ScenicSpotMPO> queryScenicSpotByPoint(double longitude,double latitude);
 }

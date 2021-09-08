@@ -20,6 +20,7 @@ import com.huoli.trip.central.web.mapper.TripPromotionMapper;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
+import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
@@ -2169,7 +2170,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public BaseResponse homeSearchDefaultRecommend(String traceId) {
+    public BaseResponse homeSearchDefaultRecommend(HomeSearchReq req) {
         List<TripSearchRecommendDetail> list = tripSearchRecommendMapper.listByPosition(1);
         if (list == null) {
             list = Collections.emptyList();
@@ -2206,7 +2207,13 @@ public class ProductServiceImpl implements ProductService {
             homeSearchRes.setType(1);
             result.add(homeSearchRes);
         }
-        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(req.getKeyword(), 5);
+        List<String> keywords = new ArrayList<>();
+        if (CentralUtils.isChinese(req.getKeyword().charAt(0))) {
+            keywords = cityPOS.stream().map(CityPO::getCityName).collect(Collectors.toList());
+        } else {
+            keywords.add(req.getKeyword());
+        }
+        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, null);
         for (ScenicSpotMPO mpo : scenicSpotMPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
             homeSearchRes.setContent(mpo.getName());
@@ -2261,7 +2268,9 @@ public class ProductServiceImpl implements ProductService {
             res.setType(1);
             result.add(res);
         }
-        List<ScenicSpotMPO> list = getByKeyword(keyword, 10);
+        List<String> keywords = new ArrayList<>();
+        keywords.add(keyword);
+        List<ScenicSpotMPO> list = getByKeyword(keywords, 10);
         for (ScenicSpotMPO mpo : list) {
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
             res.setContent(mpo.getName());
@@ -2281,15 +2290,6 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return BaseResponse.withSuccess(result);
-    }
-
-    @Override
-    public BaseResponse<List<String>> groupTourSearchRecommendAddress(String traceId) {
-        List<String> list = tripSearchRecommendMapper.getContactAreaCode(4);
-        if (list == null) {
-            list = Collections.emptyList();
-        }
-        return BaseResponse.withSuccess(list);
     }
 
     @Override
@@ -2323,15 +2323,16 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * 模糊搜索景点
-     * @param keyword
+     * @param keywords
      * @param count
      * @return
      */
-    private List<ScenicSpotMPO> getByKeyword(String keyword, int count) {
-        List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count);
-        if (list == null) {
-            list = Collections.emptyList();
+    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count) {
+        List<ScenicSpotMPO> result = new ArrayList<>();
+        for (String keyword : keywords) {
+            List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count);
+            result.addAll(list);
         }
-        return list;
+        return result;
     }
 }
