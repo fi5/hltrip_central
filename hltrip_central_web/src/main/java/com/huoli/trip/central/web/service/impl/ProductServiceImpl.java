@@ -3,12 +3,20 @@ package com.huoli.trip.central.web.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.PageHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.huoli.flight.server.api.CouponDeliveryService;
+import com.huoli.flight.server.api.vo.flight.CouponSendParam;
+import com.huoli.flight.server.api.vo.flight.CouponSuccess;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.mapper.*;
+import com.huoli.trip.central.web.mapper.PassengerTemplateMapper;
+import com.huoli.trip.central.web.mapper.TripPromotionInvitationAcceptMapper;
+import com.huoli.trip.central.web.mapper.TripPromotionInvitationMapper;
+import com.huoli.trip.central.web.mapper.TripPromotionMapper;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
@@ -40,10 +48,14 @@ import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
 import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
+import com.huoli.trip.common.vo.request.promotion.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.*;
 import com.huoli.trip.common.vo.response.recommend.*;
+import com.huoli.trip.common.vo.response.promotion.PromotionDetailResult;
+import com.huoli.trip.common.vo.response.promotion.PromotionListResult;
+import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
 import com.huoli.trip.common.vo.v2.BaseRefundRuleVO;
 import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
 import com.huoli.trip.data.api.DataService;
@@ -143,6 +155,15 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private PassengerTemplateMapper passengerTemplateMapper;
 
+    @Autowired
+    private TripPromotionMapper tripPromotionMapper;
+
+    @Autowired
+    private TripPromotionInvitationMapper tripPromotionInvitationMapper;
+
+    @Autowired
+    private TripPromotionInvitationAcceptMapper tripPromotionInvitationAcceptMapper;
+
     @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
     DataService dataService;
 
@@ -151,6 +172,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private TripSearchRecommendMapper tripSearchRecommendMapper;
+
+    @Reference(group = "${flight_dubbo_group}", timeout = 60000, check = false, retries = 3)
+    CouponDeliveryService couponDeliveryService;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -321,6 +345,15 @@ public class ProductServiceImpl implements ProductService {
         List<String> channelInfo = new ArrayList<>();
         if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
+            List<ScenicSpotMPO> scenicSpotMPOs =  scenicSpotDao.queryScenicSpotByPoint(Double.parseDouble(req.getLongitude()),Double.parseDouble(req.getLatitude()));
+            log.info("scenicSpotMPOs = {}",scenicSpotMPOs);
+            if (!CollectionUtils.isEmpty(scenicSpotMPOs)){
+                List<String> scenicSpotIds = scenicSpotMPOs.stream().map(ScenicSpotMPO::getId).collect(Collectors.toList());
+                log.info("scenicSpotIds = {}" ,scenicSpotIds);
+                req.setScenicSpotIds(scenicSpotIds);
+            }
         }
         List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo);
         int count = productDao.getScenicTicketTotal(req, channelInfo);
@@ -913,7 +946,16 @@ public class ProductServiceImpl implements ProductService {
                 }
                 result.setImages(productMPO.getImages());
                 result.setIncludeDesc(ruleMPO.getFeeInclude());
-                result.setRefundType(ruleMPO.getRefundCondition());
+                // 为了兼容旧版含义对订单的影响，统一转成旧版
+                Integer type = null;
+                if(ruleMPO.getRefundCondition() == 0){
+                    type = 1;
+                } else if(ruleMPO.getRefundCondition() == 1){
+                    type = 2;
+                } else if(ruleMPO.getRefundCondition() == 2){
+                    type = 3;
+                }
+                result.setRefundType(type);
                 result.setRefundDesc(ruleMPO.getRefundRuleDesc());
                 result.setTicketInfos(ruleMPO.getTicketInfos());
                 result.setTicketCardTypes(ruleMPO.getTicketCardTypes());
@@ -1799,6 +1841,331 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setTags(rb.getTags());
         recommendProduct.setSeq(rb.getSeq());
         return recommendProduct;
+    }
+
+    public BaseResponse tripPromotionList(PromotionListReq request) {
+        PageHelper.startPage(request.getPageNum(), request.getPageSize());
+        List<PromotionListResult> list = tripPromotionMapper.getList(1);
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        for (PromotionListResult result : list) {
+            if (StringUtils.isNotEmpty(request.getPhoneId())) {
+                int count = tripPromotionInvitationMapper.countByPhoneIdAndId(request.getPhoneId(), result.getPromotionId());
+                if (count > 0) {
+                    TripPromotionInvitation invitation = tripPromotionInvitationMapper.getOneByPhoneIdPromotionId(request.getPhoneId(), result.getPromotionId());
+                    result.setInvitationId(String.valueOf(invitation.getId()));
+                    long hourDiff = DateTimeUtil.dateDiff(invitation.getTimer(), System.currentTimeMillis());
+                    if (hourDiff >= result.getValidTime()) {
+                        if (invitation.getInviteNum() == invitation.getAssistNum()) {
+                            result.setStatus(2);
+                        } else {
+                            result.setStatus(3);
+                        }
+                    } else {
+                        if (invitation.getInviteNum() == invitation.getAssistNum()) {
+                            result.setStatus(2);
+                        } else {
+                            result.setStatus(1);
+                        }
+                    }
+                } else {
+                    result.setStatus(0);
+                }
+            }
+        }
+        return BaseResponse.withSuccess(list);
+    }
+
+    @Override
+    public BaseResponse tripPromotionDetail(PromotionDetailReq request) {
+        PromotionDetailResult result = tripPromotionMapper.getResultById(request.getPromotionId(), 1);
+        if (result == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        String phoneId = request.getPhoneId();
+        // 游客
+        if (StringUtils.isEmpty(phoneId) || phoneId.equals("0")) {
+            result.setSurplus(result.getAssistNum());
+            result.setStatus("5");
+            result.setRole(0);
+            return BaseResponse.withSuccess(result);
+        }
+        long promotionId = request.getPromotionId();
+        // 判断是发起人还是助力人
+        boolean isSelf = true;
+        if (StringUtils.isNotEmpty(request.getInvitationId())) {
+            TripPromotionInvitation invitation = tripPromotionInvitationMapper.getById(Long.parseLong(request.getInvitationId()));
+            if (invitation != null && !invitation.getPhoneId().equals(phoneId)) {
+                isSelf = false;
+            }
+            if (invitation.getPromotionId() != request.getPromotionId()) {
+                return BaseResponse.withFail(CentralError.PROMOTION_NOT_MATCH);
+            }
+        }
+        // 发起人自己点击
+        if (isSelf) {
+            List<TripPromotionInvitation> tripPromotionInvitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(phoneId, promotionId);
+            int surplus = 0;
+            int couponStatus = 0;
+            List<PromotionDetailResult.Friend> friendList = new ArrayList<>();
+            // 查询好友列表
+            if (ListUtils.isNotEmpty(tripPromotionInvitations)) {
+                // 获取最新的
+                TripPromotionInvitation tripPromotionInvitation = tripPromotionInvitations.get(0);
+                int inviteNum = tripPromotionInvitation.getInviteNum();
+                int assistNum = tripPromotionInvitation.getAssistNum();
+                if (inviteNum != 0) {
+                    friendList = tripPromotionInvitationAcceptMapper.getFriends(tripPromotionInvitation.getId());
+                    if (friendList == null) {
+                        friendList = Collections.emptyList();
+                    }
+                }
+                surplus = assistNum - inviteNum;
+                couponStatus = tripPromotionInvitation.getCouponStatus();
+                String isFirst = tripPromotionInvitation.getIsFirst();
+                if (couponStatus == 2 && isFirst.equals("1")) {
+                    result.setIsFirst("1");
+                    tripPromotionInvitationMapper.updateIsFirst(tripPromotionInvitation.getId(), "2", "1");
+                } else if (couponStatus == 2 && isFirst.equals("2")) {
+                    result.setIsFirst("2");
+                }
+                // 判断是否超时
+                long hourDiff = DateTimeUtil.dateDiff(tripPromotionInvitation.getTimer(), System.currentTimeMillis());
+                // 超时
+                if (hourDiff >= tripPromotionInvitation.getValidTime()) {
+                    if (inviteNum == assistNum) {
+                        result.setTimeStatus("1");
+                    } else {
+                        result.setTimeStatus("2");
+                        tripPromotionInvitationMapper.updateStatus(tripPromotionInvitation.getId(), 2);
+                    }
+                } else {
+                    result.setTimeStatus("0");
+                }
+            } else {
+                TripPromotionInvitation tripPromotionInvitation = new TripPromotionInvitation();
+                tripPromotionInvitation.setPromotionId(promotionId);
+                tripPromotionInvitation.setStatus(0);
+                tripPromotionInvitation.setCouponStatus(0);
+                tripPromotionInvitation.setInviteNum(0);
+                tripPromotionInvitation.setPhoneId(phoneId);
+                tripPromotionInvitation.setAssistNum(result.getAssistNum());
+                tripPromotionInvitation.setValidTime(result.getValidTime());
+                tripPromotionInvitation.setTimer(System.currentTimeMillis());
+                tripPromotionInvitation.setCreateTime(new Date());
+                tripPromotionInvitation.setUpdateTime((new Date()));
+                tripPromotionInvitation.setIsFirst("0");
+                tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+                result.setTimeStatus("0");
+            }
+            result.setCouponStatus(couponStatus);
+            result.setFriends(friendList);
+            result.setSurplus(surplus);
+            result.setRole(1);
+        } else {//受邀人点击
+            // 查询助力结果
+            return checkAcceptStatus(result, phoneId, request.getInvitationId(), true);
+        }
+        return BaseResponse.withSuccess(result);
+    }
+
+    private BaseResponse checkAcceptStatus(PromotionDetailResult result, String phoneId, String invitationId, boolean isDetail) {
+        TripPromotionInvitation invitation = tripPromotionInvitationMapper.getById(Long.parseLong(invitationId));
+        if (invitation == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        if (phoneId.equals(invitation.getPhoneId())) {
+            return BaseResponse.withSuccess(result);
+        }
+        int inviteNum = invitation.getInviteNum();
+        int assistNum = invitation.getAssistNum();
+        result.setRole(2);
+        // 成功助力了
+        TripPromotionInvitationAccept invitationAccept = tripPromotionInvitationAcceptMapper.getByInvitationIdAndPhoneId(invitation.getId(), phoneId);
+        if (invitationAccept != null) {
+            result.setStatus("0");
+            return BaseResponse.withSuccess(result);
+        }
+        // 发起人已成功赢取优惠
+        if (Objects.equals(inviteNum, assistNum)) {
+            result.setStatus("2");
+            return BaseResponse.withSuccess(result);
+        }
+        // 超时
+        long hourDiff = DateTimeUtil.dateDiff(invitation.getTimer(), System.currentTimeMillis());
+        if (hourDiff >= invitation.getValidTime()) {
+            result.setStatus("1");
+            return BaseResponse.withSuccess(result);
+        }
+        // 助力次数已用完
+        Date today = new Date();
+        Date start = DateTimeUtil.getAnyDayStart(today, 0);
+        Date end = DateTimeUtil.getAnyDayEnd(today, 0);
+        Integer count = tripPromotionInvitationAcceptMapper.countByPhoneId(phoneId, start, end);
+        if (count >= result.getAssistTimes()) {
+            result.setStatus("3");
+            return BaseResponse.withSuccess(result);
+        }
+        // 未助力
+        result.setStatus("5");
+        return BaseResponse.withSuccess(result);
+    }
+
+    //    @Transactional
+    public void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation) {
+        TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
+        accept.setInvitationId(invitation.getId());
+        accept.setInviteePhoneId(req.getPhoneId());
+        accept.setInviteeAvatar(req.getAvatar());
+        accept.setInviteeNickname(req.getNickname());
+        accept.setCreateTime(new Date());
+        accept.setUpdateTime(new Date());
+        tripPromotionInvitationAcceptMapper.insert(accept);
+        int inviteNum = invitation.getInviteNum();
+        int assistNum = invitation.getAssistNum();
+        int newInviteNum = inviteNum + 1;
+        log.info("newInviteNum:{}", newInviteNum);
+        log.info("assistNum:{}", assistNum);
+        if (newInviteNum != assistNum) {// 更新数量
+            tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), newInviteNum, inviteNum);
+        } else {// 更新数量和领券状态
+            tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), newInviteNum, inviteNum, 1, 0);
+        }
+        // 如果达到助力人数则发券
+        Integer newDbInviteNum = tripPromotionInvitationMapper.getInviteNumById(invitation.getId());
+        log.info("newDbInviteNum:{}", newDbInviteNum);
+        if (newDbInviteNum == assistNum) {
+            CouponSendParam couponSendParam = new CouponSendParam();
+            TripPromotion promotion = tripPromotionMapper.getById(invitation.getPromotionId(), 1);
+            couponSendParam.setActiveflag(promotion.getActiveFlag());
+            log.info("getPhoneId:{}", invitation.getPhoneId());
+            couponSendParam.setPhoneid(invitation.getPhoneId());
+            log.info("couponSendParam:{}", JSONObject.toJSONString(couponSendParam));
+            CouponSuccess couponSuccess = new CouponSuccess();
+            try {
+                couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+            } catch (Exception e) {
+                log.error("发券异常:", e);
+                throw new RuntimeException("发券异常");
+            }
+            log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
+            if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
+                throw new RuntimeException("发券异常");
+            }
+            // 更新领券状态
+            tripPromotionInvitationMapper.updateCouponStatus(invitation.getId(), 2, 1, "1", "0", 1, 0);
+        }
+    }
+
+    @Override
+    public BaseResponse tripPromotionInvitation(PromotionInvitationReq request) {
+        Long invitationId = 0L;
+        String phoneId = request.getPhoneId();
+        if (StringUtils.isEmpty(phoneId) || phoneId.equals("0")) {
+            return BaseResponse.withFail(CentralError.NO_LOGIN);
+        }
+        long promotionId = request.getPromotionId();
+        List<TripPromotionInvitation> tripPromotionInvitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(phoneId, promotionId);
+        TripPromotion promotion = tripPromotionMapper.getById(promotionId, 1);
+        if (promotion == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        if (ListUtils.isEmpty(tripPromotionInvitations)) {
+            TripPromotionInvitation tripPromotionInvitation = new TripPromotionInvitation();
+            tripPromotionInvitation.setPromotionId(promotionId);
+            tripPromotionInvitation.setStatus(0);
+            tripPromotionInvitation.setCouponStatus(0);
+            tripPromotionInvitation.setInviteNum(0);
+            tripPromotionInvitation.setPhoneId(phoneId);
+            tripPromotionInvitation.setAssistNum(promotion.getAssistNum());
+            tripPromotionInvitation.setValidTime(promotion.getValidTime());
+            tripPromotionInvitation.setTimer(System.currentTimeMillis());
+            tripPromotionInvitation.setCreateTime(new Date());
+            tripPromotionInvitation.setUpdateTime((new Date()));
+            tripPromotionInvitation.setIsFirst("0");
+            tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+            invitationId = tripPromotionInvitation.getId();
+        } else {
+            // 如果有成功的直接返回
+            Optional<TripPromotionInvitation> find = tripPromotionInvitations.stream().filter(s -> s.getStatus() == 1).findFirst();
+            if (find.isPresent()) {
+                return BaseResponse.withFail(CentralError.NO_REPEAT_PROMOTION);
+            }
+            // 获取最新创建的
+            TripPromotionInvitation tripPromotionInvitation = tripPromotionInvitations.get(0);
+            long timer = tripPromotionInvitation.getTimer();
+            long currentTimeMillis = System.currentTimeMillis();
+            long hourDiff = DateTimeUtil.dateDiff(timer, currentTimeMillis);
+            // 如果超过规定小时数则新建TripPromotionInvitation
+            if (hourDiff >= promotion.getValidTime()) {
+                tripPromotionInvitation = new TripPromotionInvitation();
+                tripPromotionInvitation.setPromotionId(promotionId);
+                tripPromotionInvitation.setStatus(0);
+                tripPromotionInvitation.setCouponStatus(0);
+                tripPromotionInvitation.setInviteNum(0);
+                tripPromotionInvitation.setPhoneId(phoneId);
+                tripPromotionInvitation.setAssistNum(promotion.getAssistNum());
+                tripPromotionInvitation.setValidTime(promotion.getValidTime());
+                tripPromotionInvitation.setTimer(System.currentTimeMillis());
+                tripPromotionInvitation.setCreateTime(new Date());
+                tripPromotionInvitation.setUpdateTime((new Date()));
+                tripPromotionInvitation.setIsFirst("0");
+                tripPromotionInvitationMapper.insert(tripPromotionInvitation);
+            }
+            invitationId = tripPromotionInvitation.getId();
+        }
+        return BaseResponse.withSuccess(invitationId);
+    }
+
+    @Override
+    public BaseResponse tripPromotionCheckCoupon(CouponSendReq req) {
+        TripPromotion promotion = tripPromotionMapper.getById(req.getPromotionId(), 1);
+        if (promotion == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        List<TripPromotionInvitation> invitations = tripPromotionInvitationMapper.getByPhoneIdPromotionId(req.getPhoneId(), req.getPromotionId());
+        if (ListUtils.isEmpty(invitations)) {
+            return BaseResponse.withFail(CentralError.PROMOTION_NOT_SUCCESS);
+        }
+        TripPromotionInvitation invitation = invitations.get(0);
+        if (invitation.getStatus() != 1) {
+            return BaseResponse.withFail(CentralError.PROMOTION_NOT_SUCCESS);
+        }
+        Integer count = tripPromotionInvitationAcceptMapper.countByInvitationId(invitation.getId());
+        if (count < promotion.getAssistNum()) {
+            return BaseResponse.withFail(CentralError.PROMOTION_NOT_SUCCESS);
+        }
+        return BaseResponse.withSuccess(promotion.getActiveFlag());
+    }
+
+    @Override
+    public BaseResponse acceptPromotionInvitation(AcceptPromotionInvitationReq req) {
+        // 检查活动
+        TripPromotionInvitation invitation = tripPromotionInvitationMapper.getById(Long.parseLong(req.getInvitationId()));
+        if (invitation == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        PromotionDetailResult result = tripPromotionMapper.getResultById(invitation.getPromotionId(), 1);
+        if (result == null) {
+            return BaseResponse.withFail(CentralError.NO_PROMOTION);
+        }
+        // 检查是否可以助力
+        BaseResponse baseResponse = checkAcceptStatus(result, req.getPhoneId(), String.valueOf(invitation.getId()), false);
+        String data = JSONObject.toJSONString(baseResponse.getData());
+        PromotionDetailResult result1 = JSONObject.toJavaObject(JSONObject.parseObject(data), PromotionDetailResult.class);
+        // 不能助力
+        if (!baseResponse.isSuccess() || !result1.getStatus().equals("5")) {
+            return baseResponse;
+        }
+        // 可以助力
+        try {
+            insertAcceptAndUpdateInvitation(req, invitation);
+        } catch (Exception e) {
+            return BaseResponse.withFail(CentralError.SEND_COUPON_FAIL);
+        }
+        result.setStatus("0");
+        return BaseResponse.withSuccess(result);
     }
 
     @Override

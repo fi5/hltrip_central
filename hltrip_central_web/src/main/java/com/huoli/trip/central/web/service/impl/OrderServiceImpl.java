@@ -10,9 +10,11 @@ import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.vo.TripNotice;
 import com.huoli.trip.common.vo.request.*;
+import com.huoli.trip.common.vo.request.central.CenterRefundCheckRequest;
 import com.huoli.trip.common.vo.request.central.OrderStatusKafka;
 import com.huoli.trip.common.vo.request.central.RefundKafka;
 import com.huoli.trip.common.vo.response.BaseResponse;
+import com.huoli.trip.common.vo.response.central.CenterRefundCheckResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.ProductService;
 import com.huoli.trip.supplier.api.YcfOrderService;
@@ -20,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
-import org.apache.velocity.app.event.implement.EscapeXmlReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -240,5 +241,14 @@ public class OrderServiceImpl implements OrderService {
             return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
         }
         return manager;
+    }
+
+    @Override
+    public BaseResponse<CenterRefundCheckResult> refundCheck(CenterRefundCheckRequest request) {
+        OrderManager orderManager = orderFactory.getOrderManager(request.getChannelCode());
+        //校验manager处理
+        checkManger(orderManager);
+        BaseResponse<CenterRefundCheckResult> result = orderManager.refundCheck(request);
+        return result;
     }
 }

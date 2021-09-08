@@ -573,7 +573,9 @@ public class ProductDaoImpl implements ProductDao {
         if (CollectionUtils.isNotEmpty(channelInfo)) {
             criteria.and("channel").in(channelInfo);
         }
-
+        if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
+            criteria.and("scenicSpotId").in(req.getScenicSpotIds());
+        }
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "apiSellPrice", "_id");
         GroupOperation groupOperation = getNewListGroupField("scenicSpotId");

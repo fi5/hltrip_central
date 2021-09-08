@@ -28,6 +28,7 @@ import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.ProductPriceCalendarResult;
 import com.huoli.trip.common.vo.v2.*;
 import com.huoli.trip.data.api.DataService;
+import com.huoli.trip.data.api.ProductDataService;
 import com.huoli.trip.data.vo.ChannelInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -77,6 +78,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
     DataService dataService;
 
+    @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
+    ProductDataService productDataService;
+
     @Override
     public BaseResponse<ScenicSpotBase> querycScenicSpotBase(ScenicSpotRequest request) {
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
@@ -123,43 +127,44 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }
         final List<GroupTourProductSetMealMPO> groupTourProductSetMealMPOS = groupTourDao.queryProductSetMealByProductId(groupTourProductMPO.getId(), depCodes, request.getPackageId(), request.getDate());
         log.info("查询到的套餐列表：{}", JSONObject.toJSONString(groupTourProductSetMealMPOS));
-        if(groupTourProductMPO != null){
-            groupTourProductBody = new GroupTourBody();
-            BeanUtils.copyProperties(groupTourProductMPO,groupTourProductBody);
-            if(ListUtils.isNotEmpty(groupTourProductSetMealMPOS)){
-                List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p->{
-                    GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
-                    BeanUtils.copyProperties(p,groupTourProductSetMeal);
-                    //价格计算
-                    IncreasePrice increasePrice = new IncreasePrice();
-                    increasePrice.setChannelCode(groupTourProductMPO.getChannel());
-                    increasePrice.setProductCode(groupTourProductMPO.getId());
-                    increasePrice.setAppSource(request.getFrom());
-                    increasePrice.setProductCategory(groupTourProductMPO.getCategory());
-                    List<GroupTourPrice> groupTourPrices = p.getGroupTourPrices();
-                    List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
-                        IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-                        priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
-                        priceCalendar.setChdSellPrice(item.getChdSellPrice());
-                        priceCalendar.setDate(item.getDate());
-                        return priceCalendar;
-                    }).collect(Collectors.toList());
-                    increasePrice.setPrices(priceCalendars);
-                    commonService.increasePrice(increasePrice);
-
-                    Map<String, IncreasePriceCalendar> priceMap = Maps.uniqueIndex(increasePrice.getPrices(), a -> a.getDate());
-
-                    groupTourPrices.stream().forEach(item -> {
-                        IncreasePriceCalendar priceCalendar = priceMap.get(item.getDate());
-                        item.setAdtSellPrice(priceCalendar.getAdtSellPrice());
-                        item.setChdSellPrice(priceCalendar.getChdSellPrice());
-                    });
-                    p.setGroupTourPrices(groupTourPrices);
-                    return groupTourProductSetMeal;
-                }).collect(Collectors.toList());
-                groupTourProductBody.setSetMeals(meals);
-            }
+        if(ListUtils.isEmpty(groupTourProductSetMealMPOS)){
+            log.error("跟团游产品 {} 没有套餐信息，刷新列表");
+            productDataService.updateProduct(1, groupTourProductMPO.getId(), 1);
+            return BaseResponse.fail(CentralError.ERROR_NO_PRODUCT_SET_MEAL);
         }
+        groupTourProductBody = new GroupTourBody();
+        BeanUtils.copyProperties(groupTourProductMPO,groupTourProductBody);
+        List<GroupTourProductSetMeal> meals = groupTourProductSetMealMPOS.stream().map(p->{
+            GroupTourProductSetMeal groupTourProductSetMeal = new GroupTourProductSetMeal();
+            BeanUtils.copyProperties(p,groupTourProductSetMeal);
+            //价格计算
+            IncreasePrice increasePrice = new IncreasePrice();
+            increasePrice.setChannelCode(groupTourProductMPO.getChannel());
+            increasePrice.setProductCode(groupTourProductMPO.getId());
+            increasePrice.setAppSource(request.getFrom());
+            increasePrice.setProductCategory(groupTourProductMPO.getCategory());
+            List<GroupTourPrice> groupTourPrices = p.getGroupTourPrices();
+            List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
+                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
+                priceCalendar.setChdSellPrice(item.getChdSellPrice());
+                priceCalendar.setDate(item.getDate());
+                return priceCalendar;
+            }).collect(Collectors.toList());
+            increasePrice.setPrices(priceCalendars);
+            commonService.increasePrice(increasePrice);
+
+            Map<String, IncreasePriceCalendar> priceMap = Maps.uniqueIndex(increasePrice.getPrices(), a -> a.getDate());
+
+            groupTourPrices.stream().forEach(item -> {
+                IncreasePriceCalendar priceCalendar = priceMap.get(item.getDate());
+                item.setAdtSellPrice(priceCalendar.getAdtSellPrice());
+                item.setChdSellPrice(priceCalendar.getChdSellPrice());
+            });
+            p.setGroupTourPrices(groupTourPrices);
+            return groupTourProductSetMeal;
+        }).collect(Collectors.toList());
+        groupTourProductBody.setSetMeals(meals);
         //加载推荐列表
         GroupTourListReq groupTourListReq = new GroupTourListReq();
         if(CollectionUtils.isNotEmpty(depCodes) && depCodes.size() > 1){

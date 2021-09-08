@@ -9,10 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.geo.Sphere;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.geo.Point;
 
 import java.util.List;
 
@@ -148,7 +152,14 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         }
         return  mongoTemplate.find(query, ScenicSpotProductPriceMPO.class);
     }
-
+    @Override
+    public List<ScenicSpotMPO> queryScenicSpotByPoint(double longitude,double latitude) {
+        Query query = new Query();
+        Point point = new Point(longitude,latitude);
+        Criteria criteria = Criteria.where("coordinate").near(point).maxDistance( 30 / 111.12);
+        query.addCriteria(criteria);
+        return  mongoTemplate.find(query, ScenicSpotMPO.class);
+    }
     @Override
     public ScenicSpotRuleMPO queryRuleById(String ruleId) {
         Query query = new Query();
