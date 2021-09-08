@@ -1918,17 +1918,40 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<List<String>> groupTourSearchRecommendAddress(String traceId) {
-        return null;
+        List<String> list = tripSearchRecommendMapper.getContactAreaCode(4);
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        return BaseResponse.withSuccess(list);
     }
 
     @Override
     public BaseResponse<List<GroupTourRecommendRes>> groupTourSearchDefaultRecommend(GroupTourSearchReq req) {
-        return null;
+        List<TripSearchRecommendDetail> list = tripSearchRecommendMapper.listByContactAreaCode(4, req.getContactAreaCode());
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        List<GroupTourRecommendRes> result = new ArrayList<>();
+        Map<Integer, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getType));
+        for (Map.Entry entry : recommendGroup.entrySet()) {
+            List<TripSearchRecommendDetail> recommendDetailList = (List<TripSearchRecommendDetail>) entry.getValue();
+            GroupTourRecommendRes recommendRes = new GroupTourRecommendRes();
+            List<GroupTourRecommendRes.Recommendation> recommendationList = new ArrayList<>();
+            for (TripSearchRecommendDetail recommend : recommendDetailList) {
+                GroupTourRecommendRes.Recommendation recommendation = new GroupTourRecommendRes.Recommendation();
+                BeanUtils.copyProperties(recommend, recommendation);
+                recommendationList.add(recommendation);
+            }
+            recommendRes.setTitle(recommendDetailList.get(0).getTitle());
+            recommendRes.setRecommendations(recommendationList);
+            result.add(recommendRes);
+        }
+        return BaseResponse.withSuccess(result);
     }
 
     @Override
     public BaseResponse<List<HomeSearchRes>> groupTourSearchRecommend(HomeSearchReq req) {
-        return null;
+        return homeSearchRecommend(req);
     }
 
     /**
