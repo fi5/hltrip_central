@@ -180,6 +180,9 @@ public class ProductServiceImpl implements ProductService {
     @Reference(group = "${flight_dubbo_group}", timeout = 60000, check = false, retries = 3)
     CouponDeliveryService couponDeliveryService;
 
+    @Autowired
+    private ChinaCityMapper chinaCityMapper;
+
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
         ProductPageResult result = new ProductPageResult();
@@ -2201,22 +2204,27 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public BaseResponse homeSearchRecommend(HomeSearchReq req) {
         List<HomeSearchRes> result = new ArrayList<>();
-        List<CityPO> cityPOS = cityDao.queryCitys(req.getKeyword(), 5);
+        String keyword = req.getKeyword();
+        if (StringUtils.isEmpty(keyword)) {
+            return BaseResponse.withSuccess(result);
+        }
+        String condition = "%".concat(keyword).concat("%");
+        List<ChinaCity> cityPOS = chinaCityMapper.queryCityByCondition(condition, 2, 5);
         cityPOS = cityPOS.stream()
-                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getCityName(), o2.getCityName())).collect(Collectors.toList());
-        for (CityPO cityPO : cityPOS) {
+                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
+        for (ChinaCity cityPO : cityPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
-            homeSearchRes.setCityName(cityPO.getCityName());
+            homeSearchRes.setCityName(cityPO.getName());
             homeSearchRes.setCityCode(cityPO.getCode());
-            homeSearchRes.setContent(cityPO.getCityName());
+            homeSearchRes.setContent(cityPO.getName());
             homeSearchRes.setType(1);
             result.add(homeSearchRes);
         }
         List<String> keywords = new ArrayList<>();
-        if (CentralUtils.isChinese(req.getKeyword().charAt(0))) {
-            keywords = cityPOS.stream().map(CityPO::getCityName).collect(Collectors.toList());
+        if (CentralUtils.isChinese(keyword.charAt(0))) {
+            keywords = cityPOS.stream().map(ChinaCity::getName).collect(Collectors.toList());
         } else {
-            keywords.add(req.getKeyword());
+            keywords.add(keyword);
         }
         List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2);
         scenicSpotMPOS = scenicSpotMPOS.stream()
@@ -2262,18 +2270,22 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse scenicSpotProductSearchRecommend(HomeSearchReq req) {
         List<ScenicSpotProductSearchRes> result = new ArrayList<>();
         String keyword = req.getKeyword();
-        List<CityPO> cityPOS = cityDao.queryCitys(keyword);
+        if (StringUtils.isEmpty(keyword)) {
+            return BaseResponse.withSuccess(result);
+        }
+        String condition = "%" + keyword + "%";
+        List<ChinaCity> cityPOS = chinaCityMapper.queryCityByCondition(condition, 2, 10);
         cityPOS = cityPOS.stream()
-                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getCityName(), o2.getCityName())).collect(Collectors.toList());
+                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
         boolean cityFullMatch = false;
-        List<CityPO> collect = cityPOS.stream().filter(s -> s.getCityName().equals(keyword)).collect(Collectors.toList());
+        List<ChinaCity> collect = cityPOS.stream().filter(s -> s.getName().equals(keyword)).collect(Collectors.toList());
         if (ListUtils.isNotEmpty(collect)) {
             cityFullMatch = true;
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
-            CityPO cityPO = collect.get(0);
-            res.setCityName(cityPO.getCityName());
+            ChinaCity cityPO = collect.get(0);
+            res.setCityName(cityPO.getName());
             res.setCityCode(cityPO.getCode());
-            res.setContent(cityPO.getCityName());
+            res.setContent(cityPO.getName());
             res.setType(1);
             result.add(res);
         }
@@ -2291,11 +2303,11 @@ public class ProductServiceImpl implements ProductService {
             result.add(res);
         }
         if (!cityFullMatch) {
-            for (CityPO cityPO : cityPOS) {
+            for (ChinaCity cityPO : cityPOS) {
                 ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
-                res.setCityName(cityPO.getCityName());
+                res.setCityName(cityPO.getName());
                 res.setCityCode(cityPO.getCode());
-                res.setContent(cityPO.getCityName());
+                res.setContent(cityPO.getName());
                 res.setType(1);
                 result.add(res);
             }
