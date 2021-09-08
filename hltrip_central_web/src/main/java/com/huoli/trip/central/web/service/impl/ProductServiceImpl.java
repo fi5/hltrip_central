@@ -74,6 +74,7 @@ import org.springframework.util.StopWatch;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
+import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -98,6 +99,8 @@ public class ProductServiceImpl implements ProductService {
     private static final ImmutableList<Integer> TRIP_PRODUCTS = ImmutableList.of(ProductType.TRIP_FREE.getCode(),
             ProductType.TRIP_GROUP_PRIVATE.getCode(), ProductType.TRIP_GROUP.getCode(),
             ProductType.TRIP_GROUP_LOCAL.getCode(), ProductType.TRIP_GROUP_SEMI.getCode());
+
+    private static final Comparator<Object> CHINA_COMPARE = Collator.getInstance(Locale.CHINA);
 
     @Autowired
     private ProductDao productDao;
@@ -2199,6 +2202,8 @@ public class ProductServiceImpl implements ProductService {
     public BaseResponse homeSearchRecommend(HomeSearchReq req) {
         List<HomeSearchRes> result = new ArrayList<>();
         List<CityPO> cityPOS = cityDao.queryCitys(req.getKeyword(), 5);
+        cityPOS = cityPOS.stream()
+                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getCityName(), o2.getCityName())).collect(Collectors.toList());
         for (CityPO cityPO : cityPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
             homeSearchRes.setCityName(cityPO.getCityName());
@@ -2213,7 +2218,9 @@ public class ProductServiceImpl implements ProductService {
         } else {
             keywords.add(req.getKeyword());
         }
-        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, null);
+        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2);
+        scenicSpotMPOS = scenicSpotMPOS.stream()
+                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
         for (ScenicSpotMPO mpo : scenicSpotMPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
             homeSearchRes.setContent(mpo.getName());
@@ -2256,6 +2263,8 @@ public class ProductServiceImpl implements ProductService {
         List<ScenicSpotProductSearchRes> result = new ArrayList<>();
         String keyword = req.getKeyword();
         List<CityPO> cityPOS = cityDao.queryCitys(keyword);
+        cityPOS = cityPOS.stream()
+                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getCityName(), o2.getCityName())).collect(Collectors.toList());
         boolean cityFullMatch = false;
         List<CityPO> collect = cityPOS.stream().filter(s -> s.getCityName().equals(keyword)).collect(Collectors.toList());
         if (ListUtils.isNotEmpty(collect)) {
@@ -2271,6 +2280,8 @@ public class ProductServiceImpl implements ProductService {
         List<String> keywords = new ArrayList<>();
         keywords.add(keyword);
         List<ScenicSpotMPO> list = getByKeyword(keywords, 10);
+        list = list.stream()
+                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
         for (ScenicSpotMPO mpo : list) {
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
             res.setContent(mpo.getName());
