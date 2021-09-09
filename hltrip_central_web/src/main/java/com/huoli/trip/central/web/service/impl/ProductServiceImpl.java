@@ -2216,8 +2216,11 @@ public class ProductServiceImpl implements ProductService {
         } else {
             cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 5);
         }
-        cityPOS = cityPOS.stream()
-                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
+        try {
+            CentralUtils.pinyinSort(cityPOS, ChinaCity.class, "name");
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         for (ChinaCity cityPO : cityPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
             homeSearchRes.setCityName(cityPO.getName());
@@ -2227,14 +2230,17 @@ public class ProductServiceImpl implements ProductService {
             result.add(homeSearchRes);
         }
         List<String> keywords = new ArrayList<>();
-        if (CentralUtils.isChinese(keyword.charAt(0))) {
+        if (!CentralUtils.isChinese(keyword.charAt(0))) {
             keywords = cityPOS.stream().map(ChinaCity::getName).collect(Collectors.toList());
         } else {
             keywords.add(keyword);
         }
         List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2);
-        scenicSpotMPOS = scenicSpotMPOS.stream()
-                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
+        try {
+            CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         for (ScenicSpotMPO mpo : scenicSpotMPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
             homeSearchRes.setContent(mpo.getName());
@@ -2287,8 +2293,11 @@ public class ProductServiceImpl implements ProductService {
         } else {
             cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 10);
         }
-        cityPOS = cityPOS.stream()
-                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
+        try {
+            CentralUtils.pinyinSort(cityPOS, ChinaCity.class, "name");
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         boolean cityFullMatch = false;
         List<ChinaCity> collect = cityPOS.stream().filter(s -> s.getName().equals(req.getKeyword())).collect(Collectors.toList());
         if (ListUtils.isNotEmpty(collect)) {
@@ -2304,8 +2313,11 @@ public class ProductServiceImpl implements ProductService {
         List<String> keywords = new ArrayList<>();
         keywords.add(keyword);
         List<ScenicSpotMPO> list = getByKeyword(keywords, 10);
-        list = list.stream()
-                .sorted((o1, o2) -> CHINA_COMPARE.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
+        try {
+            CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         for (ScenicSpotMPO mpo : list) {
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
             res.setContent(mpo.getName());
