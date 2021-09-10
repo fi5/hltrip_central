@@ -2226,7 +2226,8 @@ public class ProductServiceImpl implements ProductService {
             homeSearchRes.setCityName(cityPO.getName());
             homeSearchRes.setCityCode(cityPO.getCode());
             homeSearchRes.setContent(cityPO.getName());
-            homeSearchRes.setType(1);
+            homeSearchRes.setType(SearchRecommendResEnum.CITY.getCode());
+            homeSearchRes.setIcon(SearchRecommendResEnum.CITY.getUrl());
             result.add(homeSearchRes);
         }
         List<String> keywords = new ArrayList<>();
@@ -2246,7 +2247,8 @@ public class ProductServiceImpl implements ProductService {
             homeSearchRes.setContent(mpo.getName());
             homeSearchRes.setScenicSpotId(mpo.getId());
             homeSearchRes.setScenicSpotName(mpo.getName());
-            homeSearchRes.setType(2);
+            homeSearchRes.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
+            homeSearchRes.setIcon(SearchRecommendResEnum.SCENIC_SPOT.getUrl());
             result.add(homeSearchRes);
         }
         return BaseResponse.withSuccess(result);
@@ -2307,7 +2309,8 @@ public class ProductServiceImpl implements ProductService {
             res.setCityName(cityPO.getName());
             res.setCityCode(cityPO.getCode());
             res.setContent(cityPO.getName());
-            res.setType(1);
+            res.setType(SearchRecommendResEnum.CITY.getCode());
+            res.setIcon(SearchRecommendResEnum.CITY.getUrl());
             result.add(res);
         }
         List<String> keywords = new ArrayList<>();
@@ -2323,7 +2326,8 @@ public class ProductServiceImpl implements ProductService {
             res.setContent(mpo.getName());
             res.setScenicSpotId(mpo.getId());
             res.setScenicSpotName(mpo.getName());
-            res.setType(2);
+            res.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
+            res.setIcon(SearchRecommendResEnum.SCENIC_SPOT.getUrl());
             result.add(res);
         }
         if (!cityFullMatch) {
@@ -2332,7 +2336,8 @@ public class ProductServiceImpl implements ProductService {
                 res.setCityName(cityPO.getName());
                 res.setCityCode(cityPO.getCode());
                 res.setContent(cityPO.getName());
-                res.setType(1);
+                res.setType(SearchRecommendResEnum.CITY.getCode());
+                res.setIcon(SearchRecommendResEnum.CITY.getUrl());
                 result.add(res);
             }
         }
