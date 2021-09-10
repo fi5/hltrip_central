@@ -536,7 +536,7 @@ public class ProductServiceImpl implements ProductService {
                                 rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
             }
             products = recommendBaseInfos.stream().map(rb ->
-                    convertToRecommendProductV2(rb, request.getPosition().toString())).collect(Collectors.toList());
+                    convertToRecommendProductV2(rb, request.getPosition().toString(), request.getAppSource())).collect(Collectors.toList());
         }
         log.info("products:{}", products.size());
         if(products.size() > request.getPageSize()){
@@ -840,6 +840,7 @@ public class ProductServiceImpl implements ProductService {
             if(StringUtils.isNotBlank(req.getEndDate()))
                 priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
             priceCal.setProductCode(req.getProductCode());
+            priceCal.setFrom(req.getFrom());
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
             try {
                 priceCalcResultBaseResponse= calcTotalPrice(priceCal);
@@ -1805,7 +1806,7 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, String position){
+    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, String position, String appSource){
         RecommendProductV2 recommendProduct = new RecommendProductV2();
         recommendProduct.setPoiId(rb.getPoiId());
         recommendProduct.setPoiName(rb.getPoiName());
@@ -1819,6 +1820,7 @@ public class ProductServiceImpl implements ProductService {
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
         calendar.setAdtSellPrice(rb.getApiSettlementPrice());
         increasePrice.setPrices(Lists.newArrayList(calendar));
+        increasePrice.setAppSource(appSource);
         commonService.increasePrice(increasePrice);
         recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
