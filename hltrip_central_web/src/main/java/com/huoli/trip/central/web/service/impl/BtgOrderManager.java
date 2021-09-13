@@ -85,7 +85,7 @@ public class BtgOrderManager extends OrderManager {
         UBRTicketEntity ticketEntity = new UBRTicketEntity();
         ticketEntity.setCode(scenicSpotProductMPO.getSupplierProductId());
         ticketEntity.setDatetime(String.format("%sT08:00:00", DateTimeUtil.formatDate(DateTimeUtil.trancateToDate(DateTimeUtil.parseDate(req.getBeginDate())))));
-        ticketEntity.setPrice(req.getSellAmount() != null ? req.getSellAmount().toPlainString() : null);
+        ticketEntity.setPrice(req.getOutPayUnitPrice() != null ? req.getOutPayUnitPrice().toPlainString() : null);
         List<UBRGuest> ubrGuests = req.getGuests().stream().map(g -> {
             UBRGuest ubrGuest = new UBRGuest();
             ubrGuest.setTelephone(g.getMobile());
