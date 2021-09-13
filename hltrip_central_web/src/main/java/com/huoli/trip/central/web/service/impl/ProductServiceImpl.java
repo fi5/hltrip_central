@@ -1310,7 +1310,6 @@ public class ProductServiceImpl implements ProductService {
         calendar.setChdSellPrice(chdPrice);
         calendar.setDate(date);
         increasePrice.setPrices(Lists.newArrayList(calendar));
-        increasePrice.setAppSubSource(request.getSource());
         commonService.increasePrice(increasePrice);
         return increasePrice;
     }
