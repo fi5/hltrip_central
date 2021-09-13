@@ -464,6 +464,7 @@ public class ProductServiceImpl implements ProductService {
         priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
         increasePrice.setPrices(Arrays.asList(priceCalendar));
         log.info("increasePrice:{}", JSONObject.toJSONString(increasePrice));
+        increasePrice.setScenicSpotId(productListMPO.getScenicSpotId());
         commonService.increasePrice(increasePrice);
         return increasePrice;
     }
@@ -1203,6 +1204,7 @@ public class ProductServiceImpl implements ProductService {
             ScenicSpotProductMPO productMPO = scenicSpotProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
             channel = productMPO.getChannel();
+            request.setScenicSpotId(productMPO.getScenicSpotId());
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
             GroupTourProductMPO productMPO = groupTourProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
@@ -1310,6 +1312,7 @@ public class ProductServiceImpl implements ProductService {
         calendar.setChdSellPrice(chdPrice);
         calendar.setDate(date);
         increasePrice.setPrices(Lists.newArrayList(calendar));
+        increasePrice.setScenicSpotId(request.getScenicSpotId());
         commonService.increasePrice(increasePrice);
         return increasePrice;
     }
@@ -1829,6 +1832,7 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setPrices(Lists.newArrayList(calendar));
         increasePrice.setAppSource(appSource);
         increasePrice.setAppSubSource(appSubSource);
+        increasePrice.setScenicSpotId(rb.getPoiId());
         commonService.increasePrice(increasePrice);
         recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());

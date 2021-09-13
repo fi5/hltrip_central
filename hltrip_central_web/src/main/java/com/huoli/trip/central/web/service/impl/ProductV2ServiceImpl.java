@@ -261,6 +261,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
+                    increasePrice.setScenicSpotId(request.getScenicSpotId());
                     commonService.increasePrice(increasePrice);
                     List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                     if(ListUtils.isEmpty(prices)){
@@ -564,6 +565,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     priceCalendar.setDate(p.getStartDate());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
+                    increasePrice.setScenicSpotId(scenicSpotId);
                     commonService.increasePrice(increasePrice);
                     List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                     IncreasePriceCalendar priceCalendar1 = prices.get(0);
