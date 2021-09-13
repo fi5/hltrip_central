@@ -290,7 +290,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                     String dateStr = localDate.format(fmt);
                     String tomorrowStr = tomorrow.format(fmt);
-                    List<Tag> bookTag = new ArrayList<>(1);
+                    List<Tag> bookTag = new ArrayList<>();
                     Tag tag = null;
                     if(StringUtils.equals(startDate,dateStr)) {
                         tag = new Tag();
@@ -305,8 +305,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     }
                     if(StringUtils.isNotBlank(increasePriceCalendar.getTagDesc()) && StringUtils.isNotBlank(increasePriceCalendar.getTagDesc())){
                         Tag discountTag = new Tag();
-                        tag.setName(String.format("%s%s折", increasePriceCalendar.getTagDesc(), increasePriceCalendar.getTag()));
-                        tag.setColour(ColourConstants.TICKET_GREEN);
+                        discountTag.setName(String.format("%s%s折", increasePriceCalendar.getTagDesc(), increasePriceCalendar.getTag()));
+                        discountTag.setColour(ColourConstants.TICKET_GREEN);
                         bookTag.add(discountTag);
                     }
                     scenicSpotProductBase.setBookTag(bookTag);
