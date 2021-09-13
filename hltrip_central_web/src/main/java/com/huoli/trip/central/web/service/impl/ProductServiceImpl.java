@@ -358,7 +358,10 @@ public class ProductServiceImpl implements ProductService {
                 //加价计算
                 IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
                 // 设置价格
-                scenicTicketListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                IncreasePriceCalendar increasePriceCalendar = increasePrice.getPrices().get(0);
+                scenicTicketListItem.setPrice(increasePriceCalendar.getAdtSellPrice());
+                scenicTicketListItem.setDiscount(increasePriceCalendar.getTag());
+                scenicTicketListItem.setPreferenceTag(increasePriceCalendar.getTagDesc());
                 items.add(scenicTicketListItem);
             });
         }
@@ -1837,7 +1840,8 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setSubTitle(rb.getSubTitle());
         recommendProduct.setTags(rb.getTags());
         recommendProduct.setSeq(rb.getSeq());
-        recommendProduct.setPreferenceTag(calendar.getTag());
+        recommendProduct.setPreferenceTag(calendar.getTagDesc());
+        recommendProduct.setDiscount(calendar.getTag());
         return recommendProduct;
     }
 

@@ -271,6 +271,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     IncreasePriceCalendar increasePriceCalendar = prices.get(0);
                     basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
                     basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
+                    if(increasePriceCalendar.getOriAdtSellPrice() != null && increasePriceCalendar.getAdtSellPrice() != null && increasePriceCalendar.getOriAdtSellPrice().compareTo(increasePriceCalendar.getAdtSellPrice()) > 0){
+                        basePrice.setOriPrice(increasePriceCalendar.getOriAdtSellPrice());
+                    }
                     scenicSpotProductBase.setPrice(basePrice);
 
                     BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
@@ -299,6 +302,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                         tag.setName("可订明日");
                         tag.setColour(ColourConstants.TICKET_BLUE);
                         bookTag.add(tag);
+                    }
+                    if(StringUtils.isNotBlank(increasePriceCalendar.getTagDesc()) && StringUtils.isNotBlank(increasePriceCalendar.getTagDesc())){
+                        Tag discountTag = new Tag();
+                        tag.setName(String.format("%s%s折", increasePriceCalendar.getTagDesc(), increasePriceCalendar.getTag()));
+                        tag.setColour(ColourConstants.TICKET_GREEN);
+                        bookTag.add(discountTag);
                     }
                     scenicSpotProductBase.setBookTag(bookTag);
 
