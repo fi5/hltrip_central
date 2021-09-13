@@ -74,6 +74,7 @@ public class CommonServiceImpl implements CommonService {
                 price.setTag(supplierPolicy.getTag());
                 price.setOriAdtSellPrice(price.getAdtSellPrice());
                 price.setOriChdSellPrice(price.getChdSellPrice());
+                price.setTagDesc(price.getTagDesc());
                 // 加价计算
                 if(price.getAdtSellPrice() != null){
                     BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
