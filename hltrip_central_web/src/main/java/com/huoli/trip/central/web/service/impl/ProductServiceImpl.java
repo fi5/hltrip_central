@@ -536,7 +536,7 @@ public class ProductServiceImpl implements ProductService {
                                 rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
             }
             products = recommendBaseInfos.stream().map(rb ->
-                    convertToRecommendProductV2(rb, request.getPosition().toString(), request.getAppSource())).collect(Collectors.toList());
+                    convertToRecommendProductV2(rb, request.getPosition().toString(), request.getAppSource(), request.getSource())).collect(Collectors.toList());
         }
         log.info("products:{}", products.size());
         if(products.size() > request.getPageSize()){
@@ -1304,6 +1304,7 @@ public class ProductServiceImpl implements ProductService {
         calendar.setChdSellPrice(chdPrice);
         calendar.setDate(date);
         increasePrice.setPrices(Lists.newArrayList(calendar));
+        increasePrice.setAppSubSource(request.getSource());
         commonService.increasePrice(increasePrice);
         return increasePrice;
     }
@@ -1807,7 +1808,7 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, String position, String appSource){
+    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, String position, String appSource, String appSubSource){
         RecommendProductV2 recommendProduct = new RecommendProductV2();
         recommendProduct.setPoiId(rb.getPoiId());
         recommendProduct.setPoiName(rb.getPoiName());
@@ -1822,6 +1823,7 @@ public class ProductServiceImpl implements ProductService {
         calendar.setAdtSellPrice(rb.getApiSettlementPrice());
         increasePrice.setPrices(Lists.newArrayList(calendar));
         increasePrice.setAppSource(appSource);
+        increasePrice.setAppSubSource(appSubSource);
         commonService.increasePrice(increasePrice);
         recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
