@@ -142,6 +142,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             increasePrice.setChannelCode(groupTourProductMPO.getChannel());
             increasePrice.setProductCode(groupTourProductMPO.getId());
             increasePrice.setAppSource(request.getFrom());
+            increasePrice.setAppSubSource(request.getSource());
             increasePrice.setProductCategory(groupTourProductMPO.getCategory());
             List<GroupTourPrice> groupTourPrices = p.getGroupTourPrices();
             List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
@@ -184,7 +185,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 groupTourRecommend.setImage(a.getProductImageUrl());
                 groupTourRecommend.setProductId(a.getProductId());
                 groupTourRecommend.setProductName(a.getProductName());
-                IncreasePrice increasePrice = productService.increasePrice(a, request.getFrom());
+                IncreasePrice increasePrice = productService.increasePrice(a, request.getFrom(), request.getSource());
                 groupTourRecommend.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
                 return groupTourRecommend;
             }).collect(Collectors.toList());
@@ -252,6 +253,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     increasePrice.setChannelCode(scenicSpotProduct.getChannel());
                     increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
                     increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setAppSubSource(request.getSource());
                     increasePrice.setProductCategory(category);
                     List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
                     IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
@@ -545,6 +547,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     //increasePrice.setChannelCode(request.getChannelCode());
                     increasePrice.setProductCode(p.getScenicSpotProductId());
                     increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setAppSubSource(request.getSource());
                     increasePrice.setProductCategory("d_ss_ticket");
                     List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
                     IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
@@ -718,7 +721,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             increasePrice.setChannelCode(groupTourProductMPO.getChannel());
             increasePrice.setProductCode(groupTourProductMPO.getId());
             increasePrice.setAppSource(request.getFrom());
+            increasePrice.setAppSubSource(request.getSource());
             increasePrice.setProductCategory(groupTourProductMPO.getCategory());
+            increasePrice.setAppSubSource(request.getSource());
             List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
                priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
@@ -866,6 +871,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         increasePrice.setChannelCode(productMPO.getChannel());
         increasePrice.setProductCode(productMPO.getId());
         increasePrice.setAppSource(request.getFrom());
+        increasePrice.setAppSubSource(request.getSource());
         increasePrice.setProductCategory(productMPO.getCategory());
         List<IncreasePriceCalendar> priceCalendars = priceStocks.stream().map(item -> {
             IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();

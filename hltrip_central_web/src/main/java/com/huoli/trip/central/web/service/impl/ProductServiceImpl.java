@@ -356,7 +356,7 @@ public class ProductServiceImpl implements ProductService {
                 ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
                 BeanUtils.copyProperties(item, scenicTicketListItem);
                 //加价计算
-                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
                 // 设置价格
                 scenicTicketListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
                 items.add(scenicTicketListItem);
@@ -393,7 +393,7 @@ public class ProductServiceImpl implements ProductService {
                 GroupTourListItem groupTourListItem = new GroupTourListItem();
                 BeanUtils.copyProperties(item, groupTourListItem);
                 //加价计算
-                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
                 // 设置价格
                 groupTourListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
                 items.add(groupTourListItem);
@@ -431,7 +431,7 @@ public class ProductServiceImpl implements ProductService {
                 HotelScenicListItem hotelScenicListItem = new HotelScenicListItem();
                 BeanUtils.copyProperties(item, hotelScenicListItem);
                 //加价计算
-                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
                 // 设置价格
                 hotelScenicListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
                 items.add(hotelScenicListItem);
@@ -450,12 +450,13 @@ public class ProductServiceImpl implements ProductService {
      * @throws
      */
     @Override
-    public IncreasePrice increasePrice(ProductListMPO productListMPO, String app){
+    public IncreasePrice increasePrice(ProductListMPO productListMPO, String app, String source){
         IncreasePrice increasePrice = new IncreasePrice();
         increasePrice.setChannelCode(productListMPO.getChannel());
         increasePrice.setProductCode(productListMPO.getProductId());
         increasePrice.setProductCategory(productListMPO.getCategory());
         increasePrice.setAppSource(app);
+        increasePrice.setAppSubSource(source);
         IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
         priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
         increasePrice.setPrices(Arrays.asList(priceCalendar));
@@ -1298,6 +1299,7 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setProductCode(request.getProductCode());
         increasePrice.setChannelCode(request.getChannelCode());
         increasePrice.setAppSource(request.getFrom());
+        increasePrice.setAppSubSource(request.getSource());
         increasePrice.setProductCategory(request.getCategory());
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
         calendar.setAdtSellPrice(adtPrice);

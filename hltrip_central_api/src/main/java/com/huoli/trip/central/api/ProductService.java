@@ -1,12 +1,10 @@
 package com.huoli.trip.central.api;
 
-import com.huoli.trip.common.entity.TripPromotionInvitation;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.Product;
-import com.huoli.trip.common.vo.RecommendProductV2;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -130,7 +128,7 @@ public interface ProductService {
      */
     BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req);
 
-    IncreasePrice increasePrice(ProductListMPO productListMPO, String app);
+    IncreasePrice increasePrice(ProductListMPO productListMPO, String app, String source);
 
     /**
      * 推荐列表
