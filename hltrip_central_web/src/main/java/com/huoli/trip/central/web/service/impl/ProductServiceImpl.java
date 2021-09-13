@@ -1832,6 +1832,7 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setSubTitle(rb.getSubTitle());
         recommendProduct.setTags(rb.getTags());
         recommendProduct.setSeq(rb.getSeq());
+        recommendProduct.setPreferenceTag(calendar.getTag());
         return recommendProduct;
     }
 
