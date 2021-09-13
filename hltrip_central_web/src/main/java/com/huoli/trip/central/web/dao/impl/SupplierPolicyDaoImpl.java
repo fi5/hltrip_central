@@ -39,8 +39,10 @@ public class SupplierPolicyDaoImpl implements SupplierPolicyDao {
         appSource.orOperator(Criteria.where("appSource").in(increasePrice.getAppSource()), Criteria.where("appSource").is(null));
         Criteria category = new Criteria();
         category.orOperator(Criteria.where("productType").in(increasePrice.getProductCategory()), Criteria.where("productType").is(null));
+        Criteria appSubSource = new Criteria();
+        appSubSource.orOperator(Criteria.where("appSubSource").in(increasePrice.getAppSubSource()), Criteria.where("appSubSource").is(null));
         Criteria criteria = new Criteria();
-        criteria.andOperator(supplierId, appSource, category);
+        criteria.andOperator(supplierId, appSource, category, appSubSource);
         return mongoTemplate.find(Query.query(criteria), SupplierPolicyPO.class);
     }
 
