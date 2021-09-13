@@ -138,6 +138,7 @@ public class BtgOrderManager extends OrderManager {
             traceId = TraceIdUtils.getTraceId();
         }
         calcRequest.setTraceId(traceId);
+        calcRequest.setSource(req.getSource());
         try{
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
             if(StringUtils.isBlank(req.getCategory())){
