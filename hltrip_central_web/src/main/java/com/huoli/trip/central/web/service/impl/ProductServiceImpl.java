@@ -901,6 +901,9 @@ public class ProductServiceImpl implements ProductService {
                 if (priceMPO == null) {
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
                 }
+                if(!StringUtils.equals(priceMPO.getStartDate(), req.getStartDate())){
+                    return BaseResponse.fail(CentralError.PRICE_DATE_NO_MATCH_ERROR);
+                }
                 ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(productMPO.getScenicSpotId());
                 if(scenicSpotMPO == null){
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
