@@ -548,7 +548,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
                 effective = finalPriceList.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
                 List<String> finalChannelInfo = channelInfo;
-                String scenicId = scenicSpotId;
+                String finalScenicSpotId = scenicSpotId;
                 basePrices = effective.stream().map(p -> {
                     BasePrice basePrice = new BasePrice();
                     BeanUtils.copyProperties(p, basePrice);
@@ -569,7 +569,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     priceCalendar.setDate(p.getStartDate());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
-                    increasePrice.setScenicSpotId(scenicId);
+                    increasePrice.setScenicSpotId(finalScenicSpotId);
                     commonService.increasePrice(increasePrice);
                     List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                     IncreasePriceCalendar priceCalendar1 = prices.get(0);
