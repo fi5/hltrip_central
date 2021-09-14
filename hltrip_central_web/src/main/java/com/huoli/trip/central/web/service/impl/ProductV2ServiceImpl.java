@@ -284,8 +284,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
 
                     //使用最近可定日期比较
-                    //String startDate = scenicSpotProductPriceMPO.getStartDate();
-                    String startDate = DateTimeUtil.formatDate(canBuyDate);
+                    String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    if (canBuyDate.after(DateTimeUtil.parseDate(startDate))) {
+                        startDate = DateTimeUtil.formatDate(canBuyDate);
+                    }
                     LocalDate localDate = LocalDate.now();
                     LocalDate tomorrow = localDate.plusDays(1);
                     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
