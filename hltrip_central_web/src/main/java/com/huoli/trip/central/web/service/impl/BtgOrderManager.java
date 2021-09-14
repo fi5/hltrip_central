@@ -57,8 +57,8 @@ public class BtgOrderManager extends OrderManager {
     @Reference(timeout = 10000,group = "hltrip", check = false)
     private UBROrderService ubrOrderService;
 
-    @Reference(timeout = 10000,group = "hltrip", check = false)
-    private UBRProductService ubrProductService;
+//    @Reference(timeout = 10000,group = "hltrip", check = false)
+//    private UBRProductService ubrProductService;
 
     @Autowired
     private ScenicSpotDao scenicSpotDao;
@@ -305,9 +305,9 @@ public class BtgOrderManager extends OrderManager {
      * @param endDate
      * @param traceId
      */
-    public void syncPriceV2(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
-        log.info("这里为了实时同步库存。。");
-        ubrProductService.getTicketList();
-    }
+//    public void syncPriceV2(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
+//        log.info("这里为了实时同步库存。。");
+//        ubrProductService.getTicketList();
+//    }
 
 }
