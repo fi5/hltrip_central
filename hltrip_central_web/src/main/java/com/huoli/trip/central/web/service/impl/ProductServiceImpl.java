@@ -1838,6 +1838,7 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setAppSource(appSource);
         increasePrice.setAppSubSource(appSubSource);
         increasePrice.setScenicSpotId(rb.getPoiId());
+        increasePrice.setProductCategory(rb.getCategory());
         commonService.increasePrice(increasePrice);
         recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
