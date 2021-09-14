@@ -901,7 +901,7 @@ public class ProductServiceImpl implements ProductService {
                 if (priceMPO == null) {
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
                 }
-                if(!StringUtils.equals(DateTimeUtil.formatDate(DateTimeUtil.parseDate(priceMPO.getStartDate())), req.getStartDate())){
+                if (DateTimeUtil.parseDate(priceMPO.getStartDate()).compareTo(DateTimeUtil.parseDate(req.getStartDate())) == 1 || DateTimeUtil.parseDate(priceMPO.getEndDate()).compareTo(DateTimeUtil.parseDate(req.getStartDate())) == -1){
                     return BaseResponse.fail(CentralError.PRICE_DATE_NO_MATCH_ERROR);
                 }
                 ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(productMPO.getScenicSpotId());

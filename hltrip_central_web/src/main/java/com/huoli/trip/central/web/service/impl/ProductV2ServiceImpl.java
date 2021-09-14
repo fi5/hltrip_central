@@ -284,8 +284,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
 
                     //使用最近可定日期比较
-                    //String startDate = scenicSpotProductPriceMPO.getStartDate();
-                    String startDate = DateTimeUtil.formatDate(canBuyDate);
+                    String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    if (canBuyDate.after(DateTimeUtil.parseDate(startDate))) {
+                        startDate = DateTimeUtil.formatDate(canBuyDate);
+                    }
                     LocalDate localDate = LocalDate.now();
                     LocalDate tomorrow = localDate.plusDays(1);
                     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -571,6 +573,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     IncreasePriceCalendar priceCalendar1 = prices.get(0);
                     basePrice.setSellPrice(priceCalendar1.getAdtSellPrice());
                     basePrice.setPriceId(p.getId());
+                    basePrice.setStartDate(DateTimeUtil.format(DateTimeUtil.parseDate(p.getStartDate()),DateTimeUtil.YYYYMMDD));
                     return basePrice;
                 }).collect(Collectors.toList());
             }
