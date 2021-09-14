@@ -22,12 +22,13 @@ import com.huoli.trip.common.vo.response.central.CenterRefundCheckResult;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.UBROrderService;
+import com.huoli.trip.supplier.api.UBRProductService;
 import com.huoli.trip.supplier.self.universal.vo.UBRGuest;
 import com.huoli.trip.supplier.self.universal.vo.UBROrderDetailResponse;
 import com.huoli.trip.supplier.self.universal.vo.UBRTicketEntity;
+import com.huoli.trip.supplier.self.universal.vo.reqeust.UBRTicketListRequest;
 import com.huoli.trip.supplier.self.universal.vo.reqeust.UBRTicketOrderRequest;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRBaseResponse;
-import com.huoli.trip.supplier.self.universal.vo.response.UBRRefundCheckResponse;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRRefundCheckResponseCustom;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRTicketOrderResponse;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
@@ -55,6 +56,9 @@ public class BtgOrderManager extends OrderManager {
 
     @Reference(timeout = 10000,group = "hltrip", check = false)
     private UBROrderService ubrOrderService;
+
+    @Reference(timeout = 10000,group = "hltrip", check = false)
+    private UBRProductService ubrProductService;
 
     @Autowired
     private ScenicSpotDao scenicSpotDao;
@@ -291,6 +295,19 @@ public class BtgOrderManager extends OrderManager {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.ERROR_NOT_ALLOW_REFUND);
+    }
+
+    /**
+     * 实时同步价格
+     * @param productCode
+     * @param supplierProductId
+     * @param startDate
+     * @param endDate
+     * @param traceId
+     */
+    public void syncPriceV2(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
+        log.info("这里为了实时同步库存。。");
+        ubrProductService.getTicketList();
     }
 
 }
