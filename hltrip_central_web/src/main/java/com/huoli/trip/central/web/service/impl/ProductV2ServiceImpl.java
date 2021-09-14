@@ -497,6 +497,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }else {
                 //获取最近可定日期
                 ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(productId, channelInfo);
+                scenicSpotId = scenicSpotProductMPO.getScenicSpotId();
                 int bookBeforeDay = scenicSpotProductMPO.getScenicSpotProductTransaction() == null ? 0 : scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeDay();
                 Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProductMPO.getScenicSpotProductTransaction() == null ? null : scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeTime());
                 String trueStartDate = DateTimeUtil.getDateDiffDays(start, canBuyDate) < 0 ? DateTimeUtil.formatDate(canBuyDate) : startDate;
@@ -547,6 +548,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
                 effective = finalPriceList.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
                 List<String> finalChannelInfo = channelInfo;
+                String scenicId = scenicSpotId;
                 basePrices = effective.stream().map(p -> {
                     BasePrice basePrice = new BasePrice();
                     BeanUtils.copyProperties(p, basePrice);
@@ -567,7 +569,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     priceCalendar.setDate(p.getStartDate());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
-                    increasePrice.setScenicSpotId(scenicSpotId);
+                    increasePrice.setScenicSpotId(scenicId);
                     commonService.increasePrice(increasePrice);
                     List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                     IncreasePriceCalendar priceCalendar1 = prices.get(0);

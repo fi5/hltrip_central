@@ -33,6 +33,9 @@ public class SupplierPolicyDaoImpl implements SupplierPolicyDao {
 
     @Override
     public List<SupplierPolicyPO> getSupplierPolicy(IncreasePrice increasePrice){
+        if(StringUtils.isBlank(increasePrice.getChannelCode())){
+            increasePrice.setChannelCode(null);
+        }
         Criteria supplierId = new Criteria();
         supplierId.orOperator(Criteria.where("supplierId").is(increasePrice.getChannelCode()), Criteria.where("supplierId").is(null));
         Criteria appSource = new Criteria();
