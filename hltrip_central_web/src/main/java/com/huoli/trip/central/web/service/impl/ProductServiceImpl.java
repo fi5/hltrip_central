@@ -1829,7 +1829,9 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setChannelName(rb.getChannelName());
         IncreasePrice increasePrice = new IncreasePrice();
         increasePrice.setProductCode(rb.getProductId());
-        increasePrice.setChannelCode(rb.getChannel());
+        if(StringUtils.isNotBlank(rb.getChannel())){
+            increasePrice.setChannelCode(rb.getChannel().trim());
+        }
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
         calendar.setAdtSellPrice(rb.getApiSettlementPrice());
         increasePrice.setPrices(Lists.newArrayList(calendar));
