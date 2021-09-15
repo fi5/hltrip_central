@@ -6,12 +6,14 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.dao.ScenicSpotProductPriceDao;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Certificate;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.request.*;
@@ -64,6 +66,9 @@ public class BtgOrderManager extends OrderManager {
     private ScenicSpotDao scenicSpotDao;
 
     @Autowired
+    private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
+
+    @Autowired
     private ProductService productService;
 
     public final static String CHANNEL = ChannelConstant.SUPPLIER_TYPE_BTG;
@@ -86,9 +91,16 @@ public class BtgOrderManager extends OrderManager {
         ubrContact.setTelephone(req.getMobile());
         orderRequest.setContact(ubrContact);
         ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
+        String date = String.format("%sT06:00:00", DateTimeUtil.formatDate(DateTimeUtil.trancateToDate(DateTimeUtil.parseDate(req.getBeginDate()))));
+        if(StringUtils.isNotBlank(req.getPackageId())) {
+            ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(req.getPackageId());
+            if (priceMPO != null && StringUtils.isNotBlank(priceMPO.getOriDate())) {
+                date = priceMPO.getOriDate().replace(" ", "T");
+            }
+        }
         UBRTicketEntity ticketEntity = new UBRTicketEntity();
         ticketEntity.setCode(scenicSpotProductMPO.getSupplierProductId());
-        ticketEntity.setDatetime(String.format("%sT06:00:00", DateTimeUtil.formatDate(DateTimeUtil.trancateToDate(DateTimeUtil.parseDate(req.getBeginDate())))));
+        ticketEntity.setDatetime(date);
         ticketEntity.setPrice(req.getOutPayUnitPrice() != null ? req.getOutPayUnitPrice().toPlainString() : null);
         List<UBRGuest> ubrGuests = req.getGuests().stream().map(g -> {
             UBRGuest ubrGuest = new UBRGuest();
