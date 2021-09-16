@@ -129,20 +129,41 @@ public class CommonServiceImpl implements CommonService {
             SupplierPolicyPO supplierPolicy = getPolicy(increasePrice);
             ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
             for (IncreasePriceCalendar price : increasePrice.getPrices()) {
-                if(price.isAdtFloatPriceManually()){
-                    if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 1){
-                        price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(formatBigDecimal(price.getAdtSettlePrice()).doubleValue()
-                                , formatBigDecimal(price.getAdtFloatPrice()).doubleValue())));
-                    } else if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 2){
-
-                    }
-
-                } else if(supplierPolicy != null){
-                    // 加价计算
-                    if(price.getAdtSettlePrice() != null){
+                // 成人
+                if(price.getAdtSettlePrice() != null && price.getAdtSettlePrice().compareTo(new BigDecimal(0)) == 1){
+                    if(price.isAdtFloatPriceManually()){
+                        // 人工维护加价计算
+                        double floatPrice = formatBigDecimal(price.getAdtFloatPrice()).doubleValue();
+                        double settlePrice = formatBigDecimal(price.getAdtSettlePrice()).doubleValue();
+                        if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 1){
+                            price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice)));
+                        } else if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 2){
+                            price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice)));
+                        }
+                    } else if(supplierPolicy != null){
+                        // 政策加价计算
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
                                 price.getAdtSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
                         price.setAdtSellPrice(newPrice);
+                    }
+                }
+
+                if(price.getChdSettlePrice() != null && price.getChdSettlePrice().compareTo(new BigDecimal(0)) == 1) {
+                    // 儿童
+                    if (price.isChdFloatPriceManually()) {
+                        // 人工维护加价计算
+                        double floatPrice = formatBigDecimal(price.getChdFloatPrice()).doubleValue();
+                        double settlePrice = formatBigDecimal(price.getChdSettlePrice()).doubleValue();
+                        if (price.getChdFloatPriceType() != null && price.getChdFloatPriceType() == 1) {
+                            price.setChdSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice)));
+                        } else if (price.getChdFloatPriceType() != null && price.getChdFloatPriceType() == 2) {
+                            price.setChdSellPrice(BigDecimal.valueOf(BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice)));
+                        }
+                    } else if (supplierPolicy != null) {
+                        // 政策加价计算
+                        BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
+                                price.getChdSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                        price.setChdSellPrice(newPrice);
                     }
                 }
             }
