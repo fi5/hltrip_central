@@ -185,6 +185,7 @@ public class YcfOrderManger extends OrderManager {
         calcRequest.setPackageCode(req.getPackageId());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
+        calcRequest.setSource(req.getSource());
         try{
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
             if(StringUtils.isBlank(req.getCategory())){
@@ -499,6 +500,7 @@ public class YcfOrderManger extends OrderManager {
         calcRequest.setCategory(req.getCategory());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
+        calcRequest.setSource(req.getSource());
         try{
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
             if(StringUtils.isBlank(req.getCategory())){

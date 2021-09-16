@@ -6,12 +6,14 @@ import com.google.common.collect.Lists;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.dao.ScenicSpotProductPriceDao;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Certificate;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.exception.HlCentralException;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.vo.request.*;
@@ -22,12 +24,13 @@ import com.huoli.trip.common.vo.response.central.CenterRefundCheckResult;
 import com.huoli.trip.common.vo.response.central.PriceCalcResult;
 import com.huoli.trip.common.vo.response.order.*;
 import com.huoli.trip.supplier.api.UBROrderService;
+import com.huoli.trip.supplier.api.UBRProductService;
 import com.huoli.trip.supplier.self.universal.vo.UBRGuest;
 import com.huoli.trip.supplier.self.universal.vo.UBROrderDetailResponse;
 import com.huoli.trip.supplier.self.universal.vo.UBRTicketEntity;
+import com.huoli.trip.supplier.self.universal.vo.reqeust.UBRTicketListRequest;
 import com.huoli.trip.supplier.self.universal.vo.reqeust.UBRTicketOrderRequest;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRBaseResponse;
-import com.huoli.trip.supplier.self.universal.vo.response.UBRRefundCheckResponse;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRRefundCheckResponseCustom;
 import com.huoli.trip.supplier.self.universal.vo.response.UBRTicketOrderResponse;
 import com.huoli.trip.supplier.self.yaochufa.vo.BaseOrderRequest;
@@ -56,8 +59,14 @@ public class BtgOrderManager extends OrderManager {
     @Reference(timeout = 10000,group = "hltrip", check = false)
     private UBROrderService ubrOrderService;
 
+    @Reference(timeout = 10000,group = "hltrip", check = false)
+    private UBRProductService ubrProductService;
+
     @Autowired
     private ScenicSpotDao scenicSpotDao;
+
+    @Autowired
+    private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
 
     @Autowired
     private ProductService productService;
@@ -82,10 +91,17 @@ public class BtgOrderManager extends OrderManager {
         ubrContact.setTelephone(req.getMobile());
         orderRequest.setContact(ubrContact);
         ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
+        String date = String.format("%sT06:00:00", DateTimeUtil.formatDate(DateTimeUtil.trancateToDate(DateTimeUtil.parseDate(req.getBeginDate()))));
+        if(StringUtils.isNotBlank(req.getPackageId())) {
+            ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(req.getPackageId());
+            if (priceMPO != null && StringUtils.isNotBlank(priceMPO.getOriDate())) {
+                date = priceMPO.getOriDate().replace(" ", "T");
+            }
+        }
         UBRTicketEntity ticketEntity = new UBRTicketEntity();
         ticketEntity.setCode(scenicSpotProductMPO.getSupplierProductId());
-        ticketEntity.setDatetime(String.format("%sT08:00:00", DateTimeUtil.formatDate(DateTimeUtil.trancateToDate(DateTimeUtil.parseDate(req.getBeginDate())))));
-        ticketEntity.setPrice(req.getSellAmount() != null ? req.getSellAmount().toPlainString() : null);
+        ticketEntity.setDatetime(date);
+        ticketEntity.setPrice(req.getOutPayUnitPrice() != null ? req.getOutPayUnitPrice().toPlainString() : null);
         List<UBRGuest> ubrGuests = req.getGuests().stream().map(g -> {
             UBRGuest ubrGuest = new UBRGuest();
             ubrGuest.setTelephone(g.getMobile());
@@ -138,6 +154,7 @@ public class BtgOrderManager extends OrderManager {
             traceId = TraceIdUtils.getTraceId();
         }
         calcRequest.setTraceId(traceId);
+        calcRequest.setSource(req.getSource());
         try{
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
             if(StringUtils.isBlank(req.getCategory())){
@@ -290,6 +307,23 @@ public class BtgOrderManager extends OrderManager {
             return BaseResponse.withSuccess(result);
         }
         return BaseResponse.withFail(CentralError.ERROR_NOT_ALLOW_REFUND);
+    }
+
+    /**
+     * 实时同步价格
+     * @param productCode
+     * @param supplierProductId
+     * @param startDate
+     * @param endDate
+     * @param traceId
+     */
+    public void syncPriceV2(String productCode, String supplierProductId, String startDate, String endDate, String traceId){
+        try {
+            log.info("这里为了实时同步库存。。");
+            ubrProductService.getTicketList();
+        } catch (Throwable e) {
+            log.error("btg实时同步价格异常", e);
+        }
     }
 
 }

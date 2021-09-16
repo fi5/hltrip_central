@@ -356,9 +356,12 @@ public class ProductServiceImpl implements ProductService {
                 ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
                 BeanUtils.copyProperties(item, scenicTicketListItem);
                 //加价计算
-                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
                 // 设置价格
-                scenicTicketListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
+                IncreasePriceCalendar increasePriceCalendar = increasePrice.getPrices().get(0);
+                scenicTicketListItem.setPrice(increasePriceCalendar.getAdtSellPrice());
+                scenicTicketListItem.setDiscount(increasePriceCalendar.getTag());
+                scenicTicketListItem.setPreferenceTag(increasePriceCalendar.getTagDesc());
                 items.add(scenicTicketListItem);
             });
         }
@@ -393,7 +396,7 @@ public class ProductServiceImpl implements ProductService {
                 GroupTourListItem groupTourListItem = new GroupTourListItem();
                 BeanUtils.copyProperties(item, groupTourListItem);
                 //加价计算
-                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
                 // 设置价格
                 groupTourListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
                 items.add(groupTourListItem);
@@ -431,7 +434,7 @@ public class ProductServiceImpl implements ProductService {
                 HotelScenicListItem hotelScenicListItem = new HotelScenicListItem();
                 BeanUtils.copyProperties(item, hotelScenicListItem);
                 //加价计算
-                IncreasePrice increasePrice = increasePrice(item, req.getApp());
+                IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
                 // 设置价格
                 hotelScenicListItem.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
                 items.add(hotelScenicListItem);
@@ -450,15 +453,17 @@ public class ProductServiceImpl implements ProductService {
      * @throws
      */
     @Override
-    public IncreasePrice increasePrice(ProductListMPO productListMPO, String app){
+    public IncreasePrice increasePrice(ProductListMPO productListMPO, String app, String source){
         IncreasePrice increasePrice = new IncreasePrice();
         increasePrice.setChannelCode(productListMPO.getChannel());
         increasePrice.setProductCode(productListMPO.getProductId());
         increasePrice.setProductCategory(productListMPO.getCategory());
         increasePrice.setAppSource(app);
+        increasePrice.setAppSubSource(source);
         IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
         priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
         increasePrice.setPrices(Arrays.asList(priceCalendar));
+        increasePrice.setScenicSpotId(productListMPO.getScenicSpotId());
         log.info("increasePrice:{}", JSONObject.toJSONString(increasePrice));
         commonService.increasePrice(increasePrice);
         return increasePrice;
@@ -536,7 +541,7 @@ public class ProductServiceImpl implements ProductService {
                                 rb.getProductStatus() == ProductStatus.STATUS_SELL.getCode()).collect(Collectors.toList());
             }
             products = recommendBaseInfos.stream().map(rb ->
-                    convertToRecommendProductV2(rb, request.getPosition().toString())).collect(Collectors.toList());
+                    convertToRecommendProductV2(rb, request.getPosition().toString(), request.getAppSource(), request.getSource())).collect(Collectors.toList());
         }
         log.info("products:{}", products.size());
         if(products.size() > request.getPageSize()){
@@ -840,6 +845,7 @@ public class ProductServiceImpl implements ProductService {
             if(StringUtils.isNotBlank(req.getEndDate()))
                 priceCal.setEndDate(CommonUtils.curDate.parse(req.getEndDate()));
             priceCal.setProductCode(req.getProductCode());
+            priceCal.setFrom(req.getFrom());
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
             try {
                 priceCalcResultBaseResponse= calcTotalPrice(priceCal);
@@ -894,6 +900,9 @@ public class ProductServiceImpl implements ProductService {
                 ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(req.getPackageCode());
                 if (priceMPO == null) {
                     return BaseResponse.fail(CentralError.NO_RESULT_ERROR);
+                }
+                if (DateTimeUtil.parseDate(priceMPO.getStartDate()).compareTo(DateTimeUtil.parseDate(req.getStartDate())) == 1 || DateTimeUtil.parseDate(priceMPO.getEndDate()).compareTo(DateTimeUtil.parseDate(req.getStartDate())) == -1){
+                    return BaseResponse.fail(CentralError.PRICE_DATE_NO_MATCH_ERROR);
                 }
                 ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(productMPO.getScenicSpotId());
                 if(scenicSpotMPO == null){
@@ -1089,6 +1098,8 @@ public class ProductServiceImpl implements ProductService {
             priceCal.setChannelCode(channel);
             priceCal.setCategory(req.getCategory());
             priceCal.setPackageCode(req.getPackageCode());
+            priceCal.setFrom(req.getFrom());
+            priceCal.setSource(req.getSource());
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = null;
             try {
                 priceCalcResultBaseResponse = calcTotalPriceV2(priceCal);
@@ -1196,6 +1207,7 @@ public class ProductServiceImpl implements ProductService {
             ScenicSpotProductMPO productMPO = scenicSpotProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
             channel = productMPO.getChannel();
+            request.setScenicSpotId(productMPO.getScenicSpotId());
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
             GroupTourProductMPO productMPO = groupTourProductDao.getProductById(request.getProductCode());
             supplierProductId = productMPO.getSupplierProductId();
@@ -1296,12 +1308,14 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setProductCode(request.getProductCode());
         increasePrice.setChannelCode(request.getChannelCode());
         increasePrice.setAppSource(request.getFrom());
+        increasePrice.setAppSubSource(request.getSource());
         increasePrice.setProductCategory(request.getCategory());
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
         calendar.setAdtSellPrice(adtPrice);
         calendar.setChdSellPrice(chdPrice);
         calendar.setDate(date);
         increasePrice.setPrices(Lists.newArrayList(calendar));
+        increasePrice.setScenicSpotId(request.getScenicSpotId());
         commonService.increasePrice(increasePrice);
         return increasePrice;
     }
@@ -1805,7 +1819,7 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, String position){
+    private RecommendProductV2 convertToRecommendProductV2(RecommendBaseInfo rb, String position, String appSource, String appSubSource){
         RecommendProductV2 recommendProduct = new RecommendProductV2();
         recommendProduct.setPoiId(rb.getPoiId());
         recommendProduct.setPoiName(rb.getPoiName());
@@ -1815,10 +1829,16 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setChannelName(rb.getChannelName());
         IncreasePrice increasePrice = new IncreasePrice();
         increasePrice.setProductCode(rb.getProductId());
-        increasePrice.setChannelCode(rb.getChannel());
+        if(StringUtils.isNotBlank(rb.getChannel())){
+            increasePrice.setChannelCode(rb.getChannel().trim());
+        }
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
         calendar.setAdtSellPrice(rb.getApiSettlementPrice());
         increasePrice.setPrices(Lists.newArrayList(calendar));
+        increasePrice.setAppSource(appSource);
+        increasePrice.setAppSubSource(appSubSource);
+        increasePrice.setScenicSpotId(rb.getPoiId());
+        increasePrice.setProductCategory(rb.getCategory());
         commonService.increasePrice(increasePrice);
         recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
@@ -1829,6 +1849,8 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setSubTitle(rb.getSubTitle());
         recommendProduct.setTags(rb.getTags());
         recommendProduct.setSeq(rb.getSeq());
+        recommendProduct.setPreferenceTag(calendar.getTagDesc());
+        recommendProduct.setDiscount(calendar.getTag());
         return recommendProduct;
     }
 

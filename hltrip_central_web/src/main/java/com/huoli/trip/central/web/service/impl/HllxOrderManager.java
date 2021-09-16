@@ -131,6 +131,7 @@ public class HllxOrderManager extends OrderManager {
         calcRequest.setCategory(req.getCategory());
         PriceCalcResult priceCalcResult = null;
         calcRequest.setTraceId(traceId);
+        calcRequest.setSource(req.getSource());
         try{
             //BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPrice(calcRequest);
             BaseResponse<PriceCalcResult> priceCalcResultBaseResponse = productService.calcTotalPriceV2(calcRequest);
