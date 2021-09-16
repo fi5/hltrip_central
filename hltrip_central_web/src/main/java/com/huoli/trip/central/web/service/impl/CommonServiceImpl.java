@@ -18,9 +18,6 @@ import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * 描述：<br/>
@@ -92,8 +89,6 @@ public class CommonServiceImpl implements CommonService {
             log.info("找到合适的加价配置，使用这条配置加价，配置={}", JSON.toJSONString(supplierPolicy));
             for (IncreasePriceCalendar price : increasePrice.getPrices()) {
                 price.setTag(supplierPolicy.getTag());
-                price.setOriAdtSellPrice(price.getAdtSellPrice());
-                price.setOriChdSellPrice(price.getChdSellPrice());
                 price.setTagDesc(supplierPolicy.getTagDesc());
                 // 加价计算
                 if(price.getAdtSellPrice() != null){
@@ -131,34 +126,23 @@ public class CommonServiceImpl implements CommonService {
                 log.error("加价失败，价格列表为空。");
                 return;
             }
-
             SupplierPolicyPO supplierPolicy = getPolicy(increasePrice);
             ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
             for (IncreasePriceCalendar price : increasePrice.getPrices()) {
                 if(price.isAdtFloatPriceManually()){
-                    price.setOriAdtSellPrice(price.getAdtSellPrice());
-                    price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(formatBigDecimal(price.getAdtSettlePrice()).doubleValue()
-                            , formatBigDecimal(price.getAdtFloatPrice()).doubleValue())));
-                    if(price.getAdtSellPrice().compareTo(price.getOriAdtSellPrice()) == 1){
-                        price.setOriAdtSellPrice(price.getAdtSellPrice());
+                    if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 1){
+                        price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(formatBigDecimal(price.getAdtSettlePrice()).doubleValue()
+                                , formatBigDecimal(price.getAdtFloatPrice()).doubleValue())));
+                    } else if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 2){
+
                     }
+
                 } else if(supplierPolicy != null){
                     // 加价计算
-                    if(price.getAdtSellPrice() != null){
+                    if(price.getAdtSettlePrice() != null){
                         BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                price.getAdtSellPrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                                price.getAdtSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
                         price.setAdtSellPrice(newPrice);
-                    }
-                    // 如果有儿童价也加价
-                    if(price.getChdSellPrice() != null){
-                        String formula = supplierPolicy.getPriceFormula();
-                        // 如果儿童单独配置了加价规则就用儿童的
-                        if(StringUtils.isNotBlank(supplierPolicy.getChdPriceFormula())){
-                            formula = supplierPolicy.getChdPriceFormula();
-                        }
-                        BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(formula.replace("price",
-                                price.getChdSellPrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
-                        price.setChdSellPrice(newPrice);
                     }
                 }
             }
@@ -173,25 +157,31 @@ public class CommonServiceImpl implements CommonService {
         if(ListUtils.isEmpty(supplierPolices)){
             log.info("没有查到相关加价配置");
             return null;
-        } else {
-            log.info("查到的加价配置={}", JSON.toJSONString(supplierPolices));
-            SupplierPolicyPO supplierPolicy = supplierPolices.stream().sorted(Comparator.comparing(sp -> {
-                String formula = sp.getPriceFormula().replace(" ", "");
-                Pattern pattern = Pattern.compile("(?<=price\\*\\(1\\+)\\d(\\.\\d{1,4})*(?=\\))");
-                Matcher matcher = pattern.matcher(formula);
-                if (matcher.find()){
-                    try {
-                        return Double.valueOf(matcher.group());
-                    } catch (Exception e) {
-                        log.error("加价公式有错误，加价配置={}", JSON.toJSONString(sp), e);
-                        return Double.MAX_VALUE;
-                    }
-                }
-                return Double.MAX_VALUE;
-            }, Double::compareTo)).findFirst().get();
-            log.info("找到合适的加价配置，使用这条配置加价，配置={}", JSON.toJSONString(supplierPolicy));
-            return supplierPolicy;
         }
+        log.info("查到的加价配置={}", JSON.toJSONString(supplierPolices));
+        ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
+        IncreasePriceCalendar priceSample = increasePrice.getPrices().stream().filter(p ->
+                p.getAdtSellPrice() != null && p.getAdtSellPrice().compareTo(new BigDecimal(0)) == 1).findFirst().orElse(null);
+        SupplierPolicyPO supplierPolicy = supplierPolices.stream().filter(sp -> {
+            try {
+                se.eval(sp.getPriceFormula().replace("price",
+                        priceSample.getAdtSellPrice().toPlainString()));
+                return true;
+            } catch (Exception e) {
+                log.error("加价公式错误，id={}, formula={}", sp.getId(), sp.getPriceFormula(), e);
+                return false;
+            }
+        }).sorted(Comparator.comparing(sp -> {
+            try {
+                return (Double) se.eval(sp.getPriceFormula().replace("price",
+                        priceSample.getAdtSellPrice().toPlainString()));
+            } catch (Exception e) {
+                log.error("加价公式错误，id={}, formula={}", sp.getId(), sp.getPriceFormula(), e);
+                return Double.MAX_VALUE;
+            }
+        }, Double::compareTo)).findFirst().get();
+        log.info("找到合适的加价配置，使用这条配置加价，配置={}", JSON.toJSONString(supplierPolicy));
+        return supplierPolicy;
     }
 
     private BigDecimal formatBigDecimal(BigDecimal bigDecimal){
