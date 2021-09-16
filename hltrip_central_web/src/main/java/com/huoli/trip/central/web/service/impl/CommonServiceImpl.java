@@ -156,7 +156,7 @@ public class CommonServiceImpl implements CommonService {
                         if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 1){
                             price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice)));
                         } else if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 2){
-                            price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice)));
+                            price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice))));
                         }
                     } else if(supplierPolicy != null){
                         // 政策加价计算
@@ -175,7 +175,7 @@ public class CommonServiceImpl implements CommonService {
                         if (price.getChdFloatPriceType() != null && price.getChdFloatPriceType() == 1) {
                             price.setChdSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice)));
                         } else if (price.getChdFloatPriceType() != null && price.getChdFloatPriceType() == 2) {
-                            price.setChdSellPrice(BigDecimal.valueOf(BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice)));
+                            price.setChdSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice))));
                         }
                     } else if (supplierPolicy != null) {
                         // 政策加价计算
