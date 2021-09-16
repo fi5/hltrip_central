@@ -92,8 +92,6 @@ public class CommonServiceImpl implements CommonService {
             log.info("找到合适的加价配置，使用这条配置加价，配置={}", JSON.toJSONString(supplierPolicy));
             for (IncreasePriceCalendar price : increasePrice.getPrices()) {
                 price.setTag(supplierPolicy.getTag());
-                price.setOriAdtSellPrice(price.getAdtSellPrice());
-                price.setOriChdSellPrice(price.getChdSellPrice());
                 price.setTagDesc(supplierPolicy.getTagDesc());
                 // 加价计算
                 if(price.getAdtSellPrice() != null){
