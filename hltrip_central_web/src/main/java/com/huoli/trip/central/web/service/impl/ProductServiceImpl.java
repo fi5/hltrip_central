@@ -461,11 +461,12 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setAppSource(app);
         increasePrice.setAppSubSource(source);
         IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-        priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
+        priceCalendar.setDate(productListMPO.getSellDate());
+        priceCalendar.setPackageId(productListMPO.getPackageId());
         increasePrice.setPrices(Arrays.asList(priceCalendar));
         increasePrice.setScenicSpotId(productListMPO.getScenicSpotId());
         log.info("increasePrice:{}", JSONObject.toJSONString(increasePrice));
-        commonService.increasePrice(increasePrice);
+        commonService.increasePriceByPackageId(increasePrice);
         return increasePrice;
     }
 
@@ -1229,7 +1230,7 @@ public class ProductServiceImpl implements ProductService {
         int chdQuantity = request.getChdQuantity() == null ? 0 : request.getChdQuantity();
         if(StringUtils.equals(request.getCategory(), "d_ss_ticket")){
             ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(request.getPackageCode());
-            IncreasePrice increasePrice = increasePrice(request, priceMPO.getSellPrice(), null, priceMPO.getStartDate());
+            IncreasePrice increasePrice = increasePrice(request, priceMPO.getStartDate());
             PriceInfo priceInfo = new PriceInfo();
             priceInfo.setSaleDate(priceMPO.getStartDate());
             priceInfo.setSalePrice(increasePrice.getPrices().get(0).getAdtSellPrice());
@@ -1240,7 +1241,7 @@ public class ProductServiceImpl implements ProductService {
         } else if(StringUtils.equals(request.getCategory(), "group_tour")){
             GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(request.getPackageCode());
             List<PriceInfo> priceInfos = setMealMPO.getGroupTourPrices().stream().map(gp -> {
-                IncreasePrice increasePrice = increasePrice(request, gp.getAdtSellPrice(), gp.getChdSellPrice(), gp.getDate());
+                IncreasePrice increasePrice = increasePrice(request, gp.getDate());
                 PriceInfo priceInfo = new PriceInfo();
                 priceInfo.setSaleDate(gp.getDate());
                 priceInfo.setSalePrice(increasePrice.getPrices().get(0).getAdtSellPrice());
@@ -1279,7 +1280,7 @@ public class ProductServiceImpl implements ProductService {
 //                return BaseResponse.withFail(CentralError.PRICE_CALC_QUANTITY_LIMIT_ERROR.getCode(), msg);
 //            }
             List<PriceInfo> priceInfos = setMealMPO.getPriceStocks().stream().map(ps -> {
-                IncreasePrice increasePrice = increasePrice(request, ps.getAdtSellPrice(), ps.getChdSellPrice(), ps.getDate());
+                IncreasePrice increasePrice = increasePrice(request, ps.getDate());
                 PriceInfo priceInfo = new PriceInfo();
                 priceInfo.setSaleDate(ps.getDate());
                 priceInfo.setSalePrice(increasePrice.getPrices().get(0).getAdtSellPrice());
@@ -1303,7 +1304,7 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
-    private IncreasePrice increasePrice(PriceCalcRequest request, BigDecimal adtPrice, BigDecimal chdPrice, String date){
+    private IncreasePrice increasePrice(PriceCalcRequest request, String date){
         IncreasePrice increasePrice = new IncreasePrice();
         increasePrice.setProductCode(request.getProductCode());
         increasePrice.setChannelCode(request.getChannelCode());
@@ -1311,12 +1312,11 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setAppSubSource(request.getSource());
         increasePrice.setProductCategory(request.getCategory());
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
-        calendar.setAdtSellPrice(adtPrice);
-        calendar.setChdSellPrice(chdPrice);
         calendar.setDate(date);
+        calendar.setPackageId(request.getPackageCode());
         increasePrice.setPrices(Lists.newArrayList(calendar));
         increasePrice.setScenicSpotId(request.getScenicSpotId());
-        commonService.increasePrice(increasePrice);
+        commonService.increasePriceByPackageId(increasePrice);
         return increasePrice;
     }
 
@@ -1827,20 +1827,6 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setProductName(rb.getProductName());
         recommendProduct.setChannel(rb.getChannel());
         recommendProduct.setChannelName(rb.getChannelName());
-        IncreasePrice increasePrice = new IncreasePrice();
-        increasePrice.setProductCode(rb.getProductId());
-        if(StringUtils.isNotBlank(rb.getChannel())){
-            increasePrice.setChannelCode(rb.getChannel().trim());
-        }
-        IncreasePriceCalendar calendar = new IncreasePriceCalendar();
-        calendar.setAdtSellPrice(rb.getApiSettlementPrice());
-        increasePrice.setPrices(Lists.newArrayList(calendar));
-        increasePrice.setAppSource(appSource);
-        increasePrice.setAppSubSource(appSubSource);
-        increasePrice.setScenicSpotId(rb.getPoiId());
-        increasePrice.setProductCategory(rb.getCategory());
-        commonService.increasePrice(increasePrice);
-        recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
         recommendProduct.setPosition(Integer.valueOf(position));
         recommendProduct.setCategory(rb.getCategory());
@@ -1849,6 +1835,21 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setSubTitle(rb.getSubTitle());
         recommendProduct.setTags(rb.getTags());
         recommendProduct.setSeq(rb.getSeq());
+        IncreasePrice increasePrice = new IncreasePrice();
+        increasePrice.setProductCode(rb.getProductId());
+        if(StringUtils.isNotBlank(rb.getChannel())){
+            increasePrice.setChannelCode(rb.getChannel().trim());
+        }
+        IncreasePriceCalendar calendar = new IncreasePriceCalendar();
+        calendar.setPackageId(rb.getPackageId());
+        calendar.setDate(rb.getSellDate());
+        increasePrice.setPrices(Lists.newArrayList(calendar));
+        increasePrice.setAppSource(appSource);
+        increasePrice.setAppSubSource(appSubSource);
+        increasePrice.setScenicSpotId(rb.getPoiId());
+        increasePrice.setProductCategory(rb.getCategory());
+        commonService.increasePriceByPackageId(increasePrice);
+        recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setPreferenceTag(calendar.getTagDesc());
         recommendProduct.setDiscount(calendar.getTag());
         return recommendProduct;

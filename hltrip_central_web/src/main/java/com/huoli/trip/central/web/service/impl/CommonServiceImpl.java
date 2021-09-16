@@ -1,9 +1,18 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.huoli.trip.central.web.dao.GroupTourProductSetMealDao;
+import com.huoli.trip.central.web.dao.HotelScenicSpotProductSetMealDao;
+import com.huoli.trip.central.web.dao.ScenicSpotProductPriceDao;
 import com.huoli.trip.central.web.dao.SupplierPolicyDao;
 import com.huoli.trip.central.web.service.CommonService;
+import com.huoli.trip.common.constant.ProductCategoryEnum;
 import com.huoli.trip.common.entity.SupplierPolicyPO;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotPriceStock;
+import com.huoli.trip.common.entity.mpo.hotelScenicSpot.HotelScenicSpotProductSetMealMPO;
+import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.util.BigDecimalUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.IncreasePrice;
@@ -33,6 +42,15 @@ public class CommonServiceImpl implements CommonService {
 
     @Autowired
     private SupplierPolicyDao supplierPolicyDao;
+
+    @Autowired
+    private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
+
+    @Autowired
+    private GroupTourProductSetMealDao groupTourProductSetMealDao;
+
+    @Autowired
+    private HotelScenicSpotProductSetMealDao hotelScenicSpotProductSetMealDao;
 
     public void increasePrice_(IncreasePrice increasePrice){
         try {
@@ -207,5 +225,81 @@ public class CommonServiceImpl implements CommonService {
 
     private BigDecimal formatBigDecimal(BigDecimal bigDecimal){
         return bigDecimal == null ? new BigDecimal(0) : bigDecimal;
+    }
+
+    @Override
+    public void increasePriceByPackageId(IncreasePrice increasePrice){
+        try {
+            buildIncreasePrice(increasePrice);
+        } catch (Exception e) {
+            log.error("加价异常", e);
+        }
+    }
+
+    private void buildIncreasePrice(IncreasePrice increasePrice){
+        if(ListUtils.isEmpty(increasePrice.getPrices())){
+            return;
+        }
+        increasePrice.getPrices().forEach(p -> {
+            if(StringUtils.isBlank(p.getPackageId())){
+                return;
+            }
+            if(StringUtils.equals(increasePrice.getProductCategory(), ProductCategoryEnum.PRODUCT_CATEGORY_TICKET.getCode())){
+                ScenicSpotProductPriceMPO price = scenicSpotProductPriceDao.getPriceById(p.getPackageId());
+                if(price == null){
+                    return;
+                }
+                p.setAdtFloatPrice(price.getFloatPrice());
+                p.setAdtFloatPriceManually(price.isFloatPriceManually());
+                p.setAdtFloatPriceType(price.getFloatPriceType());
+                p.setAdtSellPrice(price.getSellPrice());
+                p.setAdtSettlePrice(price.getSettlementPrice());
+                increasePrice(increasePrice);
+            } else if(StringUtils.equals(increasePrice.getProductCategory(), ProductCategoryEnum.PRODUCT_CATEGORY_GROUP_TOUR.getCode())){
+                GroupTourProductSetMealMPO setMealMPO = groupTourProductSetMealDao.getSetMealById(p.getPackageId());
+                if(setMealMPO == null || ListUtils.isEmpty(setMealMPO.getGroupTourPrices())){
+                    return;
+                }
+                GroupTourPrice price = setMealMPO.getGroupTourPrices().stream().filter(gp ->
+                        StringUtils.equals(p.getDate(), gp.getDate())).findFirst().orElse(null);
+                if(price == null){
+                    return;
+                }
+                p.setAdtFloatPrice(price.getAdtFloatPrice());
+                p.setAdtFloatPriceManually(price.isAdtFloatPriceManually());
+                p.setAdtFloatPriceType(price.getAdtFloatPriceType());
+                p.setAdtSellPrice(price.getAdtSellPrice());
+                p.setAdtSettlePrice(price.getAdtPrice());
+
+                p.setChdFloatPrice(price.getChdFloatPrice());
+                p.setChdSettlePrice(price.getChdPrice());
+                p.setChdSellPrice(price.getChdSellPrice());
+                p.setChdFloatPriceManually(price.isChdFloatPriceManually());
+                p.setChdFloatPriceType(price.getChdFloatPriceType());
+                increasePrice(increasePrice);
+            } else if(StringUtils.equals(increasePrice.getProductCategory(), ProductCategoryEnum.PRODUCT_CATEGORY_HOTEL_TICKET.getCode())){
+                HotelScenicSpotProductSetMealMPO setMealMPO = hotelScenicSpotProductSetMealDao.getSetMealById(p.getPackageId());
+                if(setMealMPO == null || ListUtils.isEmpty(setMealMPO.getPriceStocks())){
+                    return;
+                }
+                HotelScenicSpotPriceStock price = setMealMPO.getPriceStocks().stream().filter(gp ->
+                        StringUtils.equals(p.getDate(), gp.getDate())).findFirst().orElse(null);
+                if(price == null){
+                    return;
+                }
+                p.setAdtFloatPrice(price.getAdtFloatPrice());
+                p.setAdtFloatPriceManually(price.isAdtFloatPriceManually());
+                p.setAdtFloatPriceType(price.getAdtFloatPriceType());
+                p.setAdtSellPrice(price.getAdtSellPrice());
+                p.setAdtSettlePrice(price.getAdtPrice());
+
+                p.setChdFloatPrice(price.getChdFloatPrice());
+                p.setChdSettlePrice(price.getChdPrice());
+                p.setChdSellPrice(price.getChdSellPrice());
+                p.setChdFloatPriceManually(price.isChdFloatPriceManually());
+                p.setChdFloatPriceType(price.getChdFloatPriceType());
+                increasePrice(increasePrice);
+            }
+        });
     }
 }
