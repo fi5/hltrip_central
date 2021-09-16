@@ -272,9 +272,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     IncreasePriceCalendar increasePriceCalendar = prices.get(0);
                     basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
                     basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
-                    if(increasePriceCalendar.getOriAdtSellPrice() != null && increasePriceCalendar.getAdtSellPrice() != null && increasePriceCalendar.getOriAdtSellPrice().compareTo(increasePriceCalendar.getAdtSellPrice()) > 0){
-                        basePrice.setOriPrice(increasePriceCalendar.getOriAdtSellPrice());
-                    }
+                    basePrice.setOriPrice(scenicSpotProductPriceMPO.getMarketPrice());
                     scenicSpotProductBase.setPrice(basePrice);
 
                     BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
