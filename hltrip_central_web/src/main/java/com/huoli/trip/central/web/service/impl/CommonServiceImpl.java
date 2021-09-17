@@ -154,14 +154,14 @@ public class CommonServiceImpl implements CommonService {
                         double floatPrice = formatBigDecimal(price.getAdtFloatPrice()).doubleValue();
                         double settlePrice = formatBigDecimal(price.getAdtSettlePrice()).doubleValue();
                         if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 1){
-                            price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice)));
+                            price.setAdtSellPrice(formatBigDecimalInt(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice))));
                         } else if(price.getAdtFloatPriceType() != null && price.getAdtFloatPriceType() == 2){
-                            price.setAdtSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice))));
+                            price.setAdtSellPrice(formatBigDecimalInt(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice)))));
                         }
                     } else if(supplierPolicy != null){
                         // 政策加价计算
-                        BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                price.getAdtSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal newPrice = formatBigDecimalInt(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
+                                price.getAdtSettlePrice().toPlainString()))));
                         price.setAdtSellPrice(newPrice);
                     }
                 }
@@ -173,14 +173,14 @@ public class CommonServiceImpl implements CommonService {
                         double floatPrice = formatBigDecimal(price.getChdFloatPrice()).doubleValue();
                         double settlePrice = formatBigDecimal(price.getChdSettlePrice()).doubleValue();
                         if (price.getChdFloatPriceType() != null && price.getChdFloatPriceType() == 1) {
-                            price.setChdSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice)));
+                            price.setChdSellPrice(formatBigDecimalInt(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, floatPrice))));
                         } else if (price.getChdFloatPriceType() != null && price.getChdFloatPriceType() == 2) {
-                            price.setChdSellPrice(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice))));
+                            price.setChdSellPrice(formatBigDecimalInt(BigDecimal.valueOf(BigDecimalUtil.add(settlePrice, BigDecimalUtil.mul(settlePrice, floatPrice == 0 ? 1 : floatPrice)))));
                         }
                     } else if (supplierPolicy != null) {
                         // 政策加价计算
-                        BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                price.getChdSettlePrice().toPlainString()))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal newPrice = formatBigDecimalInt(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
+                                price.getChdSettlePrice().toPlainString()))));
                         price.setChdSellPrice(newPrice);
                     }
                 }
@@ -225,6 +225,10 @@ public class CommonServiceImpl implements CommonService {
 
     private BigDecimal formatBigDecimal(BigDecimal bigDecimal){
         return bigDecimal == null ? new BigDecimal(0) : bigDecimal;
+    }
+
+    private BigDecimal formatBigDecimalInt(BigDecimal bigDecimal){
+        return bigDecimal == null ? new BigDecimal(0) : bigDecimal.setScale(0, BigDecimal.ROUND_HALF_UP);
     }
 
     @Override
