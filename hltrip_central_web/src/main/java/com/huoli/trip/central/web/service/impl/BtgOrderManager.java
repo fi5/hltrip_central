@@ -92,16 +92,23 @@ public class BtgOrderManager extends OrderManager {
         orderRequest.setContact(ubrContact);
         ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getProductId(), null);
         String date = String.format("%sT06:00:00", DateTimeUtil.formatDate(DateTimeUtil.trancateToDate(DateTimeUtil.parseDate(req.getBeginDate()))));
+        String oriPrice = null;
         if(StringUtils.isNotBlank(req.getPackageId())) {
             ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(req.getPackageId());
-            if (priceMPO != null && StringUtils.isNotBlank(priceMPO.getOriDate())) {
-                date = priceMPO.getOriDate().replace(" ", "T");
+            if (priceMPO != null) {
+                if(StringUtils.isNotBlank(priceMPO.getOriDate())){
+                    date = priceMPO.getOriDate().replace(" ", "T");
+                }
+                oriPrice = priceMPO.getOriPrice();
             }
+        }
+        if(StringUtils.isBlank(oriPrice)){
+            oriPrice = req.getOutPayUnitPrice() != null ? req.getOutPayUnitPrice().toPlainString() : null;
         }
         UBRTicketEntity ticketEntity = new UBRTicketEntity();
         ticketEntity.setCode(scenicSpotProductMPO.getSupplierProductId());
         ticketEntity.setDatetime(date);
-        ticketEntity.setPrice(req.getOutPayUnitPrice() != null ? req.getOutPayUnitPrice().toPlainString() : null);
+        ticketEntity.setPrice(oriPrice);
         List<UBRGuest> ubrGuests = req.getGuests().stream().map(g -> {
             UBRGuest ubrGuest = new UBRGuest();
             ubrGuest.setTelephone(g.getMobile());
