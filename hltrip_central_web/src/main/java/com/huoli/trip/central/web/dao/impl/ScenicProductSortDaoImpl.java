@@ -1,10 +1,7 @@
 package com.huoli.trip.central.web.dao.impl;
 
 import com.huoli.trip.central.web.dao.ScenicProductSortDao;
-import com.huoli.trip.central.web.dao.ScenicSpotRuleDao;
 import com.huoli.trip.common.entity.mpo.ScenicProductSortMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
-import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotRuleMPO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
