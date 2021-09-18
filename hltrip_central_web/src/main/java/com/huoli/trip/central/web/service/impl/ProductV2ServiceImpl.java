@@ -1184,8 +1184,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         }
         //产品排序
         List<ScenicRealProductBase> result = new ArrayList<>();
+        result.addAll(productBases);
         if (!CollectionUtils.isEmpty(scenicProductSortMPOS)){
-            Map<String,List<ScenicRealProductBase>> scenicRealProductMap = productBases.stream().collect(Collectors.groupingBy(ScenicRealProductBase::getSortId, LinkedHashMap::new,Collectors.toList()));
+            Map<String,List<ScenicRealProductBase>> scenicRealProductMap = result.stream().collect(Collectors.groupingBy(ScenicRealProductBase::getSortId, LinkedHashMap::new,Collectors.toList()));
+            result = new ArrayList<>();
             for (ScenicProductSortMPO scenicProductSortMPO : scenicProductSortMPOS){
                 result.add(scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0));
                 scenicRealProductMap.remove(scenicProductSortMPO.getId());
@@ -1193,8 +1195,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             for(Map.Entry<String,List<ScenicRealProductBase>> entry:scenicRealProductMap.entrySet()){
                 result.add(entry.getValue().get(0));
             }
-        } else {
-            result = productBases;
         }
         //票种排序
         if (StringUtils.isNotBlank(scenicSpotMPO.getTicketKindSort())){
