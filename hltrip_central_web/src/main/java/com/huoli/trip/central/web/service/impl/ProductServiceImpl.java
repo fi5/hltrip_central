@@ -1833,7 +1833,7 @@ public class ProductServiceImpl implements ProductService {
             increasePrice.setChannelCode(rb.getChannel().trim());
         }
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
-        calendar.setAdtSellPrice(rb.getApiSettlementPrice());
+        calendar.setAdtSellPrice(rb.getApiSellPrice());
         increasePrice.setPrices(Lists.newArrayList(calendar));
         increasePrice.setAppSource(appSource);
         increasePrice.setAppSubSource(appSubSource);
