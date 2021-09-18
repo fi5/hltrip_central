@@ -1174,6 +1174,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
                     productBases.add(scenicSpotProductBase);
                     scenicSpotProductBase.setCategory(category);
+                    scenicSpotProductBase.setProductName(scenicSpotProduct.getName());
                     scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
                     scenicSpotProductBase.setSellCount(productListMPO.getSellCount());
