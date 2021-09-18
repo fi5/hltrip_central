@@ -1203,6 +1203,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             result = new ArrayList<>();
             for (String ticketKindSort : ticketKindSorts){
                 result.addAll(resultMap.get(ticketKindSort));
+                resultMap.remove(resultMap.get(ticketKindSort));
             }
             for(Map.Entry<String,List<ScenicRealProductBase>> entry:resultMap.entrySet()){
                 result.addAll(entry.getValue());
