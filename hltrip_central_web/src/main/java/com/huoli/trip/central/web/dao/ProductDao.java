@@ -181,4 +181,6 @@ public interface ProductDao {
     int groupTourListCount(GroupTourListReq req, List<String> channelInfo);
 
     int hotelScenicListCount(HotelScenicListReq req, List<String> channelInfo);
+
+    ProductListMPO getProductByProductId(String productId);
 }

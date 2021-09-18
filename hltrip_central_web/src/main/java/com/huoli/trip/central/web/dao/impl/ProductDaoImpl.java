@@ -720,4 +720,12 @@ public class ProductDaoImpl implements ProductDao {
 
         return  output.getMappedResults() == null ? 0 : output.getMappedResults().size();
     }
+
+    @Override
+    public ProductListMPO getProductByProductId(String productId){
+        Criteria criteria = new Criteria();
+        criteria.and("productId").is(productId);
+        ProductListMPO productListMPO = mongoTemplate.findOne(new Query(criteria), ProductListMPO.class);
+        return productListMPO;
+    }
 }
