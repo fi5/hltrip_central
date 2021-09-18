@@ -142,6 +142,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             increasePrice.setChannelCode(groupTourProductMPO.getChannel());
             increasePrice.setProductCode(groupTourProductMPO.getId());
             increasePrice.setAppSource(request.getFrom());
+            increasePrice.setAppSubSource(request.getSource());
             increasePrice.setProductCategory(groupTourProductMPO.getCategory());
             List<GroupTourPrice> groupTourPrices = p.getGroupTourPrices();
             List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
@@ -184,7 +185,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 groupTourRecommend.setImage(a.getProductImageUrl());
                 groupTourRecommend.setProductId(a.getProductId());
                 groupTourRecommend.setProductName(a.getProductName());
-                IncreasePrice increasePrice = productService.increasePrice(a, request.getFrom());
+                IncreasePrice increasePrice = productService.increasePrice(a, request.getFrom(), request.getSource());
                 groupTourRecommend.setPrice(increasePrice.getPrices().get(0).getAdtSellPrice());
                 return groupTourRecommend;
             }).collect(Collectors.toList());
@@ -252,6 +253,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     increasePrice.setChannelCode(scenicSpotProduct.getChannel());
                     increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
                     increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setAppSubSource(request.getSource());
                     increasePrice.setProductCategory(category);
                     List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
                     IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
@@ -259,6 +261,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
+                    increasePrice.setScenicSpotId(request.getScenicSpotId());
                     commonService.increasePrice(increasePrice);
                     List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                     if(ListUtils.isEmpty(prices)){
@@ -269,6 +272,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     IncreasePriceCalendar increasePriceCalendar = prices.get(0);
                     basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
                     basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
+                    if(scenicSpotProductPriceMPO.getMarketPrice() != null && scenicSpotProductPriceMPO.getMarketPrice().compareTo(increasePriceCalendar.getAdtSellPrice()) > 0){
+                        basePrice.setOriPrice(scenicSpotProductPriceMPO.getMarketPrice());
+                    }
                     scenicSpotProductBase.setPrice(basePrice);
 
                     BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
@@ -278,14 +284,16 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
 
                     //使用最近可定日期比较
-                    //String startDate = scenicSpotProductPriceMPO.getStartDate();
-                    String startDate = DateTimeUtil.formatDate(canBuyDate);
+                    String startDate = scenicSpotProductPriceMPO.getStartDate();
+                    if (canBuyDate.after(DateTimeUtil.parseDate(startDate))) {
+                        startDate = DateTimeUtil.formatDate(canBuyDate);
+                    }
                     LocalDate localDate = LocalDate.now();
                     LocalDate tomorrow = localDate.plusDays(1);
                     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                     String dateStr = localDate.format(fmt);
                     String tomorrowStr = tomorrow.format(fmt);
-                    List<Tag> bookTag = new ArrayList<>(1);
+                    List<Tag> bookTag = new ArrayList<>();
                     Tag tag = null;
                     if(StringUtils.equals(startDate,dateStr)) {
                         tag = new Tag();
@@ -297,6 +305,12 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                         tag.setName("可订明日");
                         tag.setColour(ColourConstants.TICKET_BLUE);
                         bookTag.add(tag);
+                    }
+                    if(StringUtils.isNotBlank(increasePriceCalendar.getTagDesc()) && StringUtils.isNotBlank(increasePriceCalendar.getTagDesc())){
+                        Tag discountTag = new Tag();
+                        discountTag.setName(String.format("%s%s折", increasePriceCalendar.getTagDesc(), increasePriceCalendar.getTag()));
+                        discountTag.setColour(ColourConstants.TICKET_GREEN);
+                        bookTag.add(discountTag);
                     }
                     scenicSpotProductBase.setBookTag(bookTag);
 
@@ -483,6 +497,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }else {
                 //获取最近可定日期
                 ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(productId, channelInfo);
+                scenicSpotId = scenicSpotProductMPO.getScenicSpotId();
                 int bookBeforeDay = scenicSpotProductMPO.getScenicSpotProductTransaction() == null ? 0 : scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeDay();
                 Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProductMPO.getScenicSpotProductTransaction() == null ? null : scenicSpotProductMPO.getScenicSpotProductTransaction().getBookBeforeTime());
                 String trueStartDate = DateTimeUtil.getDateDiffDays(start, canBuyDate) < 0 ? DateTimeUtil.formatDate(canBuyDate) : startDate;
@@ -533,6 +548,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 }
                 effective = finalPriceList.stream().sorted(Comparator.comparing(ScenicSpotProductPriceMPO::getStartDate)).collect(Collectors.toList());
                 List<String> finalChannelInfo = channelInfo;
+                String finalScenicSpotId = scenicSpotId;
                 basePrices = effective.stream().map(p -> {
                     BasePrice basePrice = new BasePrice();
                     BeanUtils.copyProperties(p, basePrice);
@@ -545,6 +561,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     //increasePrice.setChannelCode(request.getChannelCode());
                     increasePrice.setProductCode(p.getScenicSpotProductId());
                     increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setAppSubSource(request.getSource());
                     increasePrice.setProductCategory("d_ss_ticket");
                     List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
                     IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
@@ -552,11 +569,13 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     priceCalendar.setDate(p.getStartDate());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
+                    increasePrice.setScenicSpotId(finalScenicSpotId);
                     commonService.increasePrice(increasePrice);
                     List<IncreasePriceCalendar> prices = increasePrice.getPrices();
                     IncreasePriceCalendar priceCalendar1 = prices.get(0);
                     basePrice.setSellPrice(priceCalendar1.getAdtSellPrice());
                     basePrice.setPriceId(p.getId());
+                    basePrice.setStartDate(DateTimeUtil.format(DateTimeUtil.parseDate(p.getStartDate()),DateTimeUtil.YYYYMMDD));
                     return basePrice;
                 }).collect(Collectors.toList());
             }
@@ -718,7 +737,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             increasePrice.setChannelCode(groupTourProductMPO.getChannel());
             increasePrice.setProductCode(groupTourProductMPO.getId());
             increasePrice.setAppSource(request.getFrom());
+            increasePrice.setAppSubSource(request.getSource());
             increasePrice.setProductCategory(groupTourProductMPO.getCategory());
+            increasePrice.setAppSubSource(request.getSource());
             List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
                priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
@@ -866,6 +887,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         increasePrice.setChannelCode(productMPO.getChannel());
         increasePrice.setProductCode(productMPO.getId());
         increasePrice.setAppSource(request.getFrom());
+        increasePrice.setAppSubSource(request.getSource());
         increasePrice.setProductCategory(productMPO.getCategory());
         List<IncreasePriceCalendar> priceCalendars = priceStocks.stream().map(item -> {
             IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();

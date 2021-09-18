@@ -201,7 +201,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
 
     @Override
     public List<ScenicSpotMPO> queryByKeyword(String keyword, Integer count) {
-        Query query = new Query();
+        Query query;
         Criteria criteria = new Criteria();
         query = new Query(Criteria.where("name").regex(keyword));
         criteria.and("del").is(0);

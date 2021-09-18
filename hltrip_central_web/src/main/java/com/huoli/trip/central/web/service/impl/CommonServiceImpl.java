@@ -54,23 +54,45 @@ public class CommonServiceImpl implements CommonService {
                 return;
             }
             log.info("查到的加价配置={}", JSON.toJSONString(supplierPolices));
-            SupplierPolicyPO supplierPolicy = supplierPolices.stream().sorted(Comparator.comparing(sp -> {
-                String formula = sp.getPriceFormula().replace(" ", "");
-                Pattern pattern = Pattern.compile("(?<=price\\*\\(1\\+)\\d(\\.\\d{1,4})*(?=\\))");
-                Matcher matcher = pattern.matcher(formula);
-                if (matcher.find()){
-                    try {
-                        return Double.valueOf(matcher.group());
-                    } catch (Exception e) {
-                        log.error("加价公式有错误，加价配置={}", JSON.toJSONString(sp), e);
-                        return Double.MAX_VALUE;
-                    }
+//            SupplierPolicyPO supplierPolicy = supplierPolices.stream().sorted(Comparator.comparing(sp -> {
+//                String formula = sp.getPriceFormula().replace(" ", "");
+//                Pattern pattern = Pattern.compile("(?<=price\\*\\(1\\+)\\d(\\.\\d{1,4})*(?=\\))");
+//                Matcher matcher = pattern.matcher(formula);
+//                if (matcher.find()){
+//                    try {
+//                        return Double.valueOf(matcher.group());
+//                    } catch (Exception e) {
+//                        log.error("加价公式有错误，加价配置={}", JSON.toJSONString(sp), e);
+//                        return Double.MAX_VALUE;
+//                    }
+//                }
+//                return Double.MAX_VALUE;
+//            }, Double::compareTo)).findFirst().get();
+            ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
+            IncreasePriceCalendar priceSample = increasePrice.getPrices().stream().filter(p ->
+                    p.getAdtSellPrice() != null && p.getAdtSellPrice().compareTo(new BigDecimal(0)) == 1).findFirst().orElse(null);
+            SupplierPolicyPO supplierPolicy = supplierPolices.stream().filter(sp -> {
+                try {
+                    se.eval(sp.getPriceFormula().replace("price",
+                            priceSample.getAdtSellPrice().toPlainString()));
+                    return true;
+                } catch (Exception e) {
+                    log.error("加价公式错误，id={}, formula={}", sp.getId(), sp.getPriceFormula(), e);
+                    return false;
                 }
-                return Double.MAX_VALUE;
+            }).sorted(Comparator.comparing(sp -> {
+                try {
+                    return (Double) se.eval(sp.getPriceFormula().replace("price",
+                            priceSample.getAdtSellPrice().toPlainString()));
+                } catch (Exception e) {
+                    log.error("加价公式错误，id={}, formula={}", sp.getId(), sp.getPriceFormula(), e);
+                    return Double.MAX_VALUE;
+                }
             }, Double::compareTo)).findFirst().get();
             log.info("找到合适的加价配置，使用这条配置加价，配置={}", JSON.toJSONString(supplierPolicy));
-            ScriptEngine se = new ScriptEngineManager().getEngineByName("JavaScript");
             for (IncreasePriceCalendar price : increasePrice.getPrices()) {
+                price.setTag(supplierPolicy.getTag());
+                price.setTagDesc(supplierPolicy.getTagDesc());
                 // 加价计算
                 if(price.getAdtSellPrice() != null){
                     BigDecimal newPrice = BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",

@@ -33,26 +33,21 @@ public class SupplierPolicyDaoImpl implements SupplierPolicyDao {
 
     @Override
     public List<SupplierPolicyPO> getSupplierPolicy(IncreasePrice increasePrice){
+        if(StringUtils.isBlank(increasePrice.getChannelCode())){
+            increasePrice.setChannelCode(null);
+        }
         Criteria supplierId = new Criteria();
-        if(StringUtils.isNotBlank(increasePrice.getChannelCode())){
-            supplierId.orOperator(Criteria.where("supplierId").is(increasePrice.getChannelCode()), Criteria.where("supplierId").is(null));
-        } else {
-            supplierId.andOperator(Criteria.where("supplierId").is(null));
-        }
+        supplierId.orOperator(Criteria.where("supplierId").is(increasePrice.getChannelCode()), Criteria.where("supplierId").is(null));
         Criteria appSource = new Criteria();
-        if(StringUtils.isNotBlank(increasePrice.getAppSource())){
-            appSource.orOperator(Criteria.where("appSource").in(increasePrice.getAppSource()), Criteria.where("appSource").is(null));
-        } else {
-            appSource.andOperator(Criteria.where("appSource").is(null));
-        }
+        appSource.orOperator(Criteria.where("appSource").in(increasePrice.getAppSource()), Criteria.where("appSource").is(null));
         Criteria category = new Criteria();
-        if(StringUtils.isNotBlank(increasePrice.getProductCategory())){
-            category.orOperator(Criteria.where("productType").in(increasePrice.getProductCategory()), Criteria.where("productType").is(null));
-        } else {
-            category.andOperator(Criteria.where("productType").is(null));
-        }
+        category.orOperator(Criteria.where("productType").in(increasePrice.getProductCategory()), Criteria.where("productType").is(null));
+        Criteria appSubSource = new Criteria();
+        appSubSource.orOperator(Criteria.where("appSubSource").in(increasePrice.getAppSubSource()), Criteria.where("appSubSource").is(null));
+        Criteria scenicSpotId = new Criteria();
+        scenicSpotId.orOperator(Criteria.where("scenicSpotId").in(increasePrice.getScenicSpotId()), Criteria.where("scenicSpotId").is(null));
         Criteria criteria = new Criteria();
-        criteria.andOperator(supplierId, appSource, category);
+        criteria.andOperator(supplierId, appSource, category, appSubSource, scenicSpotId);
         return mongoTemplate.find(Query.query(criteria), SupplierPolicyPO.class);
     }
 

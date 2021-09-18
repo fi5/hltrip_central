@@ -232,6 +232,7 @@ public class DfyToursOrderManager extends OrderManager {
         calcRequest.setCategory(req.getCategory());
 		PriceCalcResult priceCalcResult = null;
 		calcRequest.setTraceId(traceId);
+		calcRequest.setSource(req.getSource());
 		try{
 			BaseResponse<PriceCalcResult> priceCalcResultBaseResponse;
 			if(StringUtils.isBlank(req.getCategory())){

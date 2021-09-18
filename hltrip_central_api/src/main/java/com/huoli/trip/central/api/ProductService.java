@@ -132,7 +132,7 @@ public interface ProductService {
      */
     BaseResponse<HotelScenicListResult> hotelScenicList(HotelScenicListReq req);
 
-    IncreasePrice increasePrice(ProductListMPO productListMPO, String app);
+    IncreasePrice increasePrice(ProductListMPO productListMPO, String app, String source);
 
     /**
      * 推荐列表
