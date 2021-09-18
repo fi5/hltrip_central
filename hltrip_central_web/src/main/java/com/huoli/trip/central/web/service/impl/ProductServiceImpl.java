@@ -2204,9 +2204,8 @@ public class ProductServiceImpl implements ProductService {
             list = Collections.emptyList();
         }
         List<HomeRecommendRes> result = new ArrayList<>();
-        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getTitle));
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getGroupSort));
         for (Map.Entry entry : recommendGroup.entrySet()) {
-            String title = (String) entry.getKey();
             List<TripSearchRecommendDetail> recommendList = (List<TripSearchRecommendDetail>) entry.getValue();
             recommendList = recommendList.stream().sorted(Comparator.comparing(TripSearchRecommendDetail::getSort)).collect(Collectors.toList());
             HomeRecommendRes res = new HomeRecommendRes();
@@ -2216,7 +2215,7 @@ public class ProductServiceImpl implements ProductService {
                 BeanUtils.copyProperties(recommend, recommendation);
                 recommendationList.add(recommendation);
             }
-            res.setTitle(title);
+            res.setTitle(recommendList.get(0).getTitle());
             res.setRecommendations(recommendationList);
             result.add(res);
         }
@@ -2283,10 +2282,9 @@ public class ProductServiceImpl implements ProductService {
             list = Collections.emptyList();
         }
         Map<String, List<TripSearchRecommendDetail>> recommendGroup
-                = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getTitle));
+                = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getGroupSort));
         List<ScenicSpotProductSearchRecommendRes> result = new ArrayList<>();
         for (Map.Entry entry : recommendGroup.entrySet()) {
-            String title = (String) entry.getKey();
             List<TripSearchRecommendDetail> recommends = (List<TripSearchRecommendDetail>) entry.getValue();
             ScenicSpotProductSearchRecommendRes recommendRes = new ScenicSpotProductSearchRecommendRes();
             List<HomeRecommendRes.Recommendation> recommendationList = new ArrayList<>();
@@ -2295,7 +2293,7 @@ public class ProductServiceImpl implements ProductService {
                 BeanUtils.copyProperties(recommend, recommendation);
                 recommendationList.add(recommendation);
             }
-            recommendRes.setTitle(title);
+            recommendRes.setTitle(recommends.get(0).getTitle());
             recommendRes.setRecommendations(recommendationList);
             result.add(recommendRes);
         }
@@ -2373,7 +2371,7 @@ public class ProductServiceImpl implements ProductService {
             list = Collections.emptyList();
         }
         List<GroupTourRecommendRes> result = new ArrayList<>();
-        Map<Integer, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getType));
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getGroupSort));
         for (Map.Entry entry : recommendGroup.entrySet()) {
             List<TripSearchRecommendDetail> recommendDetailList = (List<TripSearchRecommendDetail>) entry.getValue();
             GroupTourRecommendRes recommendRes = new GroupTourRecommendRes();
