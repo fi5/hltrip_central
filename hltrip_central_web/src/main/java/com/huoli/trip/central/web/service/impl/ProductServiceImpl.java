@@ -1847,7 +1847,6 @@ public class ProductServiceImpl implements ProductService {
         calendar.setAdtSellPrice(rb.getApiSellPrice());
         calendar.setPackageId(rb.getPackageId());
         calendar.setDate(rb.getSellDate());
-        calendar.setAdtSellPrice(rb.getApiSellPrice());
         increasePrice.setPrices(Lists.newArrayList(calendar));
         increasePrice.setAppSource(appSource);
         increasePrice.setAppSubSource(appSubSource);

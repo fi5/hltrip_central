@@ -144,7 +144,6 @@ public class BtgOrderManager extends OrderManager {
             end = begin;
         }
         // 价格计算需要重新调
-        CenterBookCheck  bookCheck = new CenterBookCheck();
         PriceCalcRequest calcRequest = new PriceCalcRequest();
         calcRequest.setStartDate(DateTimeUtil.parseDate(begin));
         calcRequest.setEndDate(DateTimeUtil.parseDate(end));
@@ -178,10 +177,12 @@ public class BtgOrderManager extends OrderManager {
             log.error("价格计算失败。", e);
             return BaseResponse.fail(CentralError.PRICE_CALC_PRICE_NOT_FOUND_ERROR);
         }
+        CenterBookCheck  bookCheck = new CenterBookCheck();
         //设置结算总价
         bookCheck.setSettlePrice(priceCalcResult.getSettlesTotal());
         //销售总价
         bookCheck.setSalePrice(priceCalcResult.getSalesTotal());
+        bookCheck.setStock(priceCalcResult.getStock() == null ? 0 : priceCalcResult.getStock());
         return BaseResponse.success(bookCheck);
     }
 
