@@ -16,8 +16,14 @@ import java.util.List;
 public interface CommonService {
 
     /**
-     * 加价
+     * 加价，价格日历加价用这个
      * @param increasePrice
      */
     void increasePrice(IncreasePrice increasePrice);
+
+    /**
+     * 加价，单日加价用这个方法
+     * @param increasePrice
+     */
+    void increasePriceByPackageId(IncreasePrice increasePrice);
 }
