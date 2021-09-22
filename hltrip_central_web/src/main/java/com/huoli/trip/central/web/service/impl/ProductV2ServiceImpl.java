@@ -1185,7 +1185,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         //产品排序
         List<ScenicRealProductBase> result = new ArrayList<>();
         result.addAll(productBases);
-        log.info("result = {}",result);
         if (!CollectionUtils.isEmpty(scenicProductSortMPOS)){
             Map<String,List<ScenicRealProductBase>> scenicRealProductMap = result.stream().collect(Collectors.groupingBy(ScenicRealProductBase::getSortId, LinkedHashMap::new,Collectors.toList()));
             result = new ArrayList<>();
@@ -1197,7 +1196,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 result.add(entry.getValue().get(0));
             }
         }
-        log.info("result1 = {}",result);
         //票种排序
         if (StringUtils.isNotBlank(scenicSpotMPO.getTicketKindSort())){
             String [] ticketKindSorts = scenicSpotMPO.getTicketKindSort().split(",");
@@ -1211,7 +1209,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 result.addAll(entry.getValue());
             }
         }
-        log.info("result2 = {}",result);
         return BaseResponse.withSuccess(result);
     }
 }
