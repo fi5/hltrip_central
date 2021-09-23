@@ -7,11 +7,13 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.OrderInfoTranser;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.dao.ScenicSpotProductPriceDao;
+import com.huoli.trip.central.web.mapper.TripOrderMapper;
 import com.huoli.trip.central.web.util.TraceIdUtils;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.constant.Certificate;
 import com.huoli.trip.common.constant.ChannelConstant;
 import com.huoli.trip.common.constant.OrderStatus;
+import com.huoli.trip.common.entity.TripOrder;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.ScenicSpotProductPriceMPO;
 import com.huoli.trip.common.exception.HlCentralException;
@@ -70,6 +72,9 @@ public class BtgOrderManager extends OrderManager {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private TripOrderMapper tripOrderMapper;
 
     public final static String CHANNEL = ChannelConstant.SUPPLIER_TYPE_BTG;
 
@@ -279,8 +284,19 @@ public class BtgOrderManager extends OrderManager {
      * @return
      */
     public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
-        CenterPayCheckRes  payCheckRes = new CenterPayCheckRes();
+        CenterPayCheckRes payCheckRes = new CenterPayCheckRes();
         payCheckRes.setResult(true);
+        syncPriceV2(null, null, null, null, null);
+        TripOrder tripOrder = tripOrderMapper.getOrderById(req.getPartnerOrderId());
+        if(tripOrder == null || StringUtils.isBlank(tripOrder.getProductId()) || tripOrder.getQuantity() <= 0){
+            log.info("神舟支付前校验，从订单里没有拿到合适参数，跳过，orderId={}", req.getPartnerOrderId());
+            return BaseResponse.success(payCheckRes);
+        }
+        ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(tripOrder.getProductId());
+        if(tripOrder.getQuantity() > priceMPO.getStock()){
+            log.info("神舟支付校验没通过，订单数量{}大于库存{}", tripOrder.getQuantity(), priceMPO.getStock());
+            return BaseResponse.withFail(CentralError.PRICE_CALC_STOCK_SHORT_ERROR);
+        }
         return BaseResponse.success(payCheckRes);
     }
 
