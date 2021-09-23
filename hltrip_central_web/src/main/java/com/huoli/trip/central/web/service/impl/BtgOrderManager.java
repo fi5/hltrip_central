@@ -286,16 +286,21 @@ public class BtgOrderManager extends OrderManager {
     public  BaseResponse<CenterPayCheckRes> payCheck(PayOrderReq req){
         CenterPayCheckRes payCheckRes = new CenterPayCheckRes();
         payCheckRes.setResult(true);
-        syncPriceV2(null, null, null, null, null);
-        TripOrder tripOrder = tripOrderMapper.getOrderById(req.getPartnerOrderId());
-        if(tripOrder == null || StringUtils.isBlank(tripOrder.getProductId()) || tripOrder.getQuantity() <= 0){
-            log.info("神舟支付前校验，从订单里没有拿到合适参数，跳过，orderId={}", req.getPartnerOrderId());
+        try {
+            syncPriceV2(null, null, null, null, null);
+            TripOrder tripOrder = tripOrderMapper.getOrderById(req.getPartnerOrderId());
+            if(tripOrder == null || StringUtils.isBlank(tripOrder.getProductId()) || tripOrder.getQuantity() <= 0){
+                log.info("神舟支付前校验，从订单里没有拿到合适参数，跳过，orderId={}", req.getPartnerOrderId());
+                return BaseResponse.success(payCheckRes);
+            }
+            ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(tripOrder.getProductId());
+            if(tripOrder.getQuantity() > priceMPO.getStock()){
+                log.info("神舟支付校验没通过，订单数量{}大于库存{}", tripOrder.getQuantity(), priceMPO.getStock());
+                return BaseResponse.withFail(CentralError.PRICE_CALC_STOCK_SHORT_ERROR);
+            }
+        } catch (Exception e) {
+            log.error("神舟支付前校验异常，跳过", e);
             return BaseResponse.success(payCheckRes);
-        }
-        ScenicSpotProductPriceMPO priceMPO = scenicSpotProductPriceDao.getPriceById(tripOrder.getProductId());
-        if(tripOrder.getQuantity() > priceMPO.getStock()){
-            log.info("神舟支付校验没通过，订单数量{}大于库存{}", tripOrder.getQuantity(), priceMPO.getStock());
-            return BaseResponse.withFail(CentralError.PRICE_CALC_STOCK_SHORT_ERROR);
         }
         return BaseResponse.success(payCheckRes);
     }
