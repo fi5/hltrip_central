@@ -649,7 +649,9 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("depPlaces").regex(req.getDepPlace());
         }
         if (StringUtils.isNotBlank(req.getDepCityCode())) {
-            criteria.and("depCity").regex(req.getDepCityCode());
+            Criteria depCity = new Criteria();
+            depCity.orOperator(Criteria.where("depCity").regex(req.getDepCityCode()), Criteria.where("depCity").regex("qg0"));
+            criteria.andOperator(depCity);
         }
        /* if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
