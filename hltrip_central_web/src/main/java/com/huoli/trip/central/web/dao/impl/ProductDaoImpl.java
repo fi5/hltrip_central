@@ -638,7 +638,9 @@ public class ProductDaoImpl implements ProductDao {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0);
-        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        Criteria apiSellPrice = new Criteria();
+        apiSellPrice.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        Criteria depCity = new Criteria();
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
@@ -649,9 +651,7 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("depPlaces").regex(req.getDepPlace());
         }
         if (StringUtils.isNotBlank(req.getDepCityCode())) {
-            Criteria depCity = new Criteria();
             depCity.orOperator(Criteria.where("depCity").regex(req.getDepCityCode()), Criteria.where("depCity").regex("qg0"));
-            criteria.andOperator(depCity);
         }
        /* if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
@@ -665,7 +665,9 @@ public class ProductDaoImpl implements ProductDao {
         if(CollectionUtils.isNotEmpty(channelInfo)){
             criteria.and("channel").in(channelInfo);
         }
-        MatchOperation matchOperation = Aggregation.match(criteria);
+        Criteria criteriaFinal = new Criteria();
+        criteriaFinal.andOperator(criteria, apiSellPrice, depCity);
+        MatchOperation matchOperation = Aggregation.match(criteriaFinal);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
         operations.add(matchOperation);
         operations.add(sortOperation);
