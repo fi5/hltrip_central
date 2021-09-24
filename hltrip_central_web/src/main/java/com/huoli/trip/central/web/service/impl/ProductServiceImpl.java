@@ -2262,7 +2262,7 @@ public class ProductServiceImpl implements ProductService {
         } else {
             keywords.add(keyword);
         }
-        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2);
+        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2, req.getArrCity(), req.getArrCityCode());
         try {
             CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
@@ -2340,7 +2340,7 @@ public class ProductServiceImpl implements ProductService {
         }
         List<String> keywords = new ArrayList<>();
         keywords.add(keyword);
-        List<ScenicSpotMPO> list = getByKeyword(keywords, 10);
+        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode());
         try {
             CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
@@ -2402,12 +2402,14 @@ public class ProductServiceImpl implements ProductService {
      * 模糊搜索景点
      * @param keywords
      * @param count
+     * @param city
+     * @param cityCode
      * @return
      */
-    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count) {
+    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String city, String cityCode) {
         List<ScenicSpotMPO> result = new ArrayList<>();
         for (String keyword : keywords) {
-            List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count);
+            List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count, city, cityCode);
             result.addAll(list);
         }
         return result;
