@@ -2387,6 +2387,11 @@ public class ProductServiceImpl implements ProductService {
                 recommendationList.add(recommendation);
             }
             recommendRes.setTitle(recommendDetailList.get(0).getTitle());
+            if (StringUtils.isNotEmpty(recommendDetailList.get(0).getUrl())) {
+                recommendRes.setCategory("1");
+            } else {
+                recommendRes.setCategory("2");
+            }
             recommendRes.setRecommendations(recommendationList);
             result.add(recommendRes);
         }
