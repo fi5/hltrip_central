@@ -2397,7 +2397,11 @@ public class ProductServiceImpl implements ProductService {
                 res.setCityName(cityPO.getName());
                 res.setCityCode(cityPO.getCode());
                 res.setContent(cityPO.getName());
-                res.setMatch(cityPO.getName());
+                if (isChinese) {
+                    res.setMatch(getMatch(cityPO.getName(), keyword));
+                } else {
+                    res.setMatch(matchHanzi(cityPO.getName(), keyword));
+                }
                 res.setType(SearchRecommendResEnum.CITY.getCode());
                 res.setIcon(SearchRecommendResEnum.CITY.getUrl());
                 result.add(res);
