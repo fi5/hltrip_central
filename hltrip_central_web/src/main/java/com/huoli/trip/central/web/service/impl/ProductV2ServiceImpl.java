@@ -1111,6 +1111,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
         }
+        log.info("channelInfo = {}",channelInfo);
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId(), channelInfo);
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
         List<ScenicProductSortMPO> scenicProductSortMPOS = scenicProductSortDao.queryScenicProductSortByScenicId(request.getScenicSpotId());
