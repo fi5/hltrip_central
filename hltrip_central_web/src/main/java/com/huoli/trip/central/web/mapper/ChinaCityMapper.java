@@ -14,4 +14,7 @@ public interface ChinaCityMapper {
 
     @Select("SELECT code,name FROM china_city where pinying LIKE #{condition} AND type = #{type} limit #{count}")
     List<ChinaCity> queryCityByPinyinCondition(String condition, int type, int count);
+
+    @Select("SELECT code,name FROM china_city where name = #{name} AND type = #{type} limit 1")
+    ChinaCity getByName(String name, int type);
 }

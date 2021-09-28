@@ -522,8 +522,8 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo) {
-        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo);
+    public List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo, boolean isFullMatchCity) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo, isFullMatchCity);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
         operations.add(skip);
@@ -531,20 +531,20 @@ public class ProductDaoImpl implements ProductDao {
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
-        return  output.getMappedResults();
+        return output.getMappedResults();
     }
 
 
 
     @Override
-    public int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo) {
-        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo);
+    public int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo,boolean isFullMatchCity) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo, isFullMatchCity);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
         return output.getMappedResults() == null ? 0 : output.getMappedResults().size();
     }
 
-    private List<AggregationOperation> buildScenicTicketOperations(ScenicTicketListReq req, List<String> channelInfo) {
+    private List<AggregationOperation> buildScenicTicketOperations(ScenicTicketListReq req, List<String> channelInfo, boolean isFullMatchCity) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         //0门票1跟团游2酒景套餐
@@ -553,7 +553,7 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
-        if(StringUtils.isNotBlank(req.getName())){
+        if (StringUtils.isNotBlank(req.getName())) {
             criteria.and("scenicSpotName").regex(req.getName());
         }
         if (StringUtils.isNotBlank(req.getThemeCode())) {
@@ -568,7 +568,9 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("arrCityNames").regex(req.getArrCity());
         }*/
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
-            criteria.and("arrCity").regex(req.getArrCityCode());
+            if (isFullMatchCity) {
+                criteria.and("arrCity").regex(req.getArrCityCode());
+            }
         }
         if (CollectionUtils.isNotEmpty(channelInfo)) {
             criteria.and("channel").in(channelInfo);

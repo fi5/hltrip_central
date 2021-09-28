@@ -366,8 +366,13 @@ public class ProductServiceImpl implements ProductService {
                 req.setScenicSpotIds(scenicSpotIds);
             }
         }
-        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo);
-        int count = productDao.getScenicTicketTotal(req, channelInfo);
+        boolean isFullMatchCity = false;
+        ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
+        if (chinaCity != null) {
+            isFullMatchCity = true;
+        }
+        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo, isFullMatchCity);
+        int count = productDao.getScenicTicketTotal(req, channelInfo, isFullMatchCity);
         ScenicTicketListResult result=new ScenicTicketListResult();
         if(count > req.getPageSize() * req.getPageIndex()){
             result.setMore(1);
