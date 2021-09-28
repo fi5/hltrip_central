@@ -2248,7 +2248,6 @@ public class ProductServiceImpl implements ProductService {
         } else {
             cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 5);
         }
-        log.info("cityPOS:{}", JSONObject.toJSONString(cityPOS));
         try {
             CentralUtils.pinyinSort(cityPOS, ChinaCity.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
@@ -2275,7 +2274,6 @@ public class ProductServiceImpl implements ProductService {
             keywords.add(keyword);
         }
         List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2, req.getArrCity(), req.getArrCityCode());
-        log.info("scenicSpotMPOS:{}", JSONObject.toJSONString(scenicSpotMPOS));
         try {
             CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
@@ -2470,6 +2468,9 @@ public class ProductServiceImpl implements ProductService {
                 pys = PinyinHelper.toHanyuPinyinStringArray(c, format);
             } catch (BadHanyuPinyinOutputFormatCombination e) {
                 log.error("转拼音失败", e);
+            }
+            if (pys.length == 0) {
+                continue;
             }
             boolean b = target.contains(pys[0]);
             if (b) {
