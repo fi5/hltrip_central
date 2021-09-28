@@ -2371,6 +2371,8 @@ public class ProductServiceImpl implements ProductService {
         }
         List<String> keywords = new ArrayList<>();
         keywords.add(keyword);
+        log.info("req.getArrCity():{}", req.getArrCity());
+        log.info("req.getArrCityCode():{}", req.getArrCityCode());
         List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode());
         try {
             CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
