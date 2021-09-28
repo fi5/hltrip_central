@@ -62,6 +62,10 @@ import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
 import com.huoli.trip.data.api.DataService;
 import com.huoli.trip.data.vo.ChannelInfo;
 import lombok.extern.slf4j.Slf4j;
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
@@ -2237,7 +2241,9 @@ public class ProductServiceImpl implements ProductService {
         keyword = keyword.toLowerCase();
         String condition = "%".concat(keyword).concat("%");
         List<ChinaCity> cityPOS = new ArrayList<>();
+        boolean isChinese = false;
         if (CentralUtils.isChinese(keyword.charAt(0))) {
+            isChinese = true;
             cityPOS = chinaCityMapper.queryCityByNameCondition(condition, 2, 5);
         } else {
             cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 5);
@@ -2252,12 +2258,17 @@ public class ProductServiceImpl implements ProductService {
             homeSearchRes.setCityName(cityPO.getName());
             homeSearchRes.setCityCode(cityPO.getCode());
             homeSearchRes.setContent(cityPO.getName());
+            if (isChinese) {
+                homeSearchRes.setMatch(getMatch(cityPO.getName(), keyword));
+            } else {
+                homeSearchRes.setMatch(matchHanzi(cityPO.getName(), keyword));
+            }
             homeSearchRes.setType(SearchRecommendResEnum.CITY.getCode());
             homeSearchRes.setIcon(SearchRecommendResEnum.CITY.getUrl());
             result.add(homeSearchRes);
         }
         List<String> keywords = new ArrayList<>();
-        if (!CentralUtils.isChinese(keyword.charAt(0))) {
+        if (!isChinese) {
             keywords = cityPOS.stream().map(ChinaCity::getName).collect(Collectors.toList());
         } else {
             keywords.add(keyword);
@@ -2271,6 +2282,11 @@ public class ProductServiceImpl implements ProductService {
         for (ScenicSpotMPO mpo : scenicSpotMPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
             homeSearchRes.setContent(mpo.getName());
+            if (isChinese) {
+                homeSearchRes.setMatch(getMatch(mpo.getName(), keyword));
+            } else {
+                homeSearchRes.setMatch(matchHanzi(mpo.getName(), keyword));
+            }
             homeSearchRes.setScenicSpotId(mpo.getId());
             homeSearchRes.setScenicSpotName(mpo.getName());
             homeSearchRes.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
@@ -2278,6 +2294,14 @@ public class ProductServiceImpl implements ProductService {
             result.add(homeSearchRes);
         }
         return BaseResponse.withSuccess(result);
+    }
+
+    private String getMatch(String parent, String child) {
+        while (child.length() >= 1 && !parent.contains(child)) {
+            child = child.substring(0, child.length() - 1);
+            getMatch(parent, child);
+        }
+        return child;
     }
 
     @Override
@@ -2315,7 +2339,9 @@ public class ProductServiceImpl implements ProductService {
         keyword = keyword.toLowerCase();
         String condition = "%".concat(keyword).concat("%");
         List<ChinaCity> cityPOS = new ArrayList<>();
+        boolean isChinese = false;
         if (CentralUtils.isChinese(keyword.charAt(0))) {
+            isChinese = true;
             cityPOS = chinaCityMapper.queryCityByNameCondition(condition, 2, 10);
         } else {
             cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 10);
@@ -2334,6 +2360,11 @@ public class ProductServiceImpl implements ProductService {
             res.setCityName(cityPO.getName());
             res.setCityCode(cityPO.getCode());
             res.setContent(cityPO.getName());
+            if (isChinese) {
+                res.setMatch(getMatch(cityPO.getName(), keyword));
+            } else {
+                res.setMatch(matchHanzi(cityPO.getName(), keyword));
+            }
             res.setType(SearchRecommendResEnum.CITY.getCode());
             res.setIcon(SearchRecommendResEnum.CITY.getUrl());
             result.add(res);
@@ -2349,6 +2380,11 @@ public class ProductServiceImpl implements ProductService {
         for (ScenicSpotMPO mpo : list) {
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
             res.setContent(mpo.getName());
+            if (isChinese) {
+                res.setMatch(getMatch(mpo.getName(), keyword));
+            } else {
+                res.setMatch(matchHanzi(mpo.getName(), keyword));
+            }
             res.setScenicSpotId(mpo.getId());
             res.setScenicSpotName(mpo.getName());
             res.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
@@ -2361,6 +2397,7 @@ public class ProductServiceImpl implements ProductService {
                 res.setCityName(cityPO.getName());
                 res.setCityCode(cityPO.getCode());
                 res.setContent(cityPO.getName());
+                res.setMatch(cityPO.getName());
                 res.setType(SearchRecommendResEnum.CITY.getCode());
                 res.setIcon(SearchRecommendResEnum.CITY.getUrl());
                 result.add(res);
@@ -2418,5 +2455,25 @@ public class ProductServiceImpl implements ProductService {
             result.addAll(list);
         }
         return result;
+    }
+
+    private String matchHanzi(String source, String target) {
+        StringBuilder builder = new StringBuilder();
+        HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
+        format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        char[] chars = source.toCharArray();
+        for (char c : chars) {
+            String[] pys = new String[0];
+            try {
+                pys = PinyinHelper.toHanyuPinyinStringArray(c, format);
+            } catch (BadHanyuPinyinOutputFormatCombination e) {
+                log.error("转拼音失败", e);
+            }
+            boolean b = target.contains(pys[0]);
+            if (b) {
+                builder.append(c);
+            }
+        }
+        return String.valueOf(builder);
     }
 }
