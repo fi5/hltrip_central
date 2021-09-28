@@ -2248,10 +2248,11 @@ public class ProductServiceImpl implements ProductService {
         } else {
             cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 5);
         }
+        log.info("cityPOS:{}", JSONObject.toJSONString(cityPOS));
         try {
             CentralUtils.pinyinSort(cityPOS, ChinaCity.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+            log.error("拼音排序错误", e);
         }
         for (ChinaCity cityPO : cityPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
@@ -2277,7 +2278,7 @@ public class ProductServiceImpl implements ProductService {
         try {
             CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+            log.error("拼音排序错误", e);
         }
         for (ScenicSpotMPO mpo : scenicSpotMPOS) {
             HomeSearchRes homeSearchRes = new HomeSearchRes();
@@ -2349,7 +2350,7 @@ public class ProductServiceImpl implements ProductService {
         try {
             CentralUtils.pinyinSort(cityPOS, ChinaCity.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+            log.error("拼音排序错误", e);
         }
         boolean cityFullMatch = false;
         List<ChinaCity> collect = cityPOS.stream().filter(s -> s.getName().equals(req.getKeyword())).collect(Collectors.toList());
