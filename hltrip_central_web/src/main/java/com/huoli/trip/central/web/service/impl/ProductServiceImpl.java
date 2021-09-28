@@ -2275,6 +2275,7 @@ public class ProductServiceImpl implements ProductService {
             keywords.add(keyword);
         }
         List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2, req.getArrCity(), req.getArrCityCode());
+        log.info("scenicSpotMPOS:{}", JSONObject.toJSONString(scenicSpotMPOS));
         try {
             CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
