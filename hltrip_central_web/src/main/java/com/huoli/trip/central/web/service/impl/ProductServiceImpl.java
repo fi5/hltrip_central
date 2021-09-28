@@ -2464,7 +2464,7 @@ public class ProductServiceImpl implements ProductService {
         format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
         char[] chars = source.toCharArray();
         for (char c : chars) {
-            String[] pys = new String[0];
+            String[] pys = new String[20];
             try {
                 pys = PinyinHelper.toHanyuPinyinStringArray(c, format);
             } catch (BadHanyuPinyinOutputFormatCombination e) {
