@@ -2456,6 +2456,7 @@ public class ProductServiceImpl implements ProductService {
         List<ScenicSpotMPO> result = new ArrayList<>();
         for (String keyword : keywords) {
             List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count, city, cityCode);
+            list.removeIf(s -> s.getName().contains("CDATA"));
             result.addAll(list);
         }
         return result;
