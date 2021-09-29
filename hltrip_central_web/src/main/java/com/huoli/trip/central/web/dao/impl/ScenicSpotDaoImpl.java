@@ -209,7 +209,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
             criteria.and("city").is(city).and("cityCode").is(cityCode);
         }
         Query query = new Query(criteria);
-        query.fields().include("_id").include("name");
+        query.fields().include("_id").include("name").include("city").include("cityCode");
         if (count != null) {
             query.limit(count);
         }
