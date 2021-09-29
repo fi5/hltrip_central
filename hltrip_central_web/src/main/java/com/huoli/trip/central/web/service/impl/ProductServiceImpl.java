@@ -351,88 +351,83 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req) {
-        try {
-            BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
-            List<String> channelInfo = new ArrayList<>();
-            if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
-                channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
+            List<ScenicSpotMPO> scenicSpotMPOs =  scenicSpotDao.queryScenicSpotByPoint(Double.parseDouble(req.getLongitude()),Double.parseDouble(req.getLatitude()));
+            log.info("scenicSpotMPOs = {}",scenicSpotMPOs);
+            if (!CollectionUtils.isEmpty(scenicSpotMPOs)){
+                List<String> scenicSpotIds = scenicSpotMPOs.stream().map(ScenicSpotMPO::getId).collect(Collectors.toList());
+                log.info("scenicSpotIds = {}" ,scenicSpotIds);
+                req.setScenicSpotIds(scenicSpotIds);
             }
-            if (StringUtils.isNotBlank(req.getLatitude()) && StringUtils.isNotBlank(req.getLongitude())) {
-                List<ScenicSpotMPO> scenicSpotMPOs =  scenicSpotDao.queryScenicSpotByPoint(Double.parseDouble(req.getLongitude()),Double.parseDouble(req.getLatitude()));
-                log.info("scenicSpotMPOs = {}",scenicSpotMPOs);
-                if (!CollectionUtils.isEmpty(scenicSpotMPOs)){
-                    List<String> scenicSpotIds = scenicSpotMPOs.stream().map(ScenicSpotMPO::getId).collect(Collectors.toList());
-                    log.info("scenicSpotIds = {}" ,scenicSpotIds);
-                    req.setScenicSpotIds(scenicSpotIds);
-                }
-            }
-            boolean isFullMatchCity = false;
-            ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
-            if (chinaCity != null) {
-                isFullMatchCity = true;
-            }
-            List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo, true);
-            log.info("productListMPOS.size:{}", productListMPOS.size());
-            int count = productDao.getScenicTicketTotal(req, channelInfo, true);
-            int count1 = productDao.getScenicTicketTotal(req, channelInfo, false);
-            log.info("count1:{}", count1);
-            ScenicTicketListResult result=new ScenicTicketListResult();
-            if (count + count1 > req.getPageSize() * req.getPageIndex()) {
-                result.setMore(1);
-            }
-            List<ScenicTicketListItem> items = Lists.newArrayList();
-            int i = count / req.getPageSize();
-            int page = count % req.getPageSize() > 0 ? i + 1 : i;
-            if (!isFullMatchCity && ListUtils.isNotEmpty(productListMPOS) && productListMPOS.size() < req.getPageSize()) {
-                req.setPageIndex(1);
-                List<ProductListMPO> notLocal = productDao.scenicTickets(req, channelInfo, false);
-                log.info("notLocal:{}", JSONObject.toJSONString(notLocal));
+        }
+        boolean isFullMatchCity = false;
+        ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
+        if (chinaCity != null) {
+            isFullMatchCity = true;
+        }
+        List<ProductListMPO> productListMPOS = new ArrayList<>();
+        List<ProductListMPO> localList = productDao.scenicTickets(req, channelInfo, true);
+        if (ListUtils.isNotEmpty(localList)) {
+            productListMPOS.addAll(localList);
+        }
+        log.info("productListMPOS.size:{}", productListMPOS.size());
+        int count = productDao.getScenicTicketTotal(req, channelInfo, true);
+        int count1 = productDao.getScenicTicketTotal(req, channelInfo, false);
+        log.info("count1:{}", count1);
+        ScenicTicketListResult result=new ScenicTicketListResult();
+        if (count + count1 > req.getPageSize() * req.getPageIndex()) {
+            result.setMore(1);
+        }
+        List<ScenicTicketListItem> items = Lists.newArrayList();
+        int i = count / req.getPageSize();
+        int page = count % req.getPageSize() > 0 ? i + 1 : i;
+        if (!isFullMatchCity && ListUtils.isNotEmpty(productListMPOS) && productListMPOS.size() < req.getPageSize()) {
+            req.setPageIndex(1);
+            List<ProductListMPO> notLocal = productDao.scenicTickets(req, channelInfo, false);
+            log.info("notLocal:{}", JSONObject.toJSONString(notLocal));
+            if (ListUtils.isNotEmpty(notLocal)) {
                 if (notLocal.size() < req.getPageSize() - productListMPOS.size()) {
-                    for (ProductListMPO mpo : notLocal) {
-                        productListMPOS.add(mpo);
-                    }
+                    productListMPOS.addAll(Lists.newArrayList(notLocal));
                 } else {
                     List<ProductListMPO> productListMPOS1 = notLocal.subList(0, productListMPOS.size() - req.getPageSize());
-                    for (ProductListMPO mpo : productListMPOS1) {
-                        productListMPOS.add(mpo);
-                    }
-                }
-            } else if (!isFullMatchCity && ListUtils.isEmpty(productListMPOS)) {
-                req.setPageIndex(req.getPageIndex() - page);
-                int startIndex = req.getPageSize() - count % req.getPageSize();
-                productListMPOS = productDao.scenicTickets(req, channelInfo, false);
-                if (ListUtils.isNotEmpty(productListMPOS)) {
-                    productListMPOS = productListMPOS.subList(startIndex, productListMPOS.size());
-                }
-                req.setPageIndex(req.getPageIndex() - page + 1);
-                List<ProductListMPO> productListMPOS1 = productDao.scenicTickets(req, channelInfo, false);
-                if (ListUtils.isNotEmpty(productListMPOS1)) {
-                    List<ProductListMPO> productListMPOS2 = productListMPOS1.subList(count % req.getPageSize(), productListMPOS1.size());
-                    for (ProductListMPO mpo : productListMPOS2) {
-                        productListMPOS.add(mpo);
-                    }
+                    productListMPOS.addAll(Lists.newArrayList(productListMPOS1));
                 }
             }
-            if(CollectionUtils.isNotEmpty(productListMPOS)){
-                productListMPOS.stream().forEach(item -> {
-                    ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
-                    BeanUtils.copyProperties(item, scenicTicketListItem);
-                    //加价计算
-                    IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
-                    // 设置价格
-                    IncreasePriceCalendar increasePriceCalendar = increasePrice.getPrices().get(0);
-                    scenicTicketListItem.setPrice(increasePriceCalendar.getAdtSellPrice());
-                    scenicTicketListItem.setDiscount(increasePriceCalendar.getTag());
-                    scenicTicketListItem.setPreferenceTag(increasePriceCalendar.getTagDesc());
-                    items.add(scenicTicketListItem);
-                });
+        } else if (!isFullMatchCity && ListUtils.isEmpty(productListMPOS)) {
+            req.setPageIndex(req.getPageIndex() - page);
+            int startIndex = req.getPageSize() - count % req.getPageSize();
+            productListMPOS = productDao.scenicTickets(req, channelInfo, false);
+            if (ListUtils.isNotEmpty(productListMPOS)) {
+                productListMPOS = productListMPOS.subList(startIndex, productListMPOS.size());
             }
-            result.setItems(items);
-            return BaseResponse.withSuccess(result);
-        } catch (Exception e) {
-            log.error("scenicTicketListException:", e);
+            req.setPageIndex(req.getPageIndex() - page + 1);
+            List<ProductListMPO> productListMPOS1 = productDao.scenicTickets(req, channelInfo, false);
+            if (ListUtils.isNotEmpty(productListMPOS1)) {
+                List<ProductListMPO> productListMPOS2 = productListMPOS1.subList(count % req.getPageSize(), productListMPOS1.size());
+                productListMPOS.addAll(Lists.newArrayList(productListMPOS2));
+            }
         }
-        return BaseResponse.withSuccess();
+        if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS.stream().forEach(item -> {
+                ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
+                BeanUtils.copyProperties(item, scenicTicketListItem);
+                //加价计算
+                IncreasePrice increasePrice = increasePrice(item, req.getApp(), req.getSource());
+                // 设置价格
+                IncreasePriceCalendar increasePriceCalendar = increasePrice.getPrices().get(0);
+                scenicTicketListItem.setPrice(increasePriceCalendar.getAdtSellPrice());
+                scenicTicketListItem.setDiscount(increasePriceCalendar.getTag());
+                scenicTicketListItem.setPreferenceTag(increasePriceCalendar.getTagDesc());
+                items.add(scenicTicketListItem);
+            });
+        }
+        result.setItems(items);
+        return BaseResponse.withSuccess(result);
     }
 
     /**
