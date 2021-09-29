@@ -1180,6 +1180,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
                     scenicSpotProductBase.setSellCount(productListMPO.getSellCount());
                     scenicSpotProductBase.setStock(productListMPO.getStock());
+                    scenicSpotProductBase.setChannel(productListMPO.getChannel());
                     scenicSpotProductBase.setSortId(String.format("%s%s%s",scenicSpotProductPriceMPO.getScenicSpotProductId(), scenicSpotProductPriceMPO.getScenicSpotRuleId(), scenicSpotProductPriceMPO.getTicketKind()));
                 });
             }
