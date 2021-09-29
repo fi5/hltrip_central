@@ -1112,6 +1112,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
         }
         log.info("channelInfo = {}",channelInfo);
+        long startTime=System.currentTimeMillis();
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId(), channelInfo);
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
         List<ScenicProductSortMPO> scenicProductSortMPOS = scenicProductSortDao.queryScenicProductSortByScenicId(request.getScenicSpotId());
@@ -1185,6 +1186,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 });
             }
         }
+        long endTime1=System.currentTimeMillis();
+        log.info("endTime1 = {}",endTime1 - startTime);
         //产品排序
         List<ScenicRealProductBase> result = new ArrayList<>();
         result.addAll(productBases);
@@ -1199,6 +1202,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 result.add(entry.getValue().get(0));
             }
         }
+        long endTime2=System.currentTimeMillis();
+        log.info("endTime2 = {}",endTime2 - endTime1);
         //票种排序
         if (StringUtils.isNotBlank(scenicSpotMPO.getTicketKindSort())){
             String [] ticketKindSorts = scenicSpotMPO.getTicketKindSort().split(",");
@@ -1212,6 +1217,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 result.addAll(entry.getValue());
             }
         }
+        long endTime3 = System.currentTimeMillis();
+        log.info("endTime3 = {}",endTime3 - endTime2);
         return BaseResponse.withSuccess(result);
     }
 }
