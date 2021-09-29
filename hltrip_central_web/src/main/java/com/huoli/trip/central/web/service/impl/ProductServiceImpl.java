@@ -2412,11 +2412,17 @@ public class ProductServiceImpl implements ProductService {
         keywords.add(keyword);
         log.info("req.getArrCity():{}", req.getArrCity());
         log.info("req.getArrCityCode():{}", req.getArrCityCode());
-        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode());
-        try {
-            CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
-        } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+        List<ScenicSpotMPO> list = getByKeyword(keywords, null, req.getArrCity(), req.getArrCityCode());
+        log.info("ScenicSpotMPOList:{}", JSONObject.toJSONString(list));
+        if (ListUtils.isNotEmpty(list)) {
+            try {
+                CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
+            } catch (InstantiationException | IllegalAccessException e) {
+                log.error("拼音排序错误", e);
+            }
+        }
+        if (ListUtils.isNotEmpty(list) && list.size() >= 10) {
+            list.subList(0, 9);
         }
         for (ScenicSpotMPO mpo : list) {
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();

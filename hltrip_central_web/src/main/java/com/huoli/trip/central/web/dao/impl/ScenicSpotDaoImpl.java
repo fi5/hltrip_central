@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao.impl;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
 import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
@@ -212,6 +213,7 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         if (count != null) {
             query.limit(count);
         }
+        log.info("criteria:{}", JSONObject.toJSONString(criteria));
         return mongoTemplate.find(query, ScenicSpotMPO.class);
     }
 
