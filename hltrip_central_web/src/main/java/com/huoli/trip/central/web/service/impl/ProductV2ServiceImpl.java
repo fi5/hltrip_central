@@ -1128,6 +1128,8 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 int bookBeforeDay = scenicSpotProduct.getScenicSpotProductTransaction() == null ? 0 : scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeDay();
                 Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProduct.getScenicSpotProductTransaction() == null ? null : scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeTime());
                 List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
+                long endTime0=System.currentTimeMillis();
+                log.info("endTime0 = {}",endTime0 - startTime);
                 // 根据产品id、规则id、票种 拆成多个产品
                 Map<String, List<ScenicSpotProductPriceMPO>> priceMap = scenicSpotProductPriceMPOS.stream().collect(Collectors.groupingBy(price ->
                         String.format("%s-%s-%s", price.getScenicSpotProductId(), price.getScenicSpotRuleId(), price.getTicketKind())));
