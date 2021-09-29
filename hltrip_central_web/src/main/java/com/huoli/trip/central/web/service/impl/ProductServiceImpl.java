@@ -384,10 +384,23 @@ public class ProductServiceImpl implements ProductService {
         if (!isFullMatchCity && ListUtils.isNotEmpty(productListMPOS) && productListMPOS.size() < req.getPageSize()) {
             req.setPageIndex(1);
             List<ProductListMPO> notLocal = productDao.scenicTickets(req, channelInfo, false);
-            productListMPOS.addAll(notLocal.subList(0, req.getPageSize() - productListMPOS.size()));
+            if (notLocal.size() < req.getPageSize() - productListMPOS.size()) {
+                productListMPOS.addAll(notLocal);
+            } else {
+                productListMPOS.addAll(notLocal.subList(0, productListMPOS.size() - req.getPageSize()));
+            }
         } else if (!isFullMatchCity && ListUtils.isEmpty(productListMPOS)) {
-            req.setPageIndex(req.getPageIndex() - page + 1);
+            req.setPageIndex(req.getPageIndex() - page);
+            int startIndex = req.getPageSize() - count % req.getPageSize();
             productListMPOS = productDao.scenicTickets(req, channelInfo, false);
+            if (ListUtils.isNotEmpty(productListMPOS)) {
+                productListMPOS = productListMPOS.subList(startIndex, productListMPOS.size());
+            }
+            req.setPageIndex(req.getPageIndex() - page + 1);
+            List<ProductListMPO> productListMPOS1 = productDao.scenicTickets(req, channelInfo, false);
+            if (ListUtils.isNotEmpty(productListMPOS1)) {
+                productListMPOS.addAll(productListMPOS1.subList(count % req.getPageSize(), productListMPOS1.size()));
+            }
         }
         if(CollectionUtils.isNotEmpty(productListMPOS)){
             productListMPOS.stream().forEach(item -> {
