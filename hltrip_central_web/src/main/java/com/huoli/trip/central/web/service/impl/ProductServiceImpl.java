@@ -371,13 +371,24 @@ public class ProductServiceImpl implements ProductService {
         if (chinaCity != null) {
             isFullMatchCity = true;
         }
-        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo, isFullMatchCity);
-        int count = productDao.getScenicTicketTotal(req, channelInfo, isFullMatchCity);
+        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo, true);
+        int count = productDao.getScenicTicketTotal(req, channelInfo, true);
+        int count1 = productDao.getScenicTicketTotal(req, channelInfo, false);
         ScenicTicketListResult result=new ScenicTicketListResult();
-        if(count > req.getPageSize() * req.getPageIndex()){
+        if (count + count1 > req.getPageSize() * req.getPageIndex()) {
             result.setMore(1);
         }
         List<ScenicTicketListItem> items = Lists.newArrayList();
+        int i = count / req.getPageSize();
+        int page = count % req.getPageSize() > 0 ? i + 1 : i;
+        if (!isFullMatchCity && ListUtils.isNotEmpty(productListMPOS) && productListMPOS.size() < req.getPageSize()) {
+            req.setPageIndex(1);
+            List<ProductListMPO> notLocal = productDao.scenicTickets(req, channelInfo, false);
+            productListMPOS.addAll(notLocal.subList(0, req.getPageSize() - productListMPOS.size()));
+        } else if (!isFullMatchCity && ListUtils.isEmpty(productListMPOS)) {
+            req.setPageIndex(req.getPageIndex() - page + 1);
+            productListMPOS = productDao.scenicTickets(req, channelInfo, false);
+        }
         if(CollectionUtils.isNotEmpty(productListMPOS)){
             productListMPOS.stream().forEach(item -> {
                 ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
