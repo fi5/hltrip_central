@@ -2310,7 +2310,7 @@ public class ProductServiceImpl implements ProductService {
         if (!isChinese) {
             keywords = cityPOS.stream().map(ChinaCity::getName).collect(Collectors.toList());
         } else {
-            keywords.add(keyword);
+            keywords.add(req.getKeyword());
         }
         List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2, req.getArrCity(), req.getArrCityCode());
         try {
@@ -2409,10 +2409,10 @@ public class ProductServiceImpl implements ProductService {
             result.add(res);
         }
         List<String> keywords = new ArrayList<>();
-        keywords.add(keyword);
+        keywords.add(req.getKeyword().toLowerCase());
         log.info("req.getArrCity():{}", req.getArrCity());
         log.info("req.getArrCityCode():{}", req.getArrCityCode());
-        List<ScenicSpotMPO> list = getByKeyword(keywords, null, req.getArrCity(), req.getArrCityCode());
+        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode());
         log.info("ScenicSpotMPOList:{}", JSONObject.toJSONString(list));
         if (ListUtils.isNotEmpty(list)) {
             try {
@@ -2420,9 +2420,6 @@ public class ProductServiceImpl implements ProductService {
             } catch (InstantiationException | IllegalAccessException e) {
                 log.error("拼音排序错误", e);
             }
-        }
-        if (ListUtils.isNotEmpty(list) && list.size() >= 10) {
-            list.subList(0, 9);
         }
         for (ScenicSpotMPO mpo : list) {
             ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
