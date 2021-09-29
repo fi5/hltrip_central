@@ -374,6 +374,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo, true);
         int count = productDao.getScenicTicketTotal(req, channelInfo, true);
         int count1 = productDao.getScenicTicketTotal(req, channelInfo, false);
+        log.info("count1:{}", count1);
         ScenicTicketListResult result=new ScenicTicketListResult();
         if (count + count1 > req.getPageSize() * req.getPageIndex()) {
             result.setMore(1);
@@ -384,6 +385,7 @@ public class ProductServiceImpl implements ProductService {
         if (!isFullMatchCity && ListUtils.isNotEmpty(productListMPOS) && productListMPOS.size() < req.getPageSize()) {
             req.setPageIndex(1);
             List<ProductListMPO> notLocal = productDao.scenicTickets(req, channelInfo, false);
+            log.info("notLocal:{}", JSONObject.toJSONString(notLocal));
             if (notLocal.size() < req.getPageSize() - productListMPOS.size()) {
                 productListMPOS.addAll(notLocal);
             } else {

@@ -571,7 +571,7 @@ public class ProductDaoImpl implements ProductDao {
             if (isFullMatchCity) {
                 criteria.and("arrCity").regex(req.getArrCityCode());
             } else {
-                criteria.and("arrCity").not().regex(req.getArrCityCode());
+                criteria.and("arrCity").ne(req.getArrCityCode());
             }
         }
         if (CollectionUtils.isNotEmpty(channelInfo)) {
