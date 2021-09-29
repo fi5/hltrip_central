@@ -2328,6 +2328,8 @@ public class ProductServiceImpl implements ProductService {
             }
             homeSearchRes.setScenicSpotId(mpo.getId());
             homeSearchRes.setScenicSpotName(mpo.getName());
+            homeSearchRes.setCityName(mpo.getCity());
+            homeSearchRes.setCityCode(mpo.getCityCode());
             homeSearchRes.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
             homeSearchRes.setIcon(SearchRecommendResEnum.SCENIC_SPOT.getUrl());
             result.add(homeSearchRes);
@@ -2410,10 +2412,7 @@ public class ProductServiceImpl implements ProductService {
         }
         List<String> keywords = new ArrayList<>();
         keywords.add(req.getKeyword().toLowerCase());
-        log.info("req.getArrCity():{}", req.getArrCity());
-        log.info("req.getArrCityCode():{}", req.getArrCityCode());
         List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode());
-        log.info("ScenicSpotMPOList:{}", JSONObject.toJSONString(list));
         if (ListUtils.isNotEmpty(list)) {
             try {
                 CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
@@ -2431,6 +2430,8 @@ public class ProductServiceImpl implements ProductService {
             }
             res.setScenicSpotId(mpo.getId());
             res.setScenicSpotName(mpo.getName());
+            res.setCityName(mpo.getCity());
+            res.setCityCode(mpo.getCityCode());
             res.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
             res.setIcon(SearchRecommendResEnum.SCENIC_SPOT.getUrl());
             result.add(res);
