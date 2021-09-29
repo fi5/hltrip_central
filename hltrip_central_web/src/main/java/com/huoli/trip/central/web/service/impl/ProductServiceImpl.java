@@ -2330,6 +2330,8 @@ public class ProductServiceImpl implements ProductService {
             homeSearchRes.setScenicSpotName(mpo.getName());
             homeSearchRes.setCityName(mpo.getCity());
             homeSearchRes.setCityCode(mpo.getCityCode());
+            log.info("homeSearchRes.setCityName:{}", homeSearchRes.getCityName());
+            log.info("homeSearchRes.getCityCode:{}", homeSearchRes.getCityCode());
             homeSearchRes.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
             homeSearchRes.setIcon(SearchRecommendResEnum.SCENIC_SPOT.getUrl());
             result.add(homeSearchRes);
