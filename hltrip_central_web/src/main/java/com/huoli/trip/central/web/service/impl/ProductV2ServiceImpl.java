@@ -1216,8 +1216,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             Map<String,List<ScenicRealProductBase>> resultMap = result.stream().collect(Collectors.groupingBy(ScenicRealProductBase::getTicketKind, LinkedHashMap::new,Collectors.toList()));
             result = new ArrayList<>();
             for (String ticketKindSort : ticketKindSorts){
-                result.addAll(resultMap.get(ticketKindSort));
-                resultMap.remove(ticketKindSort);
+                if (!CollectionUtils.isEmpty(resultMap.get(ticketKindSort))) {
+                    result.addAll(resultMap.get(ticketKindSort));
+                    resultMap.remove(ticketKindSort);
+                }
             }
             for(Map.Entry<String,List<ScenicRealProductBase>> entry:resultMap.entrySet()){
                 result.addAll(entry.getValue());
