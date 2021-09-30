@@ -1198,7 +1198,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             result = new ArrayList<>();
             int sort = 0;
             for (ScenicProductSortMPO scenicProductSortMPO : scenicProductSortMPOS){
-                if (scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0) != null) {
+                if (!CollectionUtils.isEmpty(scenicRealProductMap.get(scenicProductSortMPO.getId()))) {
                     scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0).setSort(scenicProductSortMPO.getSort());
                     result.add(scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0));
                     scenicRealProductMap.remove(scenicProductSortMPO.getId());
