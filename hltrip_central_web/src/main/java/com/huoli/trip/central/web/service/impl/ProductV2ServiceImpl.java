@@ -1138,8 +1138,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 log.info("endTime1 = {}",endTime1 - startTime);
                 priceMap.forEach((k, v) -> {
                     ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date, canBuyDate);
-                    long endTime2=System.currentTimeMillis();
-                    log.info("endTime2 = {}",endTime2 - startTime);
                     if(scenicSpotProductPriceMPO == null){
                         return;
                     }
@@ -1149,8 +1147,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                         log.info("产品因为价格规则无数据异常被过滤,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
                         return;
                     }
-                    long endTime3 = System.currentTimeMillis();
-                    log.info("endTime3 = {}",endTime3 - startTime);
                     ScenicRealProductBase scenicSpotProductBase = new ScenicRealProductBase();
                     String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
                     BasePrice basePrice = new BasePrice();
@@ -1200,11 +1196,15 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         if (!CollectionUtils.isEmpty(scenicProductSortMPOS)){
             Map<String,List<ScenicRealProductBase>> scenicRealProductMap = result.stream().collect(Collectors.groupingBy(ScenicRealProductBase::getSortId, LinkedHashMap::new,Collectors.toList()));
             result = new ArrayList<>();
+            int sort = 0;
             for (ScenicProductSortMPO scenicProductSortMPO : scenicProductSortMPOS){
+                scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0).setSort(scenicProductSortMPO.getSort());
                 result.add(scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0));
                 scenicRealProductMap.remove(scenicProductSortMPO.getId());
+                sort++;
             }
             for(Map.Entry<String,List<ScenicRealProductBase>> entry:scenicRealProductMap.entrySet()){
+                entry.getValue().get(0).setSort(sort++);
                 result.add(entry.getValue().get(0));
             }
         }
