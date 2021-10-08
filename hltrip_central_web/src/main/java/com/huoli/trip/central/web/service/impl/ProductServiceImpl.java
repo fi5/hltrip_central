@@ -2261,6 +2261,11 @@ public class ProductServiceImpl implements ProductService {
             for (TripSearchRecommendDetail recommend : recommendList) {
                 HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
                 BeanUtils.copyProperties(recommend, recommendation);
+                if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
+                    recommendation.setContent(recommend.getCityName());
+                } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
+                    recommendation.setContent(recommend.getScenicSpotName());
+                }
                 recommendationList.add(recommendation);
             }
             res.setTitle(recommendList.get(0).getTitle());
@@ -2363,6 +2368,11 @@ public class ProductServiceImpl implements ProductService {
             for (TripSearchRecommendDetail recommend : recommends) {
                 HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
                 BeanUtils.copyProperties(recommend, recommendation);
+                if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
+                    recommendation.setContent(recommend.getCityName());
+                } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
+                    recommendation.setContent(recommend.getScenicSpotName());
+                }
                 recommendationList.add(recommendation);
             }
             recommendRes.setTitle(recommends.get(0).getTitle());
@@ -2472,6 +2482,11 @@ public class ProductServiceImpl implements ProductService {
             for (TripSearchRecommendDetail recommend : recommendDetailList) {
                 GroupTourRecommendRes.Recommendation recommendation = new GroupTourRecommendRes.Recommendation();
                 BeanUtils.copyProperties(recommend, recommendation);
+                if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
+                    recommendation.setContent(recommend.getCityName());
+                } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
+                    recommendation.setContent(recommend.getScenicSpotName());
+                }
                 recommendationList.add(recommendation);
             }
             recommendRes.setTitle(recommendDetailList.get(0).getTitle());
