@@ -1117,7 +1117,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
         List<ScenicProductSortMPO> scenicProductSortMPOS = scenicProductSortDao.queryScenicProductSortByScenicId(request.getScenicSpotId());
 
-        String date = DateTimeUtil.getTodayString();
+        String date = request.getDate();
         List<ScenicRealProductBase> productBases = Lists.newArrayList();
         if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
             log.info("查询到的产品列表数据为：{}",JSON.toJSONString(scenicSpotProductMPOS));
