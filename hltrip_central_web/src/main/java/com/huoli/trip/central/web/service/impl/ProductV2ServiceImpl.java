@@ -1112,7 +1112,6 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
         }
         log.info("channelInfo = {}",channelInfo);
-        long startTime=System.currentTimeMillis();
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId(), channelInfo);
         ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
         List<ScenicProductSortMPO> scenicProductSortMPOS = scenicProductSortDao.queryScenicProductSortByScenicId(request.getScenicSpotId());
@@ -1128,14 +1127,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 int bookBeforeDay = scenicSpotProduct.getScenicSpotProductTransaction() == null ? 0 : scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeDay();
                 Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProduct.getScenicSpotProductTransaction() == null ? null : scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeTime());
                 List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
-                long endTime0=System.currentTimeMillis();
-                log.info("endTime0 = {}",endTime0 - startTime);
                 // 根据产品id、规则id、票种 拆成多个产品
                 Map<String, List<ScenicSpotProductPriceMPO>> priceMap = scenicSpotProductPriceMPOS.stream().collect(Collectors.groupingBy(price ->
                         String.format("%s-%s-%s", price.getScenicSpotProductId(), price.getScenicSpotRuleId(), price.getTicketKind())));
                 log.info("产品{}拆成{}个", scenicSpotProduct.getId(), priceMap.size());
-                long endTime1=System.currentTimeMillis();
-                log.info("endTime1 = {}",endTime1 - startTime);
                 priceMap.forEach((k, v) -> {
                     ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date, canBuyDate);
                     if(scenicSpotProductPriceMPO == null){
