@@ -204,7 +204,6 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
     public List<ScenicSpotMPO> queryByKeyword(String keyword, Integer count, String city, String cityCode) {
         Criteria criteria = new Criteria();
         criteria.and("del").is(0);
-        criteria.and("status").is(1);
         criteria.and("name").regex(keyword);
         if (StringUtils.isNotEmpty(city) && StringUtils.isNotEmpty(cityCode)) {
             criteria.and("city").is(city).and("cityCode").is(cityCode);
@@ -214,7 +213,6 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         if (count != null) {
             query.limit(count);
         }
-        log.info("criteria:{}", JSONObject.toJSONString(criteria));
         return mongoTemplate.find(query, ScenicSpotMPO.class);
     }
 
