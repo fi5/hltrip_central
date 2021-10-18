@@ -2544,4 +2544,10 @@ public class ProductServiceImpl implements ProductService {
         }
         return String.valueOf(builder);
     }
+
+    @Override
+    public BaseResponse getAllCity() {
+        List<String> list = productDao.getAllCity();
+        return BaseResponse.withSuccess(list);
+    }
 }

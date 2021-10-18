@@ -253,4 +253,5 @@ public interface ProductService {
      */
     BaseResponse<List<HomeSearchRes>> groupTourSearchRecommend(HomeSearchReq req);
 
+    BaseResponse getAllCity();
 }
