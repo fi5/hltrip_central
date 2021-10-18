@@ -81,6 +81,7 @@ import java.math.BigDecimal;
 import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_POSITION_KEY_PREFIX;
@@ -2496,6 +2497,7 @@ public class ProductServiceImpl implements ProductService {
             recommendRes.setRecommendations(recommendationList);
             result.add(recommendRes);
         }
+        result = result.stream().sorted(Comparator.comparing(s -> s.getRecommendations().get(0).getId())).collect(Collectors.toList());
         return BaseResponse.withSuccess(result);
     }
 
