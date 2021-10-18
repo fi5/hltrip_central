@@ -13,6 +13,7 @@ import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 描述：<br/>
@@ -181,4 +182,6 @@ public interface ProductDao {
     int groupTourListCount(GroupTourListReq req, List<String> channelInfo);
 
     int hotelScenicListCount(HotelScenicListReq req, List<String> channelInfo);
+
+    Set<String> getAllCity();
 }

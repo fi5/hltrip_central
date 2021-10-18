@@ -728,4 +728,19 @@ public class ProductDaoImpl implements ProductDao {
 
         return  output.getMappedResults() == null ? 0 : output.getMappedResults().size();
     }
+
+    @Override
+    public Set<String> getAllCity() {
+        List<String> depCityNames = new ArrayList<>();
+        depCityNames = mongoTemplate.findDistinct("depCityNames", ProductListMPO.class, String.class);
+        List<String> arrCityNames = new ArrayList<>();
+        arrCityNames = mongoTemplate.findDistinct("arrCityNames", ProductListMPO.class, String.class);
+        depCityNames.addAll(arrCityNames);
+        Set<String> result = new HashSet<>();
+        for (String city : depCityNames) {
+            String[] a = city.split(",");
+            result.addAll(Arrays.asList(a));
+        }
+        return result;
+    }
 }
