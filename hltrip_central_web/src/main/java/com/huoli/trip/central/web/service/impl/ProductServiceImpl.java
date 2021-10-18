@@ -2472,33 +2472,29 @@ public class ProductServiceImpl implements ProductService {
             list = Collections.emptyList();
         }
         List<GroupTourRecommendRes> result = new ArrayList<>();
-        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getGroupSort));
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getTitle));
         for (Map.Entry entry : recommendGroup.entrySet()) {
             List<TripSearchRecommendDetail> recommendDetailList = (List<TripSearchRecommendDetail>) entry.getValue();
             GroupTourRecommendRes recommendRes = new GroupTourRecommendRes();
-            Map<String, List<TripSearchRecommendDetail>> collect = recommendDetailList.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getTitle));
-            for (Map.Entry titleEntry : collect.entrySet()) {
-                List<GroupTourRecommendRes.Recommendation> recommendationList = new ArrayList<>();
-                List<TripSearchRecommendDetail> detailList = (List<TripSearchRecommendDetail>) titleEntry.getValue();
-                for (TripSearchRecommendDetail recommend : detailList) {
-                    GroupTourRecommendRes.Recommendation recommendation = new GroupTourRecommendRes.Recommendation();
-                    BeanUtils.copyProperties(recommend, recommendation);
-                    if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
-                        recommendation.setContent(recommend.getCityName());
-                    } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
-                        recommendation.setContent(recommend.getScenicSpotName());
-                    }
-                    recommendationList.add(recommendation);
+            List<GroupTourRecommendRes.Recommendation> recommendationList = new ArrayList<>();
+            for (TripSearchRecommendDetail recommend : recommendDetailList) {
+                GroupTourRecommendRes.Recommendation recommendation = new GroupTourRecommendRes.Recommendation();
+                BeanUtils.copyProperties(recommend, recommendation);
+                if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
+                    recommendation.setContent(recommend.getCityName());
+                } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
+                    recommendation.setContent(recommend.getScenicSpotName());
                 }
-                recommendRes.setTitle(String.valueOf(titleEntry.getKey()));
-                if (StringUtils.isNotEmpty(detailList.get(0).getUrl())) {
-                    recommendRes.setCategory("1");
-                } else {
-                    recommendRes.setCategory("2");
-                }
-                recommendRes.setRecommendations(recommendationList);
-                result.add(recommendRes);
+                recommendationList.add(recommendation);
             }
+            recommendRes.setTitle(String.valueOf(entry.getKey()));
+            if (StringUtils.isNotEmpty(recommendDetailList.get(0).getUrl())) {
+                recommendRes.setCategory("1");
+            } else {
+                recommendRes.setCategory("2");
+            }
+            recommendRes.setRecommendations(recommendationList);
+            result.add(recommendRes);
         }
         return BaseResponse.withSuccess(result);
     }
