@@ -170,13 +170,13 @@ public interface ProductDao {
     List<ProductPO> queryValidCity(String city);
     HashMap<String,String> queryValidCitys();
 
-    List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo);
+    List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo, boolean isfullMatchCit);
 
     List<ProductListMPO> groupTourList(GroupTourListReq req, List<String> channelInfo);
 
     List<ProductListMPO> hotelScenicList(HotelScenicListReq req, List<String> channelInfo);
 
-    int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo);
+    int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo, boolean isFullMatchCity);
 
     int groupTourListCount(GroupTourListReq req, List<String> channelInfo);
 

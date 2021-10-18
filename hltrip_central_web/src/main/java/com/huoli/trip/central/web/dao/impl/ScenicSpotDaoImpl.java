@@ -1,7 +1,9 @@
 package com.huoli.trip.central.web.dao.impl;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.huoli.trip.central.web.dao.ScenicSpotDao;
+import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.entity.mpo.scenicSpotTicket.*;
 import lombok.extern.slf4j.Slf4j;
@@ -196,6 +198,22 @@ public class ScenicSpotDaoImpl implements ScenicSpotDao {
         criteria.and("scenicSpotProduct.id").is(productId);
         query.addCriteria(criteria);
         return mongoTemplate.findOne(query, ScenicSpotProductBackupMPO.class);
+    }
+
+    @Override
+    public List<ScenicSpotMPO> queryByKeyword(String keyword, Integer count, String city, String cityCode) {
+        Criteria criteria = new Criteria();
+        criteria.and("del").is(0);
+        criteria.and("name").regex(keyword);
+        if (StringUtils.isNotEmpty(city) && StringUtils.isNotEmpty(cityCode)) {
+            criteria.and("city").is(city).and("cityCode").is(cityCode);
+        }
+        Query query = new Query(criteria);
+        query.fields().include("_id").include("name").include("city").include("cityCode");
+        if (count != null) {
+            query.limit(count);
+        }
+        return mongoTemplate.find(query, ScenicSpotMPO.class);
     }
 
 
