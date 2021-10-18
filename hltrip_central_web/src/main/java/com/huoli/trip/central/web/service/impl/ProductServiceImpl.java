@@ -2547,7 +2547,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse getAllCity() {
-        List<String> list = productDao.getAllCity();
+        Set<String> list = productDao.getAllCity();
         return BaseResponse.withSuccess(list);
     }
 }
