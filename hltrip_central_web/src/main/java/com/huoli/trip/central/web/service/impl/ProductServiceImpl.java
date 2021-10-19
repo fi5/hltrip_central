@@ -366,10 +366,10 @@ public class ProductServiceImpl implements ProductService {
                 req.setScenicSpotIds(scenicSpotIds);
             }
         }
-        boolean isFullMatchCity = false;
+        boolean isFullMatchCity = true;
         ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
         if (chinaCity != null) {
-            isFullMatchCity = true;
+            isFullMatchCity = false;
         }
         List<ProductListMPO> productListMPOS = new ArrayList<>();
         List<ProductListMPO> localList = productDao.scenicTickets(req, channelInfo, true);
@@ -390,7 +390,6 @@ public class ProductServiceImpl implements ProductService {
         if (!isFullMatchCity && ListUtils.isNotEmpty(productListMPOS) && productListMPOS.size() < req.getPageSize()) {
             req.setPageIndex(1);
             List<ProductListMPO> notLocal = productDao.scenicTickets(req, channelInfo, false);
-            log.info("notLocal:{}", JSONObject.toJSONString(notLocal));
             if (ListUtils.isNotEmpty(notLocal)) {
                 if (notLocal.size() < req.getPageSize() - productListMPOS.size()) {
                     productListMPOS.addAll(Lists.newArrayList(notLocal));
