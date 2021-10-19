@@ -410,6 +410,7 @@ public class ProductServiceImpl implements ProductService {
             List<ProductListMPO> productListMPOS1 = productDao.scenicTickets(req, channelInfo, false);
             if (ListUtils.isNotEmpty(productListMPOS1)) {
                 List<ProductListMPO> productListMPOS2 = productListMPOS1.subList(count % req.getPageSize(), productListMPOS1.size());
+                log.info("productListMPOS2:{}", JSONObject.toJSONString(productListMPOS2));
                 productListMPOS.addAll(Lists.newArrayList(productListMPOS2));
             }
         }
