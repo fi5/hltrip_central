@@ -395,7 +395,7 @@ public class ProductServiceImpl implements ProductService {
                 if (notLocal.size() < req.getPageSize() - productListMPOS.size()) {
                     productListMPOS.addAll(Lists.newArrayList(notLocal));
                 } else {
-                    List<ProductListMPO> productListMPOS1 = notLocal.subList(0, productListMPOS.size() - req.getPageSize());
+                    List<ProductListMPO> productListMPOS1 = notLocal.subList(0, req.getPageSize() - productListMPOS.size());
                     productListMPOS.addAll(Lists.newArrayList(productListMPOS1));
                 }
             }
