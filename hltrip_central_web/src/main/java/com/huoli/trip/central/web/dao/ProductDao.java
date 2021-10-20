@@ -5,7 +5,6 @@ import com.huoli.trip.common.entity.ProductItemPO;
 import com.huoli.trip.common.entity.ProductPO;
 import com.huoli.trip.common.entity.RecommendProductPO;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
-import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.vo.Coordinate;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -188,6 +187,6 @@ public interface ProductDao {
 
     List<ProductListMPO> getScenicTicketProductBySpotId(String spotId);
 
-    List<GroupTourProductMPO> getTourProductByName(String name,String city);
+    List<ProductListMPO> getTourProductByName(String name,String city);
 
 }

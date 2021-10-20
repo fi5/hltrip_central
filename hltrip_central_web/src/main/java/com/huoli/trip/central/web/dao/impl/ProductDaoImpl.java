@@ -747,12 +747,15 @@ public class ProductDaoImpl implements ProductDao {
 
     @Override
     public List<ProductListMPO> getScenicTicketProductBySpotId(String spotId) {
-        return mongoTemplate.find(new Query(Criteria.where("category").is("d_ss_ticket").and("scenicSpotId").is(spotId).and("status").is(1).and("isDel").is(0)), ProductListMPO.class);
+        Criteria criteria = Criteria.where("category").is("d_ss_ticket").and("scenicSpotId").is(spotId).and("status").is(1).and("isDel").is(0);
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        return mongoTemplate.find(new Query(criteria), ProductListMPO.class);
     }
 
     @Override
-    public List<GroupTourProductMPO> getTourProductByName(String name, String city) {
+    public List<ProductListMPO> getTourProductByName(String name, String city) {
         Criteria criteria = Criteria.where("category").is("group_tour").and("arrCityNames").regex(city).and("status").is(1).and("isDel").is(0);
-        return mongoTemplate.find(new Query(criteria), GroupTourProductMPO.class);
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        return mongoTemplate.find(new Query(criteria), ProductListMPO.class);
     }
 }

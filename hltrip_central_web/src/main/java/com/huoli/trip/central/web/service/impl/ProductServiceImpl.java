@@ -2542,13 +2542,13 @@ public class ProductServiceImpl implements ProductService {
             if (ListUtils.isNotEmpty(productListMPOS)) {
                 return false;
             }
-            List<GroupTourProductMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            List<ProductListMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
             if (ListUtils.isNotEmpty(groupProducts)) {
                 return false;
             }
         }
         if (position == 4) {
-            List<GroupTourProductMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            List<ProductListMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
             if (ListUtils.isNotEmpty(groupProducts)) {
                 return false;
             }
