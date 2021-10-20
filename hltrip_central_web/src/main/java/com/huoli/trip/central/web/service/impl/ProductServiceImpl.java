@@ -2520,13 +2520,21 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String city, String cityCode, int position) {
+        List<ProductListMPO> list = new ArrayList<>();
         List<ScenicSpotMPO> result = new ArrayList<>();
         for (String keyword : keywords) {
-            List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count, city, cityCode);
-            list.removeIf(s -> s.getName().contains("CDATA"));
-            result.addAll(list);
+            List<ProductListMPO> temp = productDao.queryByKeyword(keyword, count, city, cityCode);
+            list.addAll(temp);
         }
-        result.removeIf(s -> filterSpot(s, position));
+        Map<String, List<ProductListMPO>> collect = list.stream().collect(Collectors.groupingBy(ProductListMPO::getScenicSpotName));
+        for (Map.Entry<String, List<ProductListMPO>> entry : collect.entrySet()) {
+            ScenicSpotMPO mpo = new ScenicSpotMPO();
+            ProductListMPO value = entry.getValue().get(0);
+            mpo.setName(entry.getKey());
+            mpo.setId(value.getScenicSpotId());
+            mpo.setCity(city);
+            mpo.setCityCode(cityCode);
+        }
         return result;
     }
 
