@@ -8,6 +8,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * 描述：<br/>
  * 版权：Copyright (c) 2011-2020<br>
@@ -25,5 +27,10 @@ public class ScenicSpotProductDaoImpl implements ScenicSpotProductDao {
     @Override
     public ScenicSpotProductMPO getProductById(String productId){
         return mongoTemplate.findOne(new Query(Criteria.where("_id").is(productId)), ScenicSpotProductMPO.class);
+    }
+
+    @Override
+    public List<ScenicSpotProductMPO> getProductsBySpotId(String spotId) {
+        return mongoTemplate.find(new Query(Criteria.where("scenicSpotId").is(spotId).and("status").is(1).and("isDel").is(0)), ScenicSpotProductMPO.class);
     }
 }

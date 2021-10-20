@@ -80,6 +80,7 @@ import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
 import java.text.Collator;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -2320,7 +2321,7 @@ public class ProductServiceImpl implements ProductService {
         } else {
             keywords.add(req.getKeyword());
         }
-        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 2, req.getArrCity(), req.getArrCityCode());
+        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 20, req.getArrCity(), req.getArrCityCode(), req.getPosition());
         try {
             CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
@@ -2385,6 +2386,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse scenicSpotProductSearchRecommend(HomeSearchReq req) {
+        req.setPosition(3);
         List<ScenicSpotProductSearchRes> result = new ArrayList<>();
         String keyword = req.getKeyword();
         if (StringUtils.isEmpty(keyword)) {
@@ -2425,7 +2427,7 @@ public class ProductServiceImpl implements ProductService {
         }
         List<String> keywords = new ArrayList<>();
         keywords.add(req.getKeyword().toLowerCase());
-        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode());
+        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode(), req.getPosition());
         if (ListUtils.isNotEmpty(list)) {
             try {
                 CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
@@ -2505,6 +2507,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse<List<HomeSearchRes>> groupTourSearchRecommend(HomeSearchReq req) {
+        req.setPosition(4);
         return homeSearchRecommend(req);
     }
 
@@ -2516,14 +2519,30 @@ public class ProductServiceImpl implements ProductService {
      * @param cityCode
      * @return
      */
-    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String city, String cityCode) {
+    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String city, String cityCode, int position) {
         List<ScenicSpotMPO> result = new ArrayList<>();
         for (String keyword : keywords) {
             List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count, city, cityCode);
             list.removeIf(s -> s.getName().contains("CDATA"));
             result.addAll(list);
         }
+        result.removeIf(s -> filterSpot(s, position));
         return result;
+    }
+
+    private boolean filterSpot(ScenicSpotMPO mpo, int position) {
+        List<ScenicSpotProductMPO> ticketProducts = scenicSpotProductDao.getProductsBySpotId(mpo.getId());
+        List<GroupTourProductMPO> groupProducts = groupTourProductDao.getProductsByName(mpo.getName());
+        if (position == 3 && ListUtils.isNotEmpty(ticketProducts)) {
+            return false;
+        }
+        if ((position == 1 || position == 2) && (ListUtils.isNotEmpty(ticketProducts) || ListUtils.isNotEmpty(groupProducts))) {
+            return false;
+        }
+        if (position == 4 && ListUtils.isNotEmpty(groupProducts)) {
+            return false;
+        }
+        return true;
     }
 
     private String matchHanzi(String source, String target) {
