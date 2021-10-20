@@ -746,16 +746,35 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> getScenicTicketProductBySpotId(String spotId) {
-        Criteria criteria = Criteria.where("category").is("d_ss_ticket").and("scenicSpotId").is(spotId).and("status").is(1).and("isDel").is(0);
+    public boolean getScenicTicketProductBySpotId(String spotId) {
+        List<AggregationOperation> operations = new ArrayList<>();
+        Criteria criteria = Criteria.where("category").is("d_ss_ticket")
+                .and("scenicSpotId").is(spotId)
+                .and("status").is(1)
+                .and("isDel").is(0);
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
-        return mongoTemplate.find(new Query(criteria), ProductListMPO.class);
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        operations.add(matchOperation);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+        List<ProductListMPO> mappedResults = output.getMappedResults();
+        return !ListUtils.isEmpty(mappedResults);
     }
 
     @Override
-    public List<ProductListMPO> getTourProductByName(String name, String city) {
-        Criteria criteria = Criteria.where("category").is("group_tour").and("arrCityNames").regex(city).and("status").is(1).and("isDel").is(0);
+    public boolean getTourProductByName(String name, String city) {
+        List<AggregationOperation> operations = new ArrayList<>();
+        Criteria criteria = Criteria.where("category").is("group_tour")
+                .and("arrCityNames").regex(city)
+                .and("productName").regex(name)
+                .and("status").is(1)
+                .and("isDel").is(0);
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
-        return mongoTemplate.find(new Query(criteria), ProductListMPO.class);
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        operations.add(matchOperation);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+        List<ProductListMPO> mappedResults = output.getMappedResults();
+        return !ListUtils.isEmpty(mappedResults);
     }
 }

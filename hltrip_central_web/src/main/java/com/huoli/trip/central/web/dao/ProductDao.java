@@ -185,8 +185,8 @@ public interface ProductDao {
 
     Set<String> getAllCity();
 
-    List<ProductListMPO> getScenicTicketProductBySpotId(String spotId);
+    boolean getScenicTicketProductBySpotId(String spotId);
 
-    List<ProductListMPO> getTourProductByName(String name,String city);
+    boolean getTourProductByName(String name,String city);
 
 }

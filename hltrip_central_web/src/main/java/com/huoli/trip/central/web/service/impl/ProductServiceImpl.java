@@ -2532,24 +2532,24 @@ public class ProductServiceImpl implements ProductService {
 
     private boolean filterSpot(ScenicSpotMPO mpo, int position) {
         if (position == 3) {
-            List<ProductListMPO> productListMPOS = productDao.getScenicTicketProductBySpotId(mpo.getId());
-            if (ListUtils.isNotEmpty(productListMPOS)) {
+            boolean have = productDao.getScenicTicketProductBySpotId(mpo.getId());
+            if (have) {
                 return false;
             }
         }
         if (position == 1 || position == 2) {
-            List<ProductListMPO> productListMPOS = productDao.getScenicTicketProductBySpotId(mpo.getId());
-            if (ListUtils.isNotEmpty(productListMPOS)) {
+            boolean have = productDao.getScenicTicketProductBySpotId(mpo.getId());
+            if (have) {
                 return false;
             }
-            List<ProductListMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
-            if (ListUtils.isNotEmpty(groupProducts)) {
+            have = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            if (have) {
                 return false;
             }
         }
         if (position == 4) {
-            List<ProductListMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
-            if (ListUtils.isNotEmpty(groupProducts)) {
+            boolean have  = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            if (have) {
                 return false;
             }
         }
