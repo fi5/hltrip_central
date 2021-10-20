@@ -2534,6 +2534,7 @@ public class ProductServiceImpl implements ProductService {
             mpo.setId(value.getScenicSpotId());
             mpo.setCity(city);
             mpo.setCityCode(cityCode);
+            result.add(mpo);
         }
         return result;
     }
