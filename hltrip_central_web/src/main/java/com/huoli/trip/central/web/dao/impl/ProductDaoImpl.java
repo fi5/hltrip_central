@@ -752,8 +752,7 @@ public class ProductDaoImpl implements ProductDao {
 
     @Override
     public List<GroupTourProductMPO> getTourProductByName(String name, String city) {
-        Criteria criteria = Criteria.where("category").is("group_tour").and("status").is(1).and("isDel").is(0);
-        criteria.orOperator(Criteria.where("depCity").regex(city), Criteria.where("arrCity").regex(city));
+        Criteria criteria = Criteria.where("category").is("group_tour").and("arrCityNames").regex(city).and("status").is(1).and("isDel").is(0);
         return mongoTemplate.find(new Query(criteria), GroupTourProductMPO.class);
     }
 }
