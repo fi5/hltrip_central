@@ -2531,16 +2531,27 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private boolean filterSpot(ScenicSpotMPO mpo, int position) {
-        List<ScenicSpotProductMPO> ticketProducts = scenicSpotProductDao.getProductsBySpotId(mpo.getId());
-        List<GroupTourProductMPO> groupProducts = groupTourProductDao.getProductsByName(mpo.getName());
-        if (position == 3 && ListUtils.isNotEmpty(ticketProducts)) {
-            return false;
+        if (position == 3) {
+            List<ProductListMPO> productListMPOS = productDao.getScenicTicketProductBySpotId(mpo.getId());
+            if (ListUtils.isNotEmpty(productListMPOS)) {
+                return false;
+            }
         }
-        if ((position == 1 || position == 2) && (ListUtils.isNotEmpty(ticketProducts) || ListUtils.isNotEmpty(groupProducts))) {
-            return false;
+        if (position == 1 || position == 2) {
+            List<ProductListMPO> productListMPOS = productDao.getScenicTicketProductBySpotId(mpo.getId());
+            if (ListUtils.isNotEmpty(productListMPOS)) {
+                return false;
+            }
+            List<GroupTourProductMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            if (ListUtils.isNotEmpty(groupProducts)) {
+                return false;
+            }
         }
-        if (position == 4 && ListUtils.isNotEmpty(groupProducts)) {
-            return false;
+        if (position == 4) {
+            List<GroupTourProductMPO> groupProducts = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            if (ListUtils.isNotEmpty(groupProducts)) {
+                return false;
+            }
         }
         return true;
     }

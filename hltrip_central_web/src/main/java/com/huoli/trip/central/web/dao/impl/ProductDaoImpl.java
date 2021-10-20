@@ -8,6 +8,7 @@ import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.MongoConst;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
+import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
@@ -742,5 +743,17 @@ public class ProductDaoImpl implements ProductDao {
             result.addAll(Arrays.asList(a));
         }
         return result;
+    }
+
+    @Override
+    public List<ProductListMPO> getScenicTicketProductBySpotId(String spotId) {
+        return mongoTemplate.find(new Query(Criteria.where("category").is("d_ss_ticket").and("scenicSpotId").is(spotId).and("status").is(1).and("isDel").is(0)), ProductListMPO.class);
+    }
+
+    @Override
+    public List<GroupTourProductMPO> getTourProductByName(String name, String city) {
+        Criteria criteria = Criteria.where("category").is("group_tour").and("status").is(1).and("isDel").is(0);
+        criteria.orOperator(Criteria.where("depCity").regex(city), Criteria.where("arrCity").regex(city));
+        return mongoTemplate.find(new Query(criteria), GroupTourProductMPO.class);
     }
 }
