@@ -2565,6 +2565,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private boolean filterSpot(ScenicSpotMPO mpo, int position) {
+        StopWatch watch = new StopWatch();
+        watch.start();
         if (position == 3) {
             boolean have = productDao.getScenicTicketProductBySpotId(mpo.getId());
             if (have) {
@@ -2587,6 +2589,8 @@ public class ProductServiceImpl implements ProductService {
                 return false;
             }
         }
+        watch.stop();
+        log.info("filterSpotTime:{}", watch.getTotalTimeMillis());
         return true;
     }
 
