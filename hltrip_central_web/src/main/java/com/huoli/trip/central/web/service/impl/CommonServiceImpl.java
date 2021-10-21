@@ -161,7 +161,7 @@ public class CommonServiceImpl implements CommonService {
                     } else if(supplierPolicy != null){
                         // 政策加价计算
                         BigDecimal newPrice = formatBigDecimalInt(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                price.getAdtSettlePrice().toPlainString()))));
+                                price.getAdtSellPrice().toPlainString()))));
                         price.setAdtSellPrice(newPrice);
                     }
                 }
@@ -180,7 +180,7 @@ public class CommonServiceImpl implements CommonService {
                     } else if (supplierPolicy != null) {
                         // 政策加价计算
                         BigDecimal newPrice = formatBigDecimalInt(BigDecimal.valueOf((Double) se.eval(supplierPolicy.getPriceFormula().replace("price",
-                                price.getChdSettlePrice().toPlainString()))));
+                                price.getChdSellPrice().toPlainString()))));
                         price.setChdSellPrice(newPrice);
                     }
                 }
