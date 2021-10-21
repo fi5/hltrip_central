@@ -2322,6 +2322,9 @@ public class ProductServiceImpl implements ProductService {
             keywords.add(req.getKeyword());
         }
         List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 20, req.getArrCity(), req.getArrCityCode(), req.getDepCity(), req.getDepCityCode(), req.getPosition());
+        if ((req.getPosition() == 1 || req.getPosition() == 2) && ListUtils.isEmpty(scenicSpotMPOS)) {
+            scenicSpotMPOS = getByKeyword(keywords, 20, "", "", "", "", req.getPosition());
+        }
         try {
             CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
