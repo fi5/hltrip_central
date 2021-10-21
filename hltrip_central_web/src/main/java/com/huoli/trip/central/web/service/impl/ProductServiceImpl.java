@@ -2386,8 +2386,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse scenicSpotProductSearchRecommend(HomeSearchReq req) {
-        StopWatch q = new StopWatch();
-        q.start();
+        StopWatch watch = new StopWatch();
+        watch.start();
         req.setPosition(3);
         List<ScenicSpotProductSearchRes> result = new ArrayList<>();
         String keyword = req.getKeyword();
@@ -2429,11 +2429,11 @@ public class ProductServiceImpl implements ProductService {
         }
         List<String> keywords = new ArrayList<>();
         keywords.add(req.getKeyword().toLowerCase());
-        q.stop();
-        q.start();
+        watch.stop();
+        watch.start();
         List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode(), req.getPosition());
-        q.stop();
-        q.start();
+        watch.stop();
+        watch.start();
         if (ListUtils.isNotEmpty(list)) {
             try {
                 CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
@@ -2473,8 +2473,8 @@ public class ProductServiceImpl implements ProductService {
                 result.add(res);
             }
         }
-        q.stop();
-        log.info("scenicSpotProductSearchRecommendTime:{}", q.prettyPrint());
+        watch.stop();
+        log.info("scenicSpotProductSearchRecommendTime:{}", watch.prettyPrint());
         return BaseResponse.withSuccess(result);
     }
 
@@ -2529,18 +2529,27 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String city, String cityCode, int position) {
-        log.info("keywords:{}", JSONObject.toJSONString(keywords));
         StopWatch watch = new StopWatch();
         watch.start();
+        List<ProductListMPO> list = new ArrayList<>();
         List<ScenicSpotMPO> result = new ArrayList<>();
         for (String keyword : keywords) {
-            List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count, city, cityCode);
-            list.removeIf(s -> s.getName().contains("CDATA"));
-            result.addAll(list);
+            List<ProductListMPO> temp = productDao.queryByKeyword(keyword, count, city, cityCode);
+            list.addAll(temp);
+        }
+        log.info("getByKeywordList:{}", JSONObject.toJSONString(list));
+        Map<String, List<ProductListMPO>> collect = list.stream().collect(Collectors.groupingBy(ProductListMPO::getScenicSpotName));
+        for (Map.Entry<String, List<ProductListMPO>> entry : collect.entrySet()) {
+            ScenicSpotMPO mpo = new ScenicSpotMPO();
+            ProductListMPO value = entry.getValue().get(0);
+            mpo.setName(entry.getKey());
+            mpo.setId(value.getScenicSpotId());
+            mpo.setCity(city);
+            mpo.setCityCode(cityCode);
+            result.add(mpo);
         }
         watch.stop();
-        log.info("querySpotByKeywordTime:{}", watch.getTotalTimeMillis());
-        result.removeIf(s -> filterSpot(s, position));
+        log.info("getByKeywordTime:{}", watch.getTotalTimeMillis());
         return result;
     }
 

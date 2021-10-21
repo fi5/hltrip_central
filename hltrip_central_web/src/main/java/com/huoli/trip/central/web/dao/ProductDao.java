@@ -189,4 +189,5 @@ public interface ProductDao {
 
     boolean getTourProductByName(String name,String city);
 
+    List<ProductListMPO> queryByKeyword(String keyword, Integer count, String city, String cityCode);
 }
