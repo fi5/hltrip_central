@@ -815,10 +815,4 @@ public class ProductDaoImpl implements ProductDao {
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
         return output.getMappedResults();
     }
-
-    public static void main(String[] args) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("|(.*长城)|(.*迪士尼)");
-        System.out.println(stringBuilder.substring(1,stringBuilder.length()));
-    }
 }
