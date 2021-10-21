@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
@@ -700,10 +701,9 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
+        Criteria nameCriteria = new Criteria();
         if(StringUtils.isNotBlank(req.getName())){
-            Criteria nameCriteria = new Criteria();
             nameCriteria.orOperator(Criteria.where("scenicSpotName").regex(req.getName()), Criteria.where("hotelName").regex(req.getName()), Criteria.where("productName").regex(req.getName()));
-            criteria.andOperator(nameCriteria);
         }
         /*if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
@@ -714,7 +714,13 @@ public class ProductDaoImpl implements ProductDao {
         if (CollectionUtils.isNotEmpty(channelInfo)) {
             criteria.and("channel").in(channelInfo);
         }
-        MatchOperation matchOperation = Aggregation.match(criteria);
+        Criteria criteriaFinal = new Criteria();
+        if (StringUtils.isNotBlank(req.getName())) {
+            criteriaFinal.andOperator(criteria, nameCriteria);
+        } else {
+            criteriaFinal.andOperator(criteria);
+        }
+        MatchOperation matchOperation = Aggregation.match(criteriaFinal);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex", "_id");
         operations.add(matchOperation);
         operations.add(sortOperation);
@@ -779,10 +785,18 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> queryByKeyword(String keyword, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
+    public List<ProductListMPO> queryByKeyword(List<String> keys, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
         List<AggregationOperation> operations = new ArrayList<>();
+        String temp = "|(.*%s)";
+        StringBuilder pattern = new StringBuilder();
+        for (String key : keys) {
+            pattern.append(String.format(temp, key));
+        }
+        String regex = pattern.substring(1, pattern.length());
+        regex = "((" + regex + ").*)";
+        log.info("regex:{}", regex);
         Criteria criteria = Criteria.where("category").is("d_ss_ticket")
-                .and("scenicSpotName").regex(keyword)
+                .and("scenicSpotName").regex(regex)
                 .and("status").is(1)
                 .and("isDel").is(0);
         if (StringUtils.isNotEmpty(arrCity)) {
@@ -792,6 +806,7 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("depCity").regex(depCityCode);
         }
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        log.info("queryByKeywordCriteria:{}", JSONObject.toJSONString(criteria));
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
         operations.add(matchOperation);
