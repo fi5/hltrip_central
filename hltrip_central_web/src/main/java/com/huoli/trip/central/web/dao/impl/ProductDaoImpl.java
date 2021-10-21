@@ -787,13 +787,12 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductListMPO> queryByKeyword(List<String> keys, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
         List<AggregationOperation> operations = new ArrayList<>();
-        List<String> keywords = new ArrayList<>();
+        List<Criteria> criteriaList = new ArrayList<>();
         for (String key : keys) {
-            keywords.add("/" + key + "/");
+            Criteria criteria = new Criteria();
+            criteriaList.add(criteria.and("scenicSpotName").regex(key));
         }
-        log.info("keywords:{}", JSONObject.toJSONString(keywords));
         Criteria criteria = Criteria.where("category").is("d_ss_ticket")
-                .and("scenicSpotName").in(keywords)
                 .and("status").is(1)
                 .and("isDel").is(0);
         if (StringUtils.isNotEmpty(arrCity)) {
@@ -802,6 +801,7 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotEmpty(depCity)) {
             criteria.and("depCity").regex(depCityCode);
         }
+        criteria.orOperator(Criteria.byExample(criteriaList));
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
         log.info("queryByKeywordCriteria:{}", JSONObject.toJSONString(criteria));
         MatchOperation matchOperation = Aggregation.match(criteria);
