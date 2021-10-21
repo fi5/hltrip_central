@@ -700,10 +700,9 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
+        Criteria nameCriteria = new Criteria();
         if(StringUtils.isNotBlank(req.getName())){
-            Criteria nameCriteria = new Criteria();
             nameCriteria.orOperator(Criteria.where("scenicSpotName").regex(req.getName()), Criteria.where("hotelName").regex(req.getName()), Criteria.where("productName").regex(req.getName()));
-            criteria.andOperator(nameCriteria);
         }
         /*if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
@@ -714,7 +713,13 @@ public class ProductDaoImpl implements ProductDao {
         if (CollectionUtils.isNotEmpty(channelInfo)) {
             criteria.and("channel").in(channelInfo);
         }
-        MatchOperation matchOperation = Aggregation.match(criteria);
+        Criteria criteriaFinal = new Criteria();
+        if (StringUtils.isNotBlank(req.getName())) {
+            criteriaFinal.andOperator(criteria, nameCriteria);
+        } else {
+            criteriaFinal.andOperator(criteria);
+        }
+        MatchOperation matchOperation = Aggregation.match(criteriaFinal);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex", "_id");
         operations.add(matchOperation);
         operations.add(sortOperation);
@@ -779,10 +784,14 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> queryByKeyword(String keyword, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
+    public List<ProductListMPO> queryByKeyword(List<String> keys, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
         List<AggregationOperation> operations = new ArrayList<>();
+        List<String> keywords = new ArrayList<>();
+        for (String key : keys) {
+            keywords.add("/" + key + "/");
+        }
         Criteria criteria = Criteria.where("category").is("d_ss_ticket")
-                .and("scenicSpotName").regex(keyword)
+                .and("scenicSpotName").in(keywords)
                 .and("status").is(1)
                 .and("isDel").is(0);
         if (StringUtils.isNotEmpty(arrCity)) {

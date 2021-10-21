@@ -2536,12 +2536,8 @@ public class ProductServiceImpl implements ProductService {
     private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode, int position) {
         StopWatch watch = new StopWatch();
         watch.start();
-        List<ProductListMPO> list = new ArrayList<>();
         List<ScenicSpotMPO> result = new ArrayList<>();
-        for (String keyword : keywords) {
-            List<ProductListMPO> temp = productDao.queryByKeyword(keyword, count, arrCity, arrCityCode, depCity, depCityCode);
-            list.addAll(temp);
-        }
+        List<ProductListMPO> list = productDao.queryByKeyword(keywords, count, arrCity, arrCityCode, depCity, depCityCode);
         log.info("getByKeywordListSize:{}", list.size());
         Map<String, List<ProductListMPO>> collect = list.stream().collect(Collectors.groupingBy(ProductListMPO::getScenicSpotName));
         for (Map.Entry<String, List<ProductListMPO>> entry : collect.entrySet()) {
