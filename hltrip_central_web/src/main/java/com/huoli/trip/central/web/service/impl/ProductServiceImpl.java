@@ -13,10 +13,6 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.mapper.*;
-import com.huoli.trip.central.web.mapper.PassengerTemplateMapper;
-import com.huoli.trip.central.web.mapper.TripPromotionInvitationAcceptMapper;
-import com.huoli.trip.central.web.mapper.TripPromotionInvitationMapper;
-import com.huoli.trip.central.web.mapper.TripPromotionMapper;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
@@ -53,10 +49,9 @@ import com.huoli.trip.common.vo.request.promotion.*;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.*;
-import com.huoli.trip.common.vo.response.recommend.*;
 import com.huoli.trip.common.vo.response.promotion.PromotionDetailResult;
 import com.huoli.trip.common.vo.response.promotion.PromotionListResult;
-import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
+import com.huoli.trip.common.vo.response.recommend.*;
 import com.huoli.trip.common.vo.v2.BaseRefundRuleVO;
 import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
 import com.huoli.trip.data.api.DataService;
@@ -81,9 +76,7 @@ import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
 import java.text.Collator;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_FLAG_TYPE_KEY_PREFIX;
 import static com.huoli.trip.central.web.constant.CentralConstants.RECOMMEND_LIST_POSITION_KEY_PREFIX;
@@ -454,6 +447,21 @@ public class ProductServiceImpl implements ProductService {
         List<String> channelInfo = new ArrayList<>();
         if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        //先查匹配城市
+        if (StringUtils.isNotBlank(req.getName())) {
+            ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
+            if(chinaCity != null){
+                //全匹配城市，使用目的地查询，清空关键字
+                req.setArrCityCode(chinaCity.getCode());
+                req.setArrCity(chinaCity.getName());
+                req.setName(null);
+            }
+        }
+        //查景点
+        if (StringUtils.isNotBlank(req.getScenicSpotId())) {
+            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getScenicSpotId(), channelInfo);
+            req.setScenicSpotName(scenicSpotProductMPO.getName());
         }
         List<ProductListMPO> productListMPOS = productDao.groupTourList(req, channelInfo);
         int count = productDao.groupTourListCount(req, channelInfo );

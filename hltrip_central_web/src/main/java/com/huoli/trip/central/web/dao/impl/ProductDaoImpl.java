@@ -9,7 +9,6 @@ import com.huoli.trip.common.constant.Constants;
 import com.huoli.trip.common.constant.MongoConst;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
-import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.util.MongoDateUtils;
@@ -670,6 +669,9 @@ public class ProductDaoImpl implements ProductDao {
         }
         if(CollectionUtils.isNotEmpty(channelInfo)){
             criteria.and("channel").in(channelInfo);
+        }
+        if (StringUtils.isNotBlank(req.getScenicSpotName())) {
+            criteria.and("scenicSpotName").regex(req.getScenicSpotName());
         }
         Criteria criteriaFinal = new Criteria();
         criteriaFinal.andOperator(criteria, apiSellPrice, depCity);
