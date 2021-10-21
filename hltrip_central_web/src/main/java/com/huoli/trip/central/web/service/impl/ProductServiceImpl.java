@@ -367,10 +367,15 @@ public class ProductServiceImpl implements ProductService {
                 req.setScenicSpotIds(scenicSpotIds);
             }
         }
-        boolean isFullMatchCity = true;
-        ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
-        if (chinaCity != null) {
-            isFullMatchCity = false;
+        boolean isFullMatchCity = false;
+        if (StringUtils.isEmpty(req.getName())) {
+            isFullMatchCity = true;
+        } else {
+            ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
+            if (chinaCity != null) {
+                isFullMatchCity = true;
+                req.setArrCityCode(chinaCity.getCode());
+            }
         }
         List<ProductListMPO> productListMPOS = new ArrayList<>();
         List<ProductListMPO> localList = productDao.scenicTickets(req, channelInfo, true);
