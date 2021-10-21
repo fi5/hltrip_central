@@ -2539,6 +2539,7 @@ public class ProductServiceImpl implements ProductService {
         List<ScenicSpotMPO> result = new ArrayList<>();
         List<ProductListMPO> list = productDao.queryByKeyword(keywords, count, arrCity, arrCityCode, depCity, depCityCode);
         log.info("getByKeywordListSize:{}", list.size());
+        log.info("getByKeywordList:{}", JSONObject.toJSONString(list));
         Map<String, List<ProductListMPO>> collect = list.stream().collect(Collectors.groupingBy(ProductListMPO::getScenicSpotName));
         for (Map.Entry<String, List<ProductListMPO>> entry : collect.entrySet()) {
             ScenicSpotMPO mpo = new ScenicSpotMPO();

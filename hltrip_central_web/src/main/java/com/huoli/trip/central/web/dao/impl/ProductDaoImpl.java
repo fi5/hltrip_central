@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
@@ -790,6 +791,7 @@ public class ProductDaoImpl implements ProductDao {
         for (String key : keys) {
             keywords.add("/" + key + "/");
         }
+        log.info("keywords:{}", JSONObject.toJSONString(keywords));
         Criteria criteria = Criteria.where("category").is("d_ss_ticket")
                 .and("scenicSpotName").in(keywords)
                 .and("status").is(1)
@@ -801,6 +803,7 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("depCity").regex(depCityCode);
         }
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        log.info("queryByKeywordCriteria:{}", JSONObject.toJSONString(criteria));
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
         operations.add(matchOperation);
