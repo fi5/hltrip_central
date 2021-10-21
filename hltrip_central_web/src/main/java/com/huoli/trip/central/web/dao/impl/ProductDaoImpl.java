@@ -794,8 +794,10 @@ public class ProductDaoImpl implements ProductDao {
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
         MatchOperation matchOperation = Aggregation.match(criteria);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
+        LimitOperation limitOperation = Aggregation.limit(count);
         operations.add(matchOperation);
         operations.add(sortOperation);
+        operations.add(limitOperation);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
         return output.getMappedResults();
