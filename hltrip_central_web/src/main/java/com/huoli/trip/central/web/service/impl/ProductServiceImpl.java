@@ -2386,6 +2386,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BaseResponse scenicSpotProductSearchRecommend(HomeSearchReq req) {
+        StopWatch q = new StopWatch();
+        q.start();
         req.setPosition(3);
         List<ScenicSpotProductSearchRes> result = new ArrayList<>();
         String keyword = req.getKeyword();
@@ -2427,7 +2429,11 @@ public class ProductServiceImpl implements ProductService {
         }
         List<String> keywords = new ArrayList<>();
         keywords.add(req.getKeyword().toLowerCase());
+        q.stop();
+        q.start();
         List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode(), req.getPosition());
+        q.stop();
+        q.start();
         if (ListUtils.isNotEmpty(list)) {
             try {
                 CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
@@ -2467,6 +2473,8 @@ public class ProductServiceImpl implements ProductService {
                 result.add(res);
             }
         }
+        q.stop();
+        log.info("scenicSpotProductSearchRecommendTime:{}", q.prettyPrint());
         return BaseResponse.withSuccess(result);
     }
 
@@ -2513,6 +2521,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * 模糊搜索景点
+     *
      * @param keywords
      * @param count
      * @param city
@@ -2520,17 +2529,24 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String city, String cityCode, int position) {
+        log.info("keywords:{}", JSONObject.toJSONString(keywords));
+        StopWatch watch = new StopWatch();
+        watch.start();
         List<ScenicSpotMPO> result = new ArrayList<>();
         for (String keyword : keywords) {
             List<ScenicSpotMPO> list = scenicSpotDao.queryByKeyword(keyword, count, city, cityCode);
             list.removeIf(s -> s.getName().contains("CDATA"));
             result.addAll(list);
         }
+        watch.stop();
+        log.info("querySpotByKeywordTime:{}", watch.getTotalTimeMillis());
         result.removeIf(s -> filterSpot(s, position));
         return result;
     }
 
     private boolean filterSpot(ScenicSpotMPO mpo, int position) {
+        StopWatch watch = new StopWatch();
+        watch.start();
         if (position == 3) {
             boolean have = productDao.getScenicTicketProductBySpotId(mpo.getId());
             if (have) {
@@ -2553,6 +2569,8 @@ public class ProductServiceImpl implements ProductService {
                 return false;
             }
         }
+        watch.stop();
+        log.info("filterSpotTime:{}", watch.getTotalTimeMillis());
         return true;
     }
 
