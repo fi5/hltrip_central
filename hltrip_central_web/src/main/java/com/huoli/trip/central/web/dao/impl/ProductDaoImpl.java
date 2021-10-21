@@ -787,12 +787,16 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<ProductListMPO> queryByKeyword(List<String> keys, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
         List<AggregationOperation> operations = new ArrayList<>();
-        List<Criteria> criteriaList = new ArrayList<>();
+        String temp = "|(.*%s)";
+        StringBuilder pattern = new StringBuilder();
         for (String key : keys) {
-            Criteria criteria = new Criteria();
-            criteriaList.add(criteria.and("scenicSpotName").regex(key));
+            pattern.append(String.format(temp, key));
         }
+        String regex = pattern.substring(1, pattern.length());
+        regex = "((" + regex + ").*)";
+        log.info("regex:{}", regex);
         Criteria criteria = Criteria.where("category").is("d_ss_ticket")
+                .and("scenicSpotName").regex(regex)
                 .and("status").is(1)
                 .and("isDel").is(0);
         if (StringUtils.isNotEmpty(arrCity)) {
@@ -801,7 +805,6 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotEmpty(depCity)) {
             criteria.and("depCity").regex(depCityCode);
         }
-        criteria.orOperator(Criteria.byExample(criteriaList));
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
         log.info("queryByKeywordCriteria:{}", JSONObject.toJSONString(criteria));
         MatchOperation matchOperation = Aggregation.match(criteria);
@@ -811,5 +814,11 @@ public class ProductDaoImpl implements ProductDao {
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
         return output.getMappedResults();
+    }
+
+    public static void main(String[] args) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("|(.*长城)|(.*迪士尼)");
+        System.out.println(stringBuilder.substring(1,stringBuilder.length()));
     }
 }
