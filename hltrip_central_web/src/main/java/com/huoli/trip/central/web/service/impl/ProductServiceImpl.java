@@ -2321,7 +2321,10 @@ public class ProductServiceImpl implements ProductService {
         } else {
             keywords.add(req.getKeyword());
         }
-        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 20, req.getArrCity(), req.getArrCityCode(), req.getPosition());
+        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 20, req.getArrCity(), req.getArrCityCode(), req.getDepCity(), req.getDepCityCode(), req.getPosition());
+        if ((req.getPosition() == 1 || req.getPosition() == 2) && ListUtils.isEmpty(scenicSpotMPOS)) {
+            scenicSpotMPOS = getByKeyword(keywords, 20, "", "", "", "", req.getPosition());
+        }
         try {
             CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
         } catch (InstantiationException | IllegalAccessException e) {
@@ -2431,7 +2434,7 @@ public class ProductServiceImpl implements ProductService {
         keywords.add(req.getKeyword().toLowerCase());
         watch.stop();
         watch.start();
-        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode(), req.getPosition());
+        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode(), req.getDepCity(), req.getDepCityCode(), req.getPosition());
         watch.stop();
         watch.start();
         if (ListUtils.isNotEmpty(list)) {
@@ -2521,31 +2524,38 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * 模糊搜索景点
-     *
      * @param keywords
      * @param count
-     * @param city
-     * @param cityCode
+     * @param arrCity
+     * @param arrCityCode
+     * @param depCity
+     * @param depCityCode
+     * @param position
      * @return
      */
-    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String city, String cityCode, int position) {
+    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode, int position) {
         StopWatch watch = new StopWatch();
         watch.start();
         List<ProductListMPO> list = new ArrayList<>();
         List<ScenicSpotMPO> result = new ArrayList<>();
         for (String keyword : keywords) {
-            List<ProductListMPO> temp = productDao.queryByKeyword(keyword, count, city, cityCode);
+            List<ProductListMPO> temp = productDao.queryByKeyword(keyword, count, arrCity, arrCityCode, depCity, depCityCode);
             list.addAll(temp);
         }
-        log.info("getByKeywordList:{}", JSONObject.toJSONString(list));
+        log.info("getByKeywordListSize:{}", list.size());
         Map<String, List<ProductListMPO>> collect = list.stream().collect(Collectors.groupingBy(ProductListMPO::getScenicSpotName));
         for (Map.Entry<String, List<ProductListMPO>> entry : collect.entrySet()) {
             ScenicSpotMPO mpo = new ScenicSpotMPO();
             ProductListMPO value = entry.getValue().get(0);
             mpo.setName(entry.getKey());
             mpo.setId(value.getScenicSpotId());
-            mpo.setCity(city);
-            mpo.setCityCode(cityCode);
+            if (position == 1 || position == 2) {
+                mpo.setCity(depCity);
+                mpo.setCityCode(depCityCode);
+            } else if (position == 3) {
+                mpo.setCity(arrCity);
+                mpo.setCityCode(arrCityCode);
+            }
             result.add(mpo);
         }
         watch.stop();

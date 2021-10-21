@@ -779,16 +779,23 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> queryByKeyword(String keyword, Integer count, String city, String cityCode) {
+    public List<ProductListMPO> queryByKeyword(String keyword, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = Criteria.where("category").is("d_ss_ticket")
-                .and("arrCity").regex(cityCode)
                 .and("scenicSpotName").regex(keyword)
                 .and("status").is(1)
                 .and("isDel").is(0);
+        if (StringUtils.isNotEmpty(arrCity)) {
+            criteria.and("arrCity").regex(arrCityCode);
+        }
+        if (StringUtils.isNotEmpty(depCity)) {
+            criteria.and("depCity").regex(depCityCode);
+        }
         criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
         MatchOperation matchOperation = Aggregation.match(criteria);
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
         operations.add(matchOperation);
+        operations.add(sortOperation);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
         return output.getMappedResults();
