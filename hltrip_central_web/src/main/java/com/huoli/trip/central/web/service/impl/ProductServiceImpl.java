@@ -2238,6 +2238,9 @@ public class ProductServiceImpl implements ProductService {
         }
         // 检查是否可以助力
         BaseResponse baseResponse = checkAcceptStatus(result, req.getPhoneId(), String.valueOf(invitation.getId()), false);
+        if (!baseResponse.isSuccess()) {
+            return baseResponse;
+        }
         String data = JSONObject.toJSONString(baseResponse.getData());
         PromotionDetailResult result1 = JSONObject.toJavaObject(JSONObject.parseObject(data), PromotionDetailResult.class);
         // 不能助力
