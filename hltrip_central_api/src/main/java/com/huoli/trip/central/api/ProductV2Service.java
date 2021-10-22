@@ -38,5 +38,5 @@ public interface ProductV2Service {
 
     BaseResponse<HotelInfoBase> queryHotelInfoDetail(HotelInfoRequest request);
 
-    BaseResponse<List<ScenicRealProductBase>> queryspotRelaProductList(ScenicSpotProductRequest request);
+    BaseResponse<List<ScenicRealProductBase>> querySpotRelaProductList(ScenicSpotProductRequest request);
 }

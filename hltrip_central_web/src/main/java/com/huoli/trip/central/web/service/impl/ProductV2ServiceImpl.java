@@ -1105,7 +1105,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
     }
 
     @Override
-    public BaseResponse<List<ScenicRealProductBase>> queryspotRelaProductList(ScenicSpotProductRequest request) {
+    public BaseResponse<List<ScenicRealProductBase>> querySpotRelaProductList(ScenicSpotProductRequest request) {
         BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
         List<String> channelInfo = new ArrayList<>();
         if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
