@@ -2238,6 +2238,8 @@ public class ProductServiceImpl implements ProductService {
         }
         // 检查是否可以助力
         BaseResponse baseResponse = checkAcceptStatus(result, req.getPhoneId(), String.valueOf(invitation.getId()), false);
+        log.info("req:{}", JSONObject.toJSONString(req));
+        log.info("baseResponse:{}", JSONObject.toJSONString(baseResponse));
         if (!baseResponse.isSuccess()) {
             return baseResponse;
         }
