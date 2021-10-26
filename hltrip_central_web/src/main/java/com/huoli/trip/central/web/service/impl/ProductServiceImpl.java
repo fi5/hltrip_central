@@ -2114,7 +2114,9 @@ public class ProductServiceImpl implements ProductService {
         int newInviteNum = inviteNum + 1;
         log.info("newInviteNum:{}", newInviteNum);
         log.info("assistNum:{}", assistNum);
+        boolean updateCase = true;
         if (newInviteNum != assistNum) {// 更新数量
+            updateCase = false;
             tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), newInviteNum, inviteNum);
         } else {// 更新数量和领券状态
             tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), newInviteNum, inviteNum, 1, 0);
@@ -2134,10 +2136,22 @@ public class ProductServiceImpl implements ProductService {
                 couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
             } catch (Exception e) {
                 log.error("发券异常:", e);
+                tripPromotionInvitationAcceptMapper.delete(accept.getId());
+                if (updateCase) {
+                    tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, newInviteNum, 0, 1);
+                } else {
+                    tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum, newInviteNum);
+                }
                 throw new RuntimeException("发券异常");
             }
             log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
             if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
+                tripPromotionInvitationAcceptMapper.delete(accept.getId());
+                if (updateCase) {
+                    tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, newInviteNum, 0, 1);
+                } else {
+                    tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum, newInviteNum);
+                }
                 throw new RuntimeException("发券异常");
             }
             // 更新领券状态
