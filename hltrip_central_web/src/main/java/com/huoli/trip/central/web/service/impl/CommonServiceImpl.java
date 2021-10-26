@@ -1,6 +1,10 @@
 package com.huoli.trip.central.web.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.huoli.flight.server.api.CouponDeliveryService;
+import com.huoli.flight.server.api.vo.flight.CouponSendParam;
+import com.huoli.flight.server.api.vo.flight.CouponSuccess;
 import com.huoli.trip.central.web.dao.GroupTourProductSetMealDao;
 import com.huoli.trip.central.web.dao.HotelScenicSpotProductSetMealDao;
 import com.huoli.trip.central.web.dao.ScenicSpotProductPriceDao;
@@ -19,6 +23,7 @@ import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.IncreasePriceCalendar;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +56,9 @@ public class CommonServiceImpl implements CommonService {
 
     @Autowired
     private HotelScenicSpotProductSetMealDao hotelScenicSpotProductSetMealDao;
+
+    @Reference(group = "${flight_dubbo_group}", timeout = 60000, check = false, retries = 3)
+    CouponDeliveryService couponDeliveryService;
 
     public void increasePrice_(IncreasePrice increasePrice){
         try {
@@ -305,5 +313,20 @@ public class CommonServiceImpl implements CommonService {
                 increasePrice(increasePrice);
             }
         });
+    }
+
+    @Override
+    public void sendCouponDelivery(CouponSendParam couponSendParam) {
+        CouponSuccess couponSuccess = new CouponSuccess();
+        try {
+            couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+        } catch (Exception e) {
+            log.error("发券异常:", e);
+            throw new RuntimeException("发券异常");
+        }
+        log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
+        if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
+            throw new RuntimeException("发券异常");
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.huoli.trip.central.web.service;
 
+import com.huoli.flight.server.api.vo.flight.CouponSendParam;
 import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.IncreasePriceCalendar;
 
@@ -26,4 +27,6 @@ public interface CommonService {
      * @param increasePrice
      */
     void increasePriceByPackageId(IncreasePrice increasePrice);
+
+    void sendCouponDelivery(CouponSendParam couponSendParam);
 }
