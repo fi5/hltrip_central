@@ -2099,7 +2099,7 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
-    @Transactional
+    //@Transactional
     public void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation) {
         TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
         accept.setInvitationId(invitation.getId());
