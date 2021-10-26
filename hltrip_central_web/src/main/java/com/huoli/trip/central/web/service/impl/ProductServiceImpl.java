@@ -2512,6 +2512,9 @@ public class ProductServiceImpl implements ProductService {
                 } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
                     recommendation.setContent(recommend.getScenicSpotName());
                 }
+                if (StringUtils.isNotEmpty(recommend.getTag())) {
+                    recommendation.setContent(recommendation.getContent() + "-" + recommend.getTag());
+                }
                 recommendationList.add(recommendation);
             }
             recommendRes.setTitle(String.valueOf(entry.getKey()));
