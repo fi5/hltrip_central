@@ -28,5 +28,5 @@ public interface CommonService {
      */
     void increasePriceByPackageId(IncreasePrice increasePrice);
 
-    void sendCouponDelivery(CouponSendParam couponSendParam);
+    void sendCouponDelivery(CouponSendParam couponSendParam) throws Exception;
 }

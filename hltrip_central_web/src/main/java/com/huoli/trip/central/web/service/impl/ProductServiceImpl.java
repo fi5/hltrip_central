@@ -2129,7 +2129,11 @@ public class ProductServiceImpl implements ProductService {
             log.info("getPhoneId:{}", invitation.getPhoneId());
             couponSendParam.setPhoneid(invitation.getPhoneId());
             log.info("couponSendParam:{}", JSONObject.toJSONString(couponSendParam));
-            commonService.sendCouponDelivery(couponSendParam);
+            try {
+                commonService.sendCouponDelivery(couponSendParam);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             // 更新领券状态
             tripPromotionInvitationMapper.updateCouponStatus(invitation.getId(), 2, 1, "1", "0", 1, 0);
         }

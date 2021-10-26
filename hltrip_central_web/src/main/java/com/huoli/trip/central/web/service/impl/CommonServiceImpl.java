@@ -318,7 +318,7 @@ public class CommonServiceImpl implements CommonService {
 
     @Override
     @Transactional
-    public void sendCouponDelivery(CouponSendParam couponSendParam) {
+    public void sendCouponDelivery(CouponSendParam couponSendParam) throws Exception {
         CouponSuccess couponSuccess = new CouponSuccess();
         try {
             couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
