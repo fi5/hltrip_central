@@ -73,6 +73,7 @@ import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 
 import javax.script.ScriptEngine;
@@ -2098,7 +2099,7 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
-    //    @Transactional
+    //@Transactional
     public void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation) {
         TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
         accept.setInvitationId(invitation.getId());
@@ -2113,7 +2114,9 @@ public class ProductServiceImpl implements ProductService {
         int newInviteNum = inviteNum + 1;
         log.info("newInviteNum:{}", newInviteNum);
         log.info("assistNum:{}", assistNum);
+        boolean updateCase = true;
         if (newInviteNum != assistNum) {// 更新数量
+            updateCase = false;
             tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), newInviteNum, inviteNum);
         } else {// 更新数量和领券状态
             tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), newInviteNum, inviteNum, 1, 0);
@@ -2131,12 +2134,25 @@ public class ProductServiceImpl implements ProductService {
             CouponSuccess couponSuccess = new CouponSuccess();
             try {
                 couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+                log.info("couponSuccessResult:{}", JSONObject.toJSONString(couponSuccess));
             } catch (Exception e) {
                 log.error("发券异常:", e);
+                tripPromotionInvitationAcceptMapper.delete(accept.getId());
+                if (updateCase) {
+                    tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, newInviteNum, 0, 1);
+                } else {
+                    tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum, newInviteNum);
+                }
                 throw new RuntimeException("发券异常");
             }
             log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
             if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
+                tripPromotionInvitationAcceptMapper.delete(accept.getId());
+                if (updateCase) {
+                    tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, newInviteNum, 0, 1);
+                } else {
+                    tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum, newInviteNum);
+                }
                 throw new RuntimeException("发券异常");
             }
             // 更新领券状态
@@ -2238,6 +2254,11 @@ public class ProductServiceImpl implements ProductService {
         }
         // 检查是否可以助力
         BaseResponse baseResponse = checkAcceptStatus(result, req.getPhoneId(), String.valueOf(invitation.getId()), false);
+        log.info("req:{}", JSONObject.toJSONString(req));
+        log.info("baseResponse:{}", JSONObject.toJSONString(baseResponse));
+        if (!baseResponse.isSuccess()) {
+            return baseResponse;
+        }
         String data = JSONObject.toJSONString(baseResponse.getData());
         PromotionDetailResult result1 = JSONObject.toJavaObject(JSONObject.parseObject(data), PromotionDetailResult.class);
         // 不能助力
