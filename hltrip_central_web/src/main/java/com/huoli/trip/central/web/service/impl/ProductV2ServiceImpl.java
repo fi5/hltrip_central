@@ -154,6 +154,16 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
                 priceCalendar.setChdSellPrice(item.getChdSellPrice());
                 priceCalendar.setDate(item.getDate());
+
+                priceCalendar.setAdtSettlePrice(item.getAdtPrice());
+                priceCalendar.setAdtFloatPriceType(item.getAdtFloatPriceType());
+                priceCalendar.setAdtFloatPrice(item.getAdtFloatPrice());
+                priceCalendar.setAdtFloatPriceManually(item.isAdtFloatPriceManually());
+
+                priceCalendar.setChdFloatPrice(item.getChdFloatPrice());
+                priceCalendar.setChdFloatPriceType(item.getChdFloatPriceType());
+                priceCalendar.setChdSettlePrice(item.getChdPrice());
+                priceCalendar.setChdFloatPriceManually(item.isChdFloatPriceManually());
                 return priceCalendar;
             }).collect(Collectors.toList());
             increasePrice.setPrices(priceCalendars);
@@ -263,6 +273,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
                     priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
                     priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
+                    priceCalendar.setAdtFloatPriceManually(scenicSpotProductPriceMPO.isFloatPriceManually());
+                    priceCalendar.setAdtFloatPriceType(scenicSpotProductPriceMPO.getFloatPriceType());
+                    priceCalendar.setAdtFloatPrice(scenicSpotProductPriceMPO.getFloatPrice());
+                    priceCalendar.setAdtSettlePrice(scenicSpotProductPriceMPO.getSettlementPrice());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
                     increasePrice.setScenicSpotId(request.getScenicSpotId());
@@ -276,7 +290,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     IncreasePriceCalendar increasePriceCalendar = prices.get(0);
                     basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
                     basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
-                    basePrice.setOriPrice(scenicSpotProductPriceMPO.getMarketPrice());
+                    if(scenicSpotProductPriceMPO.getMarketPrice() != null && scenicSpotProductPriceMPO.getMarketPrice().compareTo(increasePriceCalendar.getAdtSellPrice()) > 0){
+                        basePrice.setOriPrice(scenicSpotProductPriceMPO.getMarketPrice());
+                    }
                     scenicSpotProductBase.setPrice(basePrice);
 
                     BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
@@ -569,6 +585,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
                     priceCalendar.setAdtSellPrice(p.getSellPrice());
                     priceCalendar.setDate(p.getStartDate());
+                    priceCalendar.setAdtFloatPriceManually(p.isFloatPriceManually());
+                    priceCalendar.setAdtFloatPriceType(p.getFloatPriceType());
+                    priceCalendar.setAdtFloatPrice(p.getFloatPrice());
+                    priceCalendar.setAdtSettlePrice(p.getSettlementPrice());
                     priceCalendars.add(priceCalendar);
                     increasePrice.setPrices(priceCalendars);
                     increasePrice.setScenicSpotId(finalScenicSpotId);
@@ -744,9 +764,19 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             increasePrice.setAppSubSource(request.getSource());
             List<IncreasePriceCalendar> priceCalendars = groupTourPrices.stream().map(item -> {
                IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-               priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
-               priceCalendar.setChdSellPrice(item.getChdSellPrice());
-               priceCalendar.setDate(item.getDate());
+                priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
+                priceCalendar.setChdSellPrice(item.getChdSellPrice());
+                priceCalendar.setDate(item.getDate());
+
+                priceCalendar.setAdtSettlePrice(item.getAdtPrice());
+                priceCalendar.setAdtFloatPriceType(item.getAdtFloatPriceType());
+                priceCalendar.setAdtFloatPrice(item.getAdtFloatPrice());
+                priceCalendar.setAdtFloatPriceManually(item.isAdtFloatPriceManually());
+
+                priceCalendar.setChdFloatPrice(item.getChdFloatPrice());
+                priceCalendar.setChdFloatPriceType(item.getChdFloatPriceType());
+                priceCalendar.setChdSettlePrice(item.getChdPrice());
+                priceCalendar.setChdFloatPriceManually(item.isChdFloatPriceManually());
                return priceCalendar;
             }).collect(Collectors.toList());
             increasePrice.setPrices(priceCalendars);
@@ -893,9 +923,19 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         increasePrice.setProductCategory(productMPO.getCategory());
         List<IncreasePriceCalendar> priceCalendars = priceStocks.stream().map(item -> {
             IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
-            priceCalendar.setAdtSellPrice(item.getAdtPrice());
-            priceCalendar.setChdSellPrice(item.getChdPrice());
+            priceCalendar.setAdtSellPrice(item.getAdtSellPrice());
+            priceCalendar.setChdSellPrice(item.getChdSellPrice());
             priceCalendar.setDate(item.getDate());
+
+            priceCalendar.setAdtSettlePrice(item.getAdtPrice());
+            priceCalendar.setAdtFloatPriceType(item.getAdtFloatPriceType());
+            priceCalendar.setAdtFloatPrice(item.getAdtFloatPrice());
+            priceCalendar.setAdtFloatPriceManually(item.isAdtFloatPriceManually());
+
+            priceCalendar.setChdFloatPrice(item.getChdFloatPrice());
+            priceCalendar.setChdFloatPriceType(item.getChdFloatPriceType());
+            priceCalendar.setChdSettlePrice(item.getChdPrice());
+            priceCalendar.setChdFloatPriceManually(item.isChdFloatPriceManually());
             return priceCalendar;
         }).collect(Collectors.toList());
         increasePrice.setPrices(priceCalendars);

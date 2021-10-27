@@ -5,6 +5,9 @@ import com.huoli.trip.common.entity.mpo.ProductListMPO;
 import com.huoli.trip.common.vo.ImageBase;
 import com.huoli.trip.common.vo.IncreasePrice;
 import com.huoli.trip.common.vo.Product;
+import com.huoli.trip.common.vo.request.GroupTourSearchReq;
+import com.huoli.trip.common.vo.request.HomeSearchReq;
+import com.huoli.trip.common.vo.request.TicketSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -15,6 +18,7 @@ import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.GroupTourListResult;
 import com.huoli.trip.common.vo.response.goods.HotelScenicListResult;
 import com.huoli.trip.common.vo.response.goods.ScenicTicketListResult;
+import com.huoli.trip.common.vo.response.recommend.*;
 import com.huoli.trip.common.vo.response.promotion.PromotionDetailResult;
 import com.huoli.trip.common.vo.response.promotion.PromotionListResult;
 import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
@@ -172,7 +176,6 @@ public interface ProductService {
      */
     BaseResponse<ProductPriceDetailResultV2> getPriceDetailV2(ProductPriceReq req);
 
-
     /**
      * 助力折扣列表
      * @param request
@@ -208,4 +211,47 @@ public interface ProductService {
      */
     BaseResponse<String> acceptPromotionInvitation(AcceptPromotionInvitationReq req);
 
+    /**
+     * 首页和综合页搜索默认推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<HomeRecommendRes>> homeSearchDefaultRecommend(HomeSearchReq req);
+
+    /**
+     * 首页和综合页搜索推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<HomeSearchRes>> homeSearchRecommend(HomeSearchReq req);
+
+    /**
+     * 门票搜索默认推荐
+     *
+     * @return
+     */
+    BaseResponse<List<ScenicSpotProductSearchRecommendRes>> scenicSpotProductSearchDefaultRecommend(TicketSearchReq req);
+
+    /**
+     * 门票搜索推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<ScenicSpotProductSearchRes>> scenicSpotProductSearchRecommend(HomeSearchReq req);
+
+    /**
+     * 跟团游搜索默认推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<GroupTourRecommendRes>> groupTourSearchDefaultRecommend(GroupTourSearchReq req);
+
+    /**
+     * 跟团游搜索推荐
+     * @param req
+     * @return
+     */
+    BaseResponse<List<HomeSearchRes>> groupTourSearchRecommend(HomeSearchReq req);
+
+    BaseResponse getAllCity();
 }

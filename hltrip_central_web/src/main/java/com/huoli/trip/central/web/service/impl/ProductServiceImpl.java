@@ -12,13 +12,11 @@ import com.huoli.flight.server.api.vo.flight.CouponSuccess;
 import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.*;
-import com.huoli.trip.central.web.mapper.PassengerTemplateMapper;
-import com.huoli.trip.central.web.mapper.TripPromotionInvitationAcceptMapper;
-import com.huoli.trip.central.web.mapper.TripPromotionInvitationMapper;
-import com.huoli.trip.central.web.mapper.TripPromotionMapper;
+import com.huoli.trip.central.web.mapper.*;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.central.web.service.OrderFactory;
 import com.huoli.trip.central.web.task.RecommendTask;
+import com.huoli.trip.central.web.util.CentralUtils;
 import com.huoli.trip.common.constant.*;
 import com.huoli.trip.common.entity.*;
 import com.huoli.trip.common.entity.mpo.AddressInfo;
@@ -40,6 +38,9 @@ import com.huoli.trip.common.util.CommonUtils;
 import com.huoli.trip.common.util.DateTimeUtil;
 import com.huoli.trip.common.util.ListUtils;
 import com.huoli.trip.common.vo.*;
+import com.huoli.trip.common.vo.request.GroupTourSearchReq;
+import com.huoli.trip.common.vo.request.HomeSearchReq;
+import com.huoli.trip.common.vo.request.TicketSearchReq;
 import com.huoli.trip.common.vo.request.central.*;
 import com.huoli.trip.common.vo.request.goods.GroupTourListReq;
 import com.huoli.trip.common.vo.request.goods.HotelScenicListReq;
@@ -50,12 +51,16 @@ import com.huoli.trip.common.vo.response.central.*;
 import com.huoli.trip.common.vo.response.goods.*;
 import com.huoli.trip.common.vo.response.promotion.PromotionDetailResult;
 import com.huoli.trip.common.vo.response.promotion.PromotionListResult;
-import com.huoli.trip.common.vo.response.recommend.RecommendResultV2;
+import com.huoli.trip.common.vo.response.recommend.*;
 import com.huoli.trip.common.vo.v2.BaseRefundRuleVO;
 import com.huoli.trip.common.vo.v2.ScenicProductRefundRule;
 import com.huoli.trip.data.api.DataService;
 import com.huoli.trip.data.vo.ChannelInfo;
 import lombok.extern.slf4j.Slf4j;
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
@@ -63,11 +68,13 @@ import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
+import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -92,6 +99,8 @@ public class ProductServiceImpl implements ProductService {
     private static final ImmutableList<Integer> TRIP_PRODUCTS = ImmutableList.of(ProductType.TRIP_FREE.getCode(),
             ProductType.TRIP_GROUP_PRIVATE.getCode(), ProductType.TRIP_GROUP.getCode(),
             ProductType.TRIP_GROUP_LOCAL.getCode(), ProductType.TRIP_GROUP_SEMI.getCode());
+
+    private static final Comparator<Object> CHINA_COMPARE = Collator.getInstance(Locale.CHINA);
 
     @Autowired
     private ProductDao productDao;
@@ -162,8 +171,17 @@ public class ProductServiceImpl implements ProductService {
     @Reference(group = "hltrip", timeout = 30000, check = false, retries = 3)
     DataService dataService;
 
+    @Autowired
+    private CityDao cityDao;
+
+    @Autowired
+    private TripSearchRecommendMapper tripSearchRecommendMapper;
+
     @Reference(group = "${flight_dubbo_group}", timeout = 60000, check = false, retries = 3)
     CouponDeliveryService couponDeliveryService;
+
+    @Autowired
+    private ChinaCityMapper chinaCityMapper;
 
     @Override
     public BaseResponse<ProductPageResult> pageListForProduct(ProductPageRequest request) {
@@ -329,7 +347,6 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public BaseResponse<ScenicTicketListResult> scenicTicketList(ScenicTicketListReq req) {
-
         BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
         List<String> channelInfo = new ArrayList<>();
         if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
@@ -344,14 +361,65 @@ public class ProductServiceImpl implements ProductService {
                 req.setScenicSpotIds(scenicSpotIds);
             }
         }
-        List<ProductListMPO> productListMPOS = productDao.scenicTickets(req, channelInfo);
-        int count = productDao.getScenicTicketTotal(req, channelInfo);
+        boolean isFullMatchCity = false;
+        if (StringUtils.isEmpty(req.getName())) {
+            isFullMatchCity = true;
+        } else {
+            ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
+            if (chinaCity != null) {
+                isFullMatchCity = true;
+                req.setArrCityCode(chinaCity.getCode());
+            }
+        }
+        List<ProductListMPO> productListMPOS = new ArrayList<>();
+        List<ProductListMPO> localList = productDao.scenicTickets(req, channelInfo, true);
+        if (ListUtils.isNotEmpty(localList)) {
+            productListMPOS.addAll(localList);
+        }
+        log.info("productListMPOS.size:{}", productListMPOS.size());
+        int count = productDao.getScenicTicketTotal(req, channelInfo, true);
+        int count1 = productDao.getScenicTicketTotal(req, channelInfo, false);
+        log.info("count1:{}", count1);
         ScenicTicketListResult result=new ScenicTicketListResult();
-        if(count > req.getPageSize() * req.getPageIndex()){
+        if (count + count1 > req.getPageSize() * req.getPageIndex()) {
             result.setMore(1);
         }
         List<ScenicTicketListItem> items = Lists.newArrayList();
+        int i = count / req.getPageSize();
+        int page = count % req.getPageSize() > 0 ? i + 1 : i;
+        if (!isFullMatchCity && ListUtils.isNotEmpty(productListMPOS) && productListMPOS.size() < req.getPageSize()) {
+            req.setPageIndex(1);
+            List<ProductListMPO> notLocal = productDao.scenicTickets(req, channelInfo, false);
+            if (ListUtils.isNotEmpty(notLocal)) {
+                if (notLocal.size() < req.getPageSize() - productListMPOS.size()) {
+                    productListMPOS.addAll(Lists.newArrayList(notLocal));
+                } else {
+                    List<ProductListMPO> productListMPOS1 = notLocal.subList(0, req.getPageSize() - productListMPOS.size());
+                    productListMPOS.addAll(Lists.newArrayList(productListMPOS1));
+                }
+            }
+        } else if (!isFullMatchCity && ListUtils.isEmpty(productListMPOS)) {
+            req.setPageIndex(req.getPageIndex() - page);
+            int startIndex = req.getPageSize() - count % req.getPageSize();
+            productListMPOS = productDao.scenicTickets(req, channelInfo, false);
+            if (startIndex > productListMPOS.size()) {
+                startIndex = 0;
+            }
+            if (ListUtils.isNotEmpty(productListMPOS)) {
+                productListMPOS = productListMPOS.subList(startIndex, productListMPOS.size());
+            }
+            req.setPageIndex(req.getPageIndex() - page + 1);
+            List<ProductListMPO> productListMPOS1 = productDao.scenicTickets(req, channelInfo, false);
+            if (ListUtils.isNotEmpty(productListMPOS1)) {
+                List<ProductListMPO> productListMPOS2 = productListMPOS1.subList(count % req.getPageSize(), productListMPOS1.size());
+                if (ListUtils.isEmpty(productListMPOS)) {
+                    productListMPOS = new ArrayList<>();
+                }
+                productListMPOS.addAll(Lists.newArrayList(productListMPOS2));
+            }
+        }
         if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS = productListMPOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(ProductListMPO::getId))), ArrayList::new));
             productListMPOS.stream().forEach(item -> {
                 ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
                 BeanUtils.copyProperties(item, scenicTicketListItem);
@@ -383,6 +451,21 @@ public class ProductServiceImpl implements ProductService {
         List<String> channelInfo = new ArrayList<>();
         if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        //先查匹配城市
+        if (StringUtils.isNotBlank(req.getName())) {
+            ChinaCity chinaCity = chinaCityMapper.getByName(req.getName(), 2);
+            if(chinaCity != null){
+                //全匹配城市，使用目的地查询，清空关键字
+                req.setArrCityCode(chinaCity.getCode());
+                req.setArrCity(chinaCity.getName());
+                req.setName(null);
+            }
+        }
+        //查景点
+        if (StringUtils.isNotBlank(req.getScenicSpotId())) {
+            ScenicSpotProductMPO scenicSpotProductMPO = scenicSpotDao.querySpotProductById(req.getScenicSpotId(), channelInfo);
+            req.setScenicSpotName(scenicSpotProductMPO.getName());
         }
         List<ProductListMPO> productListMPOS = productDao.groupTourList(req, channelInfo);
         int count = productDao.groupTourListCount(req, channelInfo );
@@ -462,10 +545,12 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setAppSubSource(source);
         IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
         priceCalendar.setAdtSellPrice(productListMPO.getApiSellPrice());
+        priceCalendar.setDate(productListMPO.getSellDate());
+        priceCalendar.setPackageId(productListMPO.getPackageId());
         increasePrice.setPrices(Arrays.asList(priceCalendar));
         increasePrice.setScenicSpotId(productListMPO.getScenicSpotId());
         log.info("increasePrice:{}", JSONObject.toJSONString(increasePrice));
-        commonService.increasePrice(increasePrice);
+        commonService.increasePriceByPackageId(increasePrice);
         return increasePrice;
     }
 
@@ -1303,7 +1388,7 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
-    private IncreasePrice increasePrice(PriceCalcRequest request, BigDecimal adtPrice, BigDecimal chdPrice, String date){
+    private IncreasePrice increasePrice(PriceCalcRequest request, BigDecimal adtSellPrice, BigDecimal chdSellPrice, String date){
         IncreasePrice increasePrice = new IncreasePrice();
         increasePrice.setProductCode(request.getProductCode());
         increasePrice.setChannelCode(request.getChannelCode());
@@ -1311,12 +1396,13 @@ public class ProductServiceImpl implements ProductService {
         increasePrice.setAppSubSource(request.getSource());
         increasePrice.setProductCategory(request.getCategory());
         IncreasePriceCalendar calendar = new IncreasePriceCalendar();
-        calendar.setAdtSellPrice(adtPrice);
-        calendar.setChdSellPrice(chdPrice);
+        calendar.setAdtSellPrice(adtSellPrice);
+        calendar.setChdSellPrice(chdSellPrice);
         calendar.setDate(date);
+        calendar.setPackageId(request.getPackageCode());
         increasePrice.setPrices(Lists.newArrayList(calendar));
         increasePrice.setScenicSpotId(request.getScenicSpotId());
-        commonService.increasePrice(increasePrice);
+        commonService.increasePriceByPackageId(increasePrice);
         return increasePrice;
     }
 
@@ -1827,20 +1913,6 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setProductName(rb.getProductName());
         recommendProduct.setChannel(rb.getChannel());
         recommendProduct.setChannelName(rb.getChannelName());
-        IncreasePrice increasePrice = new IncreasePrice();
-        increasePrice.setProductCode(rb.getProductId());
-        if(StringUtils.isNotBlank(rb.getChannel())){
-            increasePrice.setChannelCode(rb.getChannel().trim());
-        }
-        IncreasePriceCalendar calendar = new IncreasePriceCalendar();
-        calendar.setAdtSellPrice(rb.getApiSettlementPrice());
-        increasePrice.setPrices(Lists.newArrayList(calendar));
-        increasePrice.setAppSource(appSource);
-        increasePrice.setAppSubSource(appSubSource);
-        increasePrice.setScenicSpotId(rb.getPoiId());
-        increasePrice.setProductCategory(rb.getCategory());
-        commonService.increasePrice(increasePrice);
-        recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setImage(rb.getMainImage());
         recommendProduct.setPosition(Integer.valueOf(position));
         recommendProduct.setCategory(rb.getCategory());
@@ -1849,12 +1921,27 @@ public class ProductServiceImpl implements ProductService {
         recommendProduct.setSubTitle(rb.getSubTitle());
         recommendProduct.setTags(rb.getTags());
         recommendProduct.setSeq(rb.getSeq());
+        IncreasePrice increasePrice = new IncreasePrice();
+        increasePrice.setProductCode(rb.getProductId());
+        if(StringUtils.isNotBlank(rb.getChannel())){
+            increasePrice.setChannelCode(rb.getChannel().trim());
+        }
+        IncreasePriceCalendar calendar = new IncreasePriceCalendar();
+        calendar.setAdtSellPrice(rb.getApiSellPrice());
+        calendar.setPackageId(rb.getPackageId());
+        calendar.setDate(rb.getSellDate());
+        increasePrice.setPrices(Lists.newArrayList(calendar));
+        increasePrice.setAppSource(appSource);
+        increasePrice.setAppSubSource(appSubSource);
+        increasePrice.setScenicSpotId(rb.getPoiId());
+        increasePrice.setProductCategory(rb.getCategory());
+        commonService.increasePriceByPackageId(increasePrice);
+        recommendProduct.setPrice(calendar.getAdtSellPrice());
         recommendProduct.setPreferenceTag(calendar.getTagDesc());
         recommendProduct.setDiscount(calendar.getTag());
         return recommendProduct;
     }
 
-    @Override
     public BaseResponse tripPromotionList(PromotionListReq request) {
         PageHelper.startPage(request.getPageNum(), request.getPageSize());
         List<PromotionListResult> list = tripPromotionMapper.getList(1);
@@ -2024,7 +2111,7 @@ public class ProductServiceImpl implements ProductService {
         return BaseResponse.withSuccess(result);
     }
 
-//    @Transactional
+    //@Transactional
     public void insertAcceptAndUpdateInvitation(AcceptPromotionInvitationReq req, TripPromotionInvitation invitation) {
         TripPromotionInvitationAccept accept = new TripPromotionInvitationAccept();
         accept.setInvitationId(invitation.getId());
@@ -2039,7 +2126,9 @@ public class ProductServiceImpl implements ProductService {
         int newInviteNum = inviteNum + 1;
         log.info("newInviteNum:{}", newInviteNum);
         log.info("assistNum:{}", assistNum);
+        boolean updateCase = true;
         if (newInviteNum != assistNum) {// 更新数量
+            updateCase = false;
             tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), newInviteNum, inviteNum);
         } else {// 更新数量和领券状态
             tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), newInviteNum, inviteNum, 1, 0);
@@ -2057,12 +2146,25 @@ public class ProductServiceImpl implements ProductService {
             CouponSuccess couponSuccess = new CouponSuccess();
             try {
                 couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+                log.info("couponSuccessResult:{}", JSONObject.toJSONString(couponSuccess));
             } catch (Exception e) {
                 log.error("发券异常:", e);
+                tripPromotionInvitationAcceptMapper.delete(accept.getId());
+                if (updateCase) {
+                    tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, newInviteNum, 0, 1);
+                } else {
+                    tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum, newInviteNum);
+                }
                 throw new RuntimeException("发券异常");
             }
             log.info("CouponSuccess:{}", JSONObject.toJSONString(couponSuccess));
             if (couponSuccess == null || !couponSuccess.getCode().equals("0")) {
+                tripPromotionInvitationAcceptMapper.delete(accept.getId());
+                if (updateCase) {
+                    tripPromotionInvitationMapper.updateInviteNumAndCouponStatus(invitation.getId(), inviteNum, newInviteNum, 0, 1);
+                } else {
+                    tripPromotionInvitationMapper.updateInviteNum(invitation.getId(), inviteNum, newInviteNum);
+                }
                 throw new RuntimeException("发券异常");
             }
             // 更新领券状态
@@ -2164,6 +2266,11 @@ public class ProductServiceImpl implements ProductService {
         }
         // 检查是否可以助力
         BaseResponse baseResponse = checkAcceptStatus(result, req.getPhoneId(), String.valueOf(invitation.getId()), false);
+        log.info("req:{}", JSONObject.toJSONString(req));
+        log.info("baseResponse:{}", JSONObject.toJSONString(baseResponse));
+        if (!baseResponse.isSuccess()) {
+            return baseResponse;
+        }
         String data = JSONObject.toJSONString(baseResponse.getData());
         PromotionDetailResult result1 = JSONObject.toJavaObject(JSONObject.parseObject(data), PromotionDetailResult.class);
         // 不能助力
@@ -2178,5 +2285,377 @@ public class ProductServiceImpl implements ProductService {
         }
         result.setStatus("0");
         return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse homeSearchDefaultRecommend(HomeSearchReq req) {
+        List<TripSearchRecommendDetail> list = tripSearchRecommendMapper.listByPosition(req.getPosition());
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        List<HomeRecommendRes> result = new ArrayList<>();
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getGroupSort));
+        for (Map.Entry entry : recommendGroup.entrySet()) {
+            List<TripSearchRecommendDetail> recommendList = (List<TripSearchRecommendDetail>) entry.getValue();
+            recommendList = recommendList.stream().sorted(Comparator.comparing(TripSearchRecommendDetail::getSort)).collect(Collectors.toList());
+            HomeRecommendRes res = new HomeRecommendRes();
+            List<HomeRecommendRes.Recommendation> recommendationList = new ArrayList<>();
+            for (TripSearchRecommendDetail recommend : recommendList) {
+                HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
+                BeanUtils.copyProperties(recommend, recommendation);
+                if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
+                    recommendation.setContent(recommend.getCityName());
+                } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
+                    recommendation.setContent(recommend.getScenicSpotName());
+                }
+                recommendationList.add(recommendation);
+            }
+            res.setTitle(recommendList.get(0).getTitle());
+            res.setRecommendations(recommendationList);
+            result.add(res);
+        }
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse homeSearchRecommend(HomeSearchReq req) {
+        List<HomeSearchRes> result = new ArrayList<>();
+        String keyword = req.getKeyword();
+        if (StringUtils.isEmpty(keyword)) {
+            return BaseResponse.withSuccess(result);
+        }
+        keyword = keyword.toLowerCase();
+        String condition = "%".concat(keyword).concat("%");
+        List<ChinaCity> cityPOS = new ArrayList<>();
+        boolean isChinese = false;
+        if (CentralUtils.isChinese(keyword.charAt(0))) {
+            isChinese = true;
+            cityPOS = chinaCityMapper.queryCityByNameCondition(condition, 2, 5);
+        } else {
+            cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 5);
+        }
+        try {
+            CentralUtils.pinyinSort(cityPOS, ChinaCity.class, "name");
+        } catch (InstantiationException | IllegalAccessException e) {
+            log.error("拼音排序错误", e);
+        }
+        for (ChinaCity cityPO : cityPOS) {
+            HomeSearchRes homeSearchRes = new HomeSearchRes();
+            homeSearchRes.setCityName(cityPO.getName());
+            homeSearchRes.setCityCode(cityPO.getCode());
+            homeSearchRes.setContent(cityPO.getName());
+            if (isChinese) {
+                homeSearchRes.setMatch(getMatch(cityPO.getName(), keyword));
+            } else {
+                homeSearchRes.setMatch(matchHanzi(cityPO.getName(), keyword));
+            }
+            homeSearchRes.setType(SearchRecommendResEnum.CITY.getCode());
+            homeSearchRes.setIcon(SearchRecommendResEnum.CITY.getUrl());
+            result.add(homeSearchRes);
+        }
+        List<String> keywords = new ArrayList<>();
+        if (!isChinese) {
+            keywords = cityPOS.stream().map(ChinaCity::getName).collect(Collectors.toList());
+        } else {
+            keywords.add(req.getKeyword());
+        }
+        List<ScenicSpotMPO> scenicSpotMPOS = getByKeyword(keywords, 20, req.getArrCity(), req.getArrCityCode(), req.getDepCity(), req.getDepCityCode(), req.getPosition());
+        if ((req.getPosition() == 1 || req.getPosition() == 2) && ListUtils.isEmpty(scenicSpotMPOS)) {
+            scenicSpotMPOS = getByKeyword(keywords, 20, "", "", "", "", req.getPosition());
+        }
+        try {
+            CentralUtils.pinyinSort(scenicSpotMPOS, ScenicSpotMPO.class, "name");
+        } catch (InstantiationException | IllegalAccessException e) {
+            log.error("拼音排序错误", e);
+        }
+        for (ScenicSpotMPO mpo : scenicSpotMPOS) {
+            HomeSearchRes homeSearchRes = new HomeSearchRes();
+            homeSearchRes.setContent(mpo.getName());
+            if (isChinese) {
+                homeSearchRes.setMatch(getMatch(mpo.getName(), keyword));
+            } else {
+                homeSearchRes.setMatch(matchHanzi(mpo.getName(), keyword));
+            }
+            homeSearchRes.setScenicSpotId(mpo.getId());
+            homeSearchRes.setScenicSpotName(mpo.getName());
+            homeSearchRes.setCityName(mpo.getCity());
+            homeSearchRes.setCityCode(mpo.getCityCode());
+            homeSearchRes.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
+            homeSearchRes.setIcon(SearchRecommendResEnum.SCENIC_SPOT.getUrl());
+            result.add(homeSearchRes);
+        }
+        return BaseResponse.withSuccess(result);
+    }
+
+    private String getMatch(String parent, String child) {
+        while (child.length() >= 1 && !parent.contains(child)) {
+            child = child.substring(0, child.length() - 1);
+            getMatch(parent, child);
+        }
+        return child;
+    }
+
+    @Override
+    public BaseResponse scenicSpotProductSearchDefaultRecommend(TicketSearchReq req) {
+        List<TripSearchRecommendDetail> list = tripSearchRecommendMapper.listByPositionAndCityCode(3, req.getDepCityCode());
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup
+                = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getGroupSort));
+        List<ScenicSpotProductSearchRecommendRes> result = new ArrayList<>();
+        for (Map.Entry entry : recommendGroup.entrySet()) {
+            List<TripSearchRecommendDetail> recommends = (List<TripSearchRecommendDetail>) entry.getValue();
+            ScenicSpotProductSearchRecommendRes recommendRes = new ScenicSpotProductSearchRecommendRes();
+            List<HomeRecommendRes.Recommendation> recommendationList = new ArrayList<>();
+            for (TripSearchRecommendDetail recommend : recommends) {
+                HomeRecommendRes.Recommendation recommendation = new HomeRecommendRes.Recommendation();
+                BeanUtils.copyProperties(recommend, recommendation);
+                if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
+                    recommendation.setContent(recommend.getCityName());
+                } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
+                    recommendation.setContent(recommend.getScenicSpotName());
+                }
+                recommendationList.add(recommendation);
+            }
+            recommendRes.setTitle(recommends.get(0).getTitle());
+            recommendRes.setRecommendations(recommendationList);
+            result.add(recommendRes);
+        }
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse scenicSpotProductSearchRecommend(HomeSearchReq req) {
+        StopWatch watch = new StopWatch();
+        watch.start();
+        req.setPosition(3);
+        List<ScenicSpotProductSearchRes> result = new ArrayList<>();
+        String keyword = req.getKeyword();
+        if (StringUtils.isEmpty(keyword)) {
+            return BaseResponse.withSuccess(result);
+        }
+        keyword = keyword.toLowerCase();
+        String condition = "%".concat(keyword).concat("%");
+        List<ChinaCity> cityPOS = new ArrayList<>();
+        boolean isChinese = false;
+        if (CentralUtils.isChinese(keyword.charAt(0))) {
+            isChinese = true;
+            cityPOS = chinaCityMapper.queryCityByNameCondition(condition, 2, 10);
+        } else {
+            cityPOS = chinaCityMapper.queryCityByPinyinCondition(condition, 2, 10);
+        }
+        try {
+            CentralUtils.pinyinSort(cityPOS, ChinaCity.class, "name");
+        } catch (InstantiationException | IllegalAccessException e) {
+            log.error("拼音排序错误", e);
+        }
+        boolean cityFullMatch = false;
+        List<ChinaCity> collect = cityPOS.stream().filter(s -> s.getName().equals(req.getKeyword())).collect(Collectors.toList());
+        if (ListUtils.isNotEmpty(collect)) {
+            cityFullMatch = true;
+            ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
+            ChinaCity cityPO = collect.get(0);
+            res.setCityName(cityPO.getName());
+            res.setCityCode(cityPO.getCode());
+            res.setContent(cityPO.getName());
+            if (isChinese) {
+                res.setMatch(getMatch(cityPO.getName(), keyword));
+            } else {
+                res.setMatch(matchHanzi(cityPO.getName(), keyword));
+            }
+            res.setType(SearchRecommendResEnum.CITY.getCode());
+            res.setIcon(SearchRecommendResEnum.CITY.getUrl());
+            result.add(res);
+        }
+        List<String> keywords = new ArrayList<>();
+        keywords.add(req.getKeyword().toLowerCase());
+        watch.stop();
+        watch.start();
+        List<ScenicSpotMPO> list = getByKeyword(keywords, 10, req.getArrCity(), req.getArrCityCode(), req.getDepCity(), req.getDepCityCode(), req.getPosition());
+        watch.stop();
+        watch.start();
+        if (ListUtils.isNotEmpty(list)) {
+            try {
+                CentralUtils.pinyinSort(list, ScenicSpotMPO.class, "name");
+            } catch (InstantiationException | IllegalAccessException e) {
+                log.error("拼音排序错误", e);
+            }
+        }
+        for (ScenicSpotMPO mpo : list) {
+            ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
+            res.setContent(mpo.getName());
+            if (isChinese) {
+                res.setMatch(getMatch(mpo.getName(), keyword));
+            } else {
+                res.setMatch(matchHanzi(mpo.getName(), keyword));
+            }
+            res.setScenicSpotId(mpo.getId());
+            res.setScenicSpotName(mpo.getName());
+            res.setCityName(mpo.getCity());
+            res.setCityCode(mpo.getCityCode());
+            res.setType(SearchRecommendResEnum.SCENIC_SPOT.getCode());
+            res.setIcon(SearchRecommendResEnum.SCENIC_SPOT.getUrl());
+            result.add(res);
+        }
+        if (!cityFullMatch) {
+            for (ChinaCity cityPO : cityPOS) {
+                ScenicSpotProductSearchRes res = new ScenicSpotProductSearchRes();
+                res.setCityName(cityPO.getName());
+                res.setCityCode(cityPO.getCode());
+                res.setContent(cityPO.getName());
+                if (isChinese) {
+                    res.setMatch(getMatch(cityPO.getName(), keyword));
+                } else {
+                    res.setMatch(matchHanzi(cityPO.getName(), keyword));
+                }
+                res.setType(SearchRecommendResEnum.CITY.getCode());
+                res.setIcon(SearchRecommendResEnum.CITY.getUrl());
+                result.add(res);
+            }
+        }
+        watch.stop();
+        log.info("scenicSpotProductSearchRecommendTime:{}", watch.prettyPrint());
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<List<GroupTourRecommendRes>> groupTourSearchDefaultRecommend(GroupTourSearchReq req) {
+        List<TripSearchRecommendDetail> list = tripSearchRecommendMapper.listByContactAreaCode(4, req.getContactAreaCode());
+        if (list == null) {
+            list = Collections.emptyList();
+        }
+        List<GroupTourRecommendRes> result = new ArrayList<>();
+        Map<String, List<TripSearchRecommendDetail>> recommendGroup = list.stream().collect(Collectors.groupingBy(TripSearchRecommendDetail::getTitle));
+        for (Map.Entry entry : recommendGroup.entrySet()) {
+            List<TripSearchRecommendDetail> recommendDetailList = (List<TripSearchRecommendDetail>) entry.getValue();
+            GroupTourRecommendRes recommendRes = new GroupTourRecommendRes();
+            List<GroupTourRecommendRes.Recommendation> recommendationList = new ArrayList<>();
+            for (TripSearchRecommendDetail recommend : recommendDetailList) {
+                GroupTourRecommendRes.Recommendation recommendation = new GroupTourRecommendRes.Recommendation();
+                BeanUtils.copyProperties(recommend, recommendation);
+                if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 1) {
+                    recommendation.setContent(recommend.getCityName());
+                } else if (StringUtils.isEmpty(recommend.getContent()) && recommend.getType() == 2) {
+                    recommendation.setContent(recommend.getScenicSpotName());
+                }
+                if (StringUtils.isNotEmpty(recommend.getTag())) {
+                    recommendation.setContent(recommendation.getContent() + "-" + recommend.getTag());
+                }
+                recommendationList.add(recommendation);
+            }
+            recommendRes.setTitle(String.valueOf(entry.getKey()));
+            if (StringUtils.isNotEmpty(recommendDetailList.get(0).getUrl())) {
+                recommendRes.setCategory("1");
+            } else {
+                recommendRes.setCategory("2");
+            }
+            recommendRes.setRecommendations(recommendationList);
+            result.add(recommendRes);
+        }
+        result = result.stream().sorted(Comparator.comparing(s -> s.getRecommendations().get(0).getId())).collect(Collectors.toList());
+        return BaseResponse.withSuccess(result);
+    }
+
+    @Override
+    public BaseResponse<List<HomeSearchRes>> groupTourSearchRecommend(HomeSearchReq req) {
+        req.setPosition(4);
+        return homeSearchRecommend(req);
+    }
+
+    /**
+     * 模糊搜索景点
+     * @param keywords
+     * @param count
+     * @param arrCity
+     * @param arrCityCode
+     * @param depCity
+     * @param depCityCode
+     * @param position
+     * @return
+     */
+    private List<ScenicSpotMPO> getByKeyword(List<String> keywords, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode, int position) {
+        StopWatch watch = new StopWatch();
+        watch.start();
+        List<ScenicSpotMPO> result = new ArrayList<>();
+        List<ProductListMPO> list = productDao.queryByKeyword(keywords, count, arrCity, arrCityCode, depCity, depCityCode);
+        log.info("getByKeywordListSize:{}", list.size());
+        Map<String, List<ProductListMPO>> collect = list.stream().collect(Collectors.groupingBy(ProductListMPO::getScenicSpotName));
+        for (Map.Entry<String, List<ProductListMPO>> entry : collect.entrySet()) {
+            ScenicSpotMPO mpo = new ScenicSpotMPO();
+            ProductListMPO value = entry.getValue().get(0);
+            mpo.setName(entry.getKey());
+            mpo.setId(value.getScenicSpotId());
+            if (position == 1 || position == 2) {
+                mpo.setCity(depCity);
+                mpo.setCityCode(depCityCode);
+            } else if (position == 3) {
+                mpo.setCity(arrCity);
+                mpo.setCityCode(arrCityCode);
+            }
+            result.add(mpo);
+        }
+        watch.stop();
+        log.info("getByKeywordTime:{}", watch.getTotalTimeMillis());
+        return result;
+    }
+
+    private boolean filterSpot(ScenicSpotMPO mpo, int position) {
+        StopWatch watch = new StopWatch();
+        watch.start();
+        if (position == 3) {
+            boolean have = productDao.getScenicTicketProductBySpotId(mpo.getId());
+            if (have) {
+                return false;
+            }
+        }
+        if (position == 1 || position == 2) {
+            boolean have = productDao.getScenicTicketProductBySpotId(mpo.getId());
+            if (have) {
+                return false;
+            }
+            have = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            if (have) {
+                return false;
+            }
+        }
+        if (position == 4) {
+            boolean have  = productDao.getTourProductByName(mpo.getName(), mpo.getCity());
+            if (have) {
+                return false;
+            }
+        }
+        watch.stop();
+        log.info("filterSpotTime:{}", watch.getTotalTimeMillis());
+        return true;
+    }
+
+    private String matchHanzi(String source, String target) {
+        StringBuilder builder = new StringBuilder();
+        HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
+        format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        char[] chars = source.toCharArray();
+        for (char c : chars) {
+            String[] pys = new String[20];
+            try {
+                pys = PinyinHelper.toHanyuPinyinStringArray(c, format);
+            } catch (BadHanyuPinyinOutputFormatCombination e) {
+                log.error("转拼音失败", e);
+            }
+            if (pys.length == 0) {
+                continue;
+            }
+            boolean b = target.contains(pys[0]);
+            if (b) {
+                builder.append(c);
+            }
+        }
+        return String.valueOf(builder);
+    }
+
+    @Override
+    public BaseResponse getAllCity() {
+        Set<String> list = productDao.getAllCity();
+        return BaseResponse.withSuccess(list);
     }
 }

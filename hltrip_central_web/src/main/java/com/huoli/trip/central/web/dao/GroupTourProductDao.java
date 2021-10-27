@@ -2,6 +2,8 @@ package com.huoli.trip.central.web.dao;
 
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 
+import java.util.List;
+
 /**
  * 描述：<br/>
  * 版权：Copyright (c) 2011-2020<br>
@@ -18,4 +20,11 @@ public interface GroupTourProductDao {
      * @return
      */
     GroupTourProductMPO getProductById(String productId);
+
+    /**
+     * 根据名字获取产品
+     * @param name
+     * @return
+     */
+    List<GroupTourProductMPO> getProductsByName(String name);
 }

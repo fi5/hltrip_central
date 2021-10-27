@@ -6,10 +6,7 @@ import com.huoli.trip.central.api.ProductService;
 import com.huoli.trip.common.vo.request.central.ProductPageRequest;
 import com.huoli.trip.common.vo.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -29,8 +26,13 @@ public class MongoToolController {
     private ProductService productService;
 
     @PostMapping("/product")
-    public BaseResponse getProduct(@RequestBody Map<String, Object> cond){
+    public BaseResponse getProduct(@RequestBody Map<String, Object> cond) {
         ProductPageRequest request = JSONObject.toJavaObject(JSON.parseObject(JSONObject.toJSONString(cond)), ProductPageRequest.class);
         return productService.pageList(request);
+    }
+
+    @GetMapping("/allCity")
+    public BaseResponse getAllCity() {
+        return productService.getAllCity();
     }
 }

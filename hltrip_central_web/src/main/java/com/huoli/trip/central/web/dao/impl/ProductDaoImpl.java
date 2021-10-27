@@ -1,6 +1,7 @@
 package com.huoli.trip.central.web.dao.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.huoli.trip.central.web.converter.ProductConverter;
 import com.huoli.trip.central.web.dao.ProductDao;
@@ -522,8 +523,8 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
-    public List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo) {
-        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo);
+    public List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo, boolean isFullMatchCity) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo, isFullMatchCity);
         LimitOperation limit = Aggregation.limit(req.getPageSize());
         SkipOperation skip = Aggregation.skip(Long.valueOf((req.getPageIndex() - 1) * req.getPageSize()));
         operations.add(skip);
@@ -531,20 +532,20 @@ public class ProductDaoImpl implements ProductDao {
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
 
-        return  output.getMappedResults();
+        return output.getMappedResults();
     }
 
 
 
     @Override
-    public int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo) {
-        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo);
+    public int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo,boolean isFullMatchCity) {
+        List<AggregationOperation> operations = buildScenicTicketOperations(req, channelInfo, isFullMatchCity);
         Aggregation aggregation = Aggregation.newAggregation(operations);
         AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
         return output.getMappedResults() == null ? 0 : output.getMappedResults().size();
     }
 
-    private List<AggregationOperation> buildScenicTicketOperations(ScenicTicketListReq req, List<String> channelInfo) {
+    private List<AggregationOperation> buildScenicTicketOperations(ScenicTicketListReq req, List<String> channelInfo, boolean isFullMatchCity) {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         //0门票1跟团游2酒景套餐
@@ -553,7 +554,7 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
-        if(StringUtils.isNotBlank(req.getName())){
+        if (StringUtils.isNotBlank(req.getName())) {
             criteria.and("scenicSpotName").regex(req.getName());
         }
         if (StringUtils.isNotBlank(req.getThemeCode())) {
@@ -568,7 +569,11 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("arrCityNames").regex(req.getArrCity());
         }*/
         if (StringUtils.isNotBlank(req.getArrCityCode())) {
-            criteria.and("arrCity").regex(req.getArrCityCode());
+            if (isFullMatchCity) {
+                criteria.and("arrCity").regex(req.getArrCityCode());
+            } else {
+                criteria.and("arrCity").ne(req.getArrCityCode());
+            }
         }
         if (CollectionUtils.isNotEmpty(channelInfo)) {
             criteria.and("channel").in(channelInfo);
@@ -638,7 +643,9 @@ public class ProductDaoImpl implements ProductDao {
         List<AggregationOperation> operations = new ArrayList<>();
         Criteria criteria = new Criteria();
         criteria.and("category").is("group_tour").and("status").is(1).and("isDel").is(0);
-        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        Criteria apiSellPrice = new Criteria();
+        apiSellPrice.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        Criteria depCity = new Criteria();
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
@@ -649,7 +656,7 @@ public class ProductDaoImpl implements ProductDao {
             criteria.and("depPlaces").regex(req.getDepPlace());
         }
         if (StringUtils.isNotBlank(req.getDepCityCode())) {
-            criteria.and("depCity").regex(req.getDepCityCode());
+            depCity.orOperator(Criteria.where("depCity").regex(req.getDepCityCode()), Criteria.where("depCity").regex("qg0"));
         }
        /* if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
@@ -663,7 +670,12 @@ public class ProductDaoImpl implements ProductDao {
         if(CollectionUtils.isNotEmpty(channelInfo)){
             criteria.and("channel").in(channelInfo);
         }
-        MatchOperation matchOperation = Aggregation.match(criteria);
+        if (StringUtils.isNotBlank(req.getScenicSpotName())) {
+            criteria.and("scenicSpotName").regex(req.getScenicSpotName());
+        }
+        Criteria criteriaFinal = new Criteria();
+        criteriaFinal.andOperator(criteria, apiSellPrice, depCity);
+        MatchOperation matchOperation = Aggregation.match(criteriaFinal);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
         operations.add(matchOperation);
         operations.add(sortOperation);
@@ -691,10 +703,9 @@ public class ProductDaoImpl implements ProductDao {
         if (StringUtils.isNotBlank(req.getApp())) {
             criteria.and("appSource").regex(req.getApp());
         }
+        Criteria nameCriteria = new Criteria();
         if(StringUtils.isNotBlank(req.getName())){
-            Criteria nameCriteria = new Criteria();
             nameCriteria.orOperator(Criteria.where("scenicSpotName").regex(req.getName()), Criteria.where("hotelName").regex(req.getName()), Criteria.where("productName").regex(req.getName()));
-            criteria.andOperator(nameCriteria);
         }
         /*if (StringUtils.isNotBlank(req.getArrCity())) {
             criteria.and("arrPlaces").regex(req.getArrCity());
@@ -705,7 +716,13 @@ public class ProductDaoImpl implements ProductDao {
         if (CollectionUtils.isNotEmpty(channelInfo)) {
             criteria.and("channel").in(channelInfo);
         }
-        MatchOperation matchOperation = Aggregation.match(criteria);
+        Criteria criteriaFinal = new Criteria();
+        if (StringUtils.isNotBlank(req.getName())) {
+            criteriaFinal.andOperator(criteria, nameCriteria);
+        } else {
+            criteriaFinal.andOperator(criteria);
+        }
+        MatchOperation matchOperation = Aggregation.match(criteriaFinal);
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "sortIndex", "_id");
         operations.add(matchOperation);
         operations.add(sortOperation);
@@ -727,5 +744,85 @@ public class ProductDaoImpl implements ProductDao {
         criteria.and("productId").is(productId);
         ProductListMPO productListMPO = mongoTemplate.findOne(new Query(criteria), ProductListMPO.class);
         return productListMPO;
+    }
+
+    @Override
+    public Set<String> getAllCity() {
+        List<String> depCityNames = new ArrayList<>();
+        depCityNames = mongoTemplate.findDistinct("depCityNames", ProductListMPO.class, String.class);
+        List<String> arrCityNames = new ArrayList<>();
+        arrCityNames = mongoTemplate.findDistinct("arrCityNames", ProductListMPO.class, String.class);
+        depCityNames.addAll(arrCityNames);
+        Set<String> result = new HashSet<>();
+        for (String city : depCityNames) {
+            String[] a = city.split(",");
+            result.addAll(Arrays.asList(a));
+        }
+        return result;
+    }
+
+    @Override
+    public boolean getScenicTicketProductBySpotId(String spotId) {
+        List<AggregationOperation> operations = new ArrayList<>();
+        Criteria criteria = Criteria.where("category").is("d_ss_ticket")
+                .and("scenicSpotId").is(spotId)
+                .and("status").is(1)
+                .and("isDel").is(0);
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        operations.add(matchOperation);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+        List<ProductListMPO> mappedResults = output.getMappedResults();
+        return !ListUtils.isEmpty(mappedResults);
+    }
+
+    @Override
+    public boolean getTourProductByName(String name, String city) {
+        List<AggregationOperation> operations = new ArrayList<>();
+        Criteria criteria = Criteria.where("category").is("group_tour")
+                .and("arrCityNames").regex(city)
+                .and("productName").regex(name)
+                .and("status").is(1)
+                .and("isDel").is(0);
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        operations.add(matchOperation);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+        List<ProductListMPO> mappedResults = output.getMappedResults();
+        return !ListUtils.isEmpty(mappedResults);
+    }
+
+    @Override
+    public List<ProductListMPO> queryByKeyword(List<String> keys, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode) {
+        List<AggregationOperation> operations = new ArrayList<>();
+        String temp = "|(.*%s)";
+        StringBuilder pattern = new StringBuilder();
+        for (String key : keys) {
+            pattern.append(String.format(temp, key));
+        }
+        String regex = pattern.substring(1, pattern.length());
+        regex = "((" + regex + ").*)";
+        log.info("regex:{}", regex);
+        Criteria criteria = Criteria.where("category").is("d_ss_ticket")
+                .and("scenicSpotName").regex(regex)
+                .and("status").is(1)
+                .and("isDel").is(0);
+        if (StringUtils.isNotEmpty(arrCity)) {
+            criteria.and("arrCity").regex(arrCityCode);
+        }
+        if (StringUtils.isNotEmpty(depCity)) {
+            criteria.and("depCity").regex(depCityCode);
+        }
+        criteria.andOperator(Criteria.where("apiSellPrice").ne(null), Criteria.where("apiSellPrice").gt(0));
+        log.info("queryByKeywordCriteria:{}", JSONObject.toJSONString(criteria));
+        MatchOperation matchOperation = Aggregation.match(criteria);
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "sortIndex", "_id");
+        operations.add(matchOperation);
+        operations.add(sortOperation);
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+        AggregationResults<ProductListMPO> output = mongoTemplate.aggregate(aggregation, MongoConst.COLLECTION_NAME_PRODUCT_LIST, ProductListMPO.class);
+        return output.getMappedResults();
     }
 }

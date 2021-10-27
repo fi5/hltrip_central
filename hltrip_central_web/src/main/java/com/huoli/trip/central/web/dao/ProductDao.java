@@ -13,6 +13,7 @@ import com.huoli.trip.common.vo.request.goods.ScenicTicketListReq;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 描述：<br/>
@@ -170,17 +171,24 @@ public interface ProductDao {
     List<ProductPO> queryValidCity(String city);
     HashMap<String,String> queryValidCitys();
 
-    List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo);
+    List<ProductListMPO> scenicTickets(ScenicTicketListReq req, List<String> channelInfo, boolean isfullMatchCit);
 
     List<ProductListMPO> groupTourList(GroupTourListReq req, List<String> channelInfo);
 
     List<ProductListMPO> hotelScenicList(HotelScenicListReq req, List<String> channelInfo);
 
-    int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo);
+    int getScenicTicketTotal(ScenicTicketListReq req, List<String> channelInfo, boolean isFullMatchCity);
 
     int groupTourListCount(GroupTourListReq req, List<String> channelInfo);
 
     int hotelScenicListCount(HotelScenicListReq req, List<String> channelInfo);
 
     ProductListMPO getProductByProductId(String productId);
+    Set<String> getAllCity();
+
+    boolean getScenicTicketProductBySpotId(String spotId);
+
+    boolean getTourProductByName(String name,String city);
+
+    List<ProductListMPO> queryByKeyword(List<String> keyword, Integer count, String arrCity, String arrCityCode, String depCity, String depCityCode);
 }
