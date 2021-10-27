@@ -415,7 +415,7 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                 result.addAll(entry.getValue());
             }
         }
-        return BaseResponse.withSuccess(productBases);
+        return BaseResponse.withSuccess(result);
     }
 
     private Date getCanBuyDate(int bookBeforeDay, String bookBeforeTime) {
