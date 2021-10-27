@@ -402,6 +402,9 @@ public class ProductServiceImpl implements ProductService {
             req.setPageIndex(req.getPageIndex() - page);
             int startIndex = req.getPageSize() - count % req.getPageSize();
             productListMPOS = productDao.scenicTickets(req, channelInfo, false);
+            if (startIndex > productListMPOS.size()) {
+                startIndex = 0;
+            }
             if (ListUtils.isNotEmpty(productListMPOS)) {
                 productListMPOS = productListMPOS.subList(startIndex, productListMPOS.size());
             }
@@ -416,6 +419,7 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         if(CollectionUtils.isNotEmpty(productListMPOS)){
+            productListMPOS = productListMPOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(ProductListMPO::getId))), ArrayList::new));
             productListMPOS.stream().forEach(item -> {
                 ScenicTicketListItem scenicTicketListItem = new ScenicTicketListItem();
                 BeanUtils.copyProperties(item, scenicTicketListItem);
