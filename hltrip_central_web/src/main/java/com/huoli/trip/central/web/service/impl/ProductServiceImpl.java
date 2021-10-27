@@ -2134,6 +2134,7 @@ public class ProductServiceImpl implements ProductService {
             CouponSuccess couponSuccess = new CouponSuccess();
             try {
                 couponSuccess = couponDeliveryService.sendCouponDelivery(couponSendParam);
+                log.info("couponSuccessResult:{}", JSONObject.toJSONString(couponSuccess));
             } catch (Exception e) {
                 log.error("发券异常:", e);
                 tripPromotionInvitationAcceptMapper.delete(accept.getId());
