@@ -401,19 +401,21 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             }
         }
         //票种排序
-        if (StringUtils.isNotBlank(scenicSpotMPO.getTicketKindSort())){
-            String [] ticketKindSorts = scenicSpotMPO.getTicketKindSort().split(",");
-            Map<String,List<ScenicSpotProductBase>> resultMap = result.stream().collect(Collectors.groupingBy(ScenicSpotProductBase::getTicketKind, LinkedHashMap::new,Collectors.toList()));
-            result = new ArrayList<>();
-            for (String ticketKindSort : ticketKindSorts){
-                if (!CollectionUtils.isEmpty(resultMap.get(ticketKindSort))) {
-                    result.addAll(resultMap.get(ticketKindSort));
-                    resultMap.remove(ticketKindSort);
-                }
+        if (StringUtils.isBlank(scenicSpotMPO.getTicketKindSort())){
+            //默认成人票第一个   特惠票第二个
+            scenicSpotMPO.setTicketKindSort("2,19");
+        }
+        String [] ticketKindSorts = scenicSpotMPO.getTicketKindSort().split(",");
+        Map<String,List<ScenicSpotProductBase>> resultMap = result.stream().collect(Collectors.groupingBy(ScenicSpotProductBase::getTicketKind, LinkedHashMap::new,Collectors.toList()));
+        result = new ArrayList<>();
+        for (String ticketKindSort : ticketKindSorts){
+            if (!CollectionUtils.isEmpty(resultMap.get(ticketKindSort))) {
+                result.addAll(resultMap.get(ticketKindSort));
+                resultMap.remove(ticketKindSort);
             }
-            for(Map.Entry<String,List<ScenicSpotProductBase>> entry:resultMap.entrySet()){
-                result.addAll(entry.getValue());
-            }
+        }
+        for(Map.Entry<String,List<ScenicSpotProductBase>> entry:resultMap.entrySet()){
+            result.addAll(entry.getValue());
         }
         return BaseResponse.withSuccess(result);
     }
