@@ -15,7 +15,7 @@ import java.util.List;
 @Repository
 public interface TripPromotionInvitationAcceptMapper {
 
-    @Select("SELECT invitee_avatar avatar,invitee_nickname nickname FROM trip_promotion_invitation_accept WHERE invitation_id=#{invitationId}")
+    @Select("SELECT ifnull(invitee_avatar,'') avatar,ifnull(invitee_nickname,'') nickname FROM trip_promotion_invitation_accept WHERE invitation_id=#{invitationId}")
     List<PromotionDetailResult.Friend> getFriends(long invitationId);
 
     @Select("select * from trip_promotion_invitation_accept where invitation_id=#{id} and invitee_phone_id=#{phoneId}")
