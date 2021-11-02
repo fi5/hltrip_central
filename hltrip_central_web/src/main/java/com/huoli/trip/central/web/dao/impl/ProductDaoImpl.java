@@ -739,6 +739,14 @@ public class ProductDaoImpl implements ProductDao {
     }
 
     @Override
+    public ProductListMPO getProductByProductId(String productId){
+        Criteria criteria = new Criteria();
+        criteria.and("productId").is(productId);
+        ProductListMPO productListMPO = mongoTemplate.findOne(new Query(criteria), ProductListMPO.class);
+        return productListMPO;
+    }
+
+    @Override
     public Set<String> getAllCity() {
         List<String> depCityNames = new ArrayList<>();
         depCityNames = mongoTemplate.findDistinct("depCityNames", ProductListMPO.class, String.class);

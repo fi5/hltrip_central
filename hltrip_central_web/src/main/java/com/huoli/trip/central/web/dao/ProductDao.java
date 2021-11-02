@@ -183,6 +183,7 @@ public interface ProductDao {
 
     int hotelScenicListCount(HotelScenicListReq req, List<String> channelInfo);
 
+    ProductListMPO getProductByProductId(String productId);
     Set<String> getAllCity();
 
     boolean getScenicTicketProductBySpotId(String spotId);

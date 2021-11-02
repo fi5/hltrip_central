@@ -11,6 +11,7 @@ import com.huoli.trip.central.web.dao.*;
 import com.huoli.trip.central.web.service.CommonService;
 import com.huoli.trip.common.constant.CentralError;
 import com.huoli.trip.common.entity.mpo.ProductListMPO;
+import com.huoli.trip.common.entity.mpo.ScenicProductSortMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourPrice;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductMPO;
 import com.huoli.trip.common.entity.mpo.groupTour.GroupTourProductSetMealMPO;
@@ -71,6 +72,9 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private ScenicProductSortDao scenicProductSortDao;
 
     @Autowired
     private ScenicSpotProductPriceDao scenicSpotProductPriceDao;
@@ -228,11 +232,15 @@ public class ProductV2ServiceImpl implements ProductV2Service {
             channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
         }
         List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId(), channelInfo);
+        ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
+        List<ScenicProductSortMPO> scenicProductSortMPOS = scenicProductSortDao.queryScenicProductSortByScenicId(request.getScenicSpotId());
+
         String date = request.getDate();
         List<ScenicSpotProductBase> productBases = Lists.newArrayList();
         if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
             log.info("查询到的产品列表数据为：{}",JSON.toJSONString(scenicSpotProductMPOS));
             for (ScenicSpotProductMPO scenicSpotProduct : scenicSpotProductMPOS) {
+                ProductListMPO productListMPO = productDao.getProductByProductId(scenicSpotProduct.getId());
                 String productId = scenicSpotProduct.getId();
                 //获取最近可定日期
                 int bookBeforeDay = scenicSpotProduct.getScenicSpotProductTransaction() == null ? 0 : scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeDay();
@@ -296,6 +304,10 @@ public class ProductV2ServiceImpl implements ProductV2Service {
                     scenicSpotProductBase.setCategory(category);
                     scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
                     scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
+                    scenicSpotProductBase.setSellCount(productListMPO.getSellCount());
+                    scenicSpotProductBase.setStock(productListMPO.getStock());
+                    scenicSpotProductBase.setChannel(productListMPO.getChannel());
+                    scenicSpotProductBase.setSortId(String.format("%s%s%s",scenicSpotProductPriceMPO.getScenicSpotProductId(), scenicSpotProductPriceMPO.getScenicSpotRuleId(), scenicSpotProductPriceMPO.getTicketKind()));
 
                     //使用最近可定日期比较
                     String startDate = scenicSpotProductPriceMPO.getStartDate();
@@ -367,7 +379,45 @@ public class ProductV2ServiceImpl implements ProductV2Service {
 
             }
         }
-        return BaseResponse.withSuccess(productBases);
+
+        //产品排序
+        List<ScenicSpotProductBase> result = new ArrayList<>();
+        result.addAll(productBases);
+        if (!CollectionUtils.isEmpty(scenicProductSortMPOS)){
+            Map<String,List<ScenicSpotProductBase>> scenicRealProductMap = result.stream().collect(Collectors.groupingBy(ScenicSpotProductBase::getSortId, LinkedHashMap::new,Collectors.toList()));
+            result = new ArrayList<>();
+            int sort = 0;
+            for (ScenicProductSortMPO scenicProductSortMPO : scenicProductSortMPOS){
+                if (!CollectionUtils.isEmpty(scenicRealProductMap.get(scenicProductSortMPO.getId()))) {
+                    scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0).setSort(scenicProductSortMPO.getSort());
+                    result.add(scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0));
+                    scenicRealProductMap.remove(scenicProductSortMPO.getId());
+                    sort++;
+                }
+            }
+            for(Map.Entry<String,List<ScenicSpotProductBase>> entry:scenicRealProductMap.entrySet()){
+                entry.getValue().get(0).setSort(sort++);
+                result.add(entry.getValue().get(0));
+            }
+        }
+        //票种排序
+        if (StringUtils.isBlank(scenicSpotMPO.getTicketKindSort())){
+            //默认成人票第一个   特惠票第二个
+            scenicSpotMPO.setTicketKindSort("2,19");
+        }
+        String [] ticketKindSorts = scenicSpotMPO.getTicketKindSort().split(",");
+        Map<String,List<ScenicSpotProductBase>> resultMap = result.stream().collect(Collectors.groupingBy(ScenicSpotProductBase::getTicketKind, LinkedHashMap::new,Collectors.toList()));
+        result = new ArrayList<>();
+        for (String ticketKindSort : ticketKindSorts){
+            if (!CollectionUtils.isEmpty(resultMap.get(ticketKindSort))) {
+                result.addAll(resultMap.get(ticketKindSort));
+                resultMap.remove(ticketKindSort);
+            }
+        }
+        for(Map.Entry<String,List<ScenicSpotProductBase>> entry:resultMap.entrySet()){
+            result.addAll(entry.getValue());
+        }
+        return BaseResponse.withSuccess(result);
     }
 
     private Date getCanBuyDate(int bookBeforeDay, String bookBeforeTime) {
@@ -1140,4 +1190,122 @@ public class ProductV2ServiceImpl implements ProductV2Service {
         return BaseResponse.withSuccess(result);
     }
 
+    @Override
+    public BaseResponse<List<ScenicRealProductBase>> querySpotRelaProductList(ScenicSpotProductRequest request) {
+        BaseResponse<List<ChannelInfo>> listBaseResponse = dataService.queryChannelInfo(1);
+        List<String> channelInfo = new ArrayList<>();
+        if(listBaseResponse.getCode() == 0 && listBaseResponse.getData() != null){
+            channelInfo = listBaseResponse.getData().stream().map(a -> a.getChannel()).collect(Collectors.toList());
+        }
+        log.info("channelInfo = {}",channelInfo);
+        List<ScenicSpotProductMPO> scenicSpotProductMPOS = scenicSpotDao.querySpotProduct(request.getScenicSpotId(), channelInfo);
+        ScenicSpotMPO scenicSpotMPO = scenicSpotDao.qyerySpotById(request.getScenicSpotId());
+        List<ScenicProductSortMPO> scenicProductSortMPOS = scenicProductSortDao.queryScenicProductSortByScenicId(request.getScenicSpotId());
+
+        String date = request.getDate();
+        List<ScenicRealProductBase> productBases = Lists.newArrayList();
+        if(ListUtils.isNotEmpty(scenicSpotProductMPOS)){
+            log.info("查询到的产品列表数据为：{}",JSON.toJSONString(scenicSpotProductMPOS));
+            for (ScenicSpotProductMPO scenicSpotProduct : scenicSpotProductMPOS) {
+                ProductListMPO productListMPO = productDao.getProductByProductId(scenicSpotProduct.getId());
+                String productId = scenicSpotProduct.getId();
+                //获取最近可定日期
+                int bookBeforeDay = scenicSpotProduct.getScenicSpotProductTransaction() == null ? 0 : scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeDay();
+                Date canBuyDate = getCanBuyDate(bookBeforeDay, scenicSpotProduct.getScenicSpotProductTransaction() == null ? null : scenicSpotProduct.getScenicSpotProductTransaction().getBookBeforeTime());
+                List<ScenicSpotProductPriceMPO> scenicSpotProductPriceMPOS = scenicSpotDao.queryProductPriceByProductId(productId);
+                // 根据产品id、规则id、票种 拆成多个产品
+                Map<String, List<ScenicSpotProductPriceMPO>> priceMap = scenicSpotProductPriceMPOS.stream().collect(Collectors.groupingBy(price ->
+                        String.format("%s-%s-%s", price.getScenicSpotProductId(), price.getScenicSpotRuleId(), price.getTicketKind())));
+                log.info("产品{}拆成{}个", scenicSpotProduct.getId(), priceMap.size());
+                priceMap.forEach((k, v) -> {
+                    ScenicSpotProductPriceMPO scenicSpotProductPriceMPO = filterPrice(v, date, canBuyDate);
+                    if(scenicSpotProductPriceMPO == null){
+                        return;
+                    }
+                    String scenicSpotRuleId = scenicSpotProductPriceMPO.getScenicSpotRuleId();
+                    ScenicSpotRuleMPO scenicSpotRuleMPO = scenicSpotDao.queryRuleById(scenicSpotRuleId);
+                    if(scenicSpotRuleMPO == null){
+                        log.info("产品因为价格规则无数据异常被过滤,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
+                        return;
+                    }
+                    ScenicRealProductBase scenicSpotProductBase = new ScenicRealProductBase();
+                    String category = scenicSpotProduct.getScenicSpotProductBaseSetting().getCategoryCode();
+                    BasePrice basePrice = new BasePrice();
+                    BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice);
+                    //需要调用加价方法
+                    IncreasePrice increasePrice = new IncreasePrice();
+                    increasePrice.setChannelCode(scenicSpotProduct.getChannel());
+                    increasePrice.setProductCode(scenicSpotProductPriceMPO.getScenicSpotProductId());
+                    increasePrice.setAppSource(request.getFrom());
+                    increasePrice.setAppSubSource(request.getSource());
+                    increasePrice.setProductCategory(category);
+                    List<IncreasePriceCalendar> priceCalendars = new ArrayList<>(1);
+                    IncreasePriceCalendar priceCalendar = new IncreasePriceCalendar();
+                    priceCalendar.setAdtSellPrice(scenicSpotProductPriceMPO.getSellPrice());
+                    priceCalendar.setDate(scenicSpotProductPriceMPO.getStartDate());
+                    priceCalendars.add(priceCalendar);
+                    increasePrice.setPrices(priceCalendars);
+                    increasePrice.setScenicSpotId(request.getScenicSpotId());
+                    commonService.increasePrice(increasePrice);
+                    List<IncreasePriceCalendar> prices = increasePrice.getPrices();
+                    if(ListUtils.isEmpty(prices)){
+                        log.info("产品因为价格计算之后无价格数据返回,当前产品id为{}, 当前适用价格信息为{}",scenicSpotProduct.getId(), JSON.toJSON(scenicSpotProductPriceMPO));
+                        return;
+                    }
+                    BeanUtils.copyProperties(scenicSpotProductPriceMPO,basePrice,"sellPrice");
+                    IncreasePriceCalendar increasePriceCalendar = prices.get(0);
+                    basePrice.setSellPrice(increasePriceCalendar.getAdtSellPrice());
+                    basePrice.setPriceId(scenicSpotProductPriceMPO.getId());
+                    scenicSpotProductBase.setPrice(basePrice.getSellPrice());
+
+                    BeanUtils.copyProperties(scenicSpotProduct,scenicSpotProductBase);
+                    productBases.add(scenicSpotProductBase);
+                    scenicSpotProductBase.setCategory(category);
+                    scenicSpotProductBase.setProductName(scenicSpotProduct.getName());
+                    scenicSpotProductBase.setTicketKind(scenicSpotProductPriceMPO.getTicketKind());
+                    scenicSpotProductBase.setProductId(scenicSpotProduct.getId());
+                    scenicSpotProductBase.setSellCount(productListMPO.getSellCount());
+                    scenicSpotProductBase.setStock(productListMPO.getStock());
+                    scenicSpotProductBase.setChannel(productListMPO.getChannel());
+                    scenicSpotProductBase.setSortId(String.format("%s%s%s",scenicSpotProductPriceMPO.getScenicSpotProductId(), scenicSpotProductPriceMPO.getScenicSpotRuleId(), scenicSpotProductPriceMPO.getTicketKind()));
+                });
+            }
+        }
+        //产品排序
+        List<ScenicRealProductBase> result = new ArrayList<>();
+        result.addAll(productBases);
+        if (!CollectionUtils.isEmpty(scenicProductSortMPOS)){
+            Map<String,List<ScenicRealProductBase>> scenicRealProductMap = result.stream().collect(Collectors.groupingBy(ScenicRealProductBase::getSortId, LinkedHashMap::new,Collectors.toList()));
+            result = new ArrayList<>();
+            int sort = 0;
+            for (ScenicProductSortMPO scenicProductSortMPO : scenicProductSortMPOS){
+                if (!CollectionUtils.isEmpty(scenicRealProductMap.get(scenicProductSortMPO.getId()))) {
+                    scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0).setSort(scenicProductSortMPO.getSort());
+                    result.add(scenicRealProductMap.get(scenicProductSortMPO.getId()).get(0));
+                    scenicRealProductMap.remove(scenicProductSortMPO.getId());
+                    sort++;
+                }
+            }
+            for(Map.Entry<String,List<ScenicRealProductBase>> entry:scenicRealProductMap.entrySet()){
+                entry.getValue().get(0).setSort(sort++);
+                result.add(entry.getValue().get(0));
+            }
+        }
+        //票种排序
+        if (StringUtils.isNotBlank(scenicSpotMPO.getTicketKindSort())){
+            String [] ticketKindSorts = scenicSpotMPO.getTicketKindSort().split(",");
+            Map<String,List<ScenicRealProductBase>> resultMap = result.stream().collect(Collectors.groupingBy(ScenicRealProductBase::getTicketKind, LinkedHashMap::new,Collectors.toList()));
+            result = new ArrayList<>();
+            for (String ticketKindSort : ticketKindSorts){
+                if (!CollectionUtils.isEmpty(resultMap.get(ticketKindSort))) {
+                    result.addAll(resultMap.get(ticketKindSort));
+                    resultMap.remove(ticketKindSort);
+                }
+            }
+            for(Map.Entry<String,List<ScenicRealProductBase>> entry:resultMap.entrySet()){
+                result.addAll(entry.getValue());
+            }
+        }
+        return BaseResponse.withSuccess(result);
+    }
 }
