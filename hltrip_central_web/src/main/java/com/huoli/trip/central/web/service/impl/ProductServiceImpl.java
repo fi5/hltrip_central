@@ -2281,7 +2281,7 @@ public class ProductServiceImpl implements ProductService {
         try {
             insertAcceptAndUpdateInvitation(req, invitation);
         } catch (Exception e) {
-            return BaseResponse.withFail(CentralError.SEND_COUPON_FAIL);
+            return BaseResponse.withFail(CentralError.GOT_PROMOTION);
         }
         result.setStatus("0");
         return BaseResponse.withSuccess(result);
